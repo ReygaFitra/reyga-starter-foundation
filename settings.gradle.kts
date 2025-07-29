@@ -9,3 +9,4 @@
 
 rootProject.name = "reyga-starter-foundation"
 include("common")
+include("common-database")
