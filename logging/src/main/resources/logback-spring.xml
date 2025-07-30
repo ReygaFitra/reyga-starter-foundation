@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true">
+
+    <!-- ======================= -->
+    <!-- SPRING PROPERTIES       -->
+    <!-- ======================= -->
+
+    <!-- Console Pattern -->
+    <springProperty scope="context"
+                    name="CONSOLE_PATTERN"
+                    source="reyga.custom.logging.console-pattern"
+                    defaultValue="[%d{yyyy-MM-dd HH:mm:ss.SSS}] x-request-id %-5level %logger{36} - %msg%n"/>
+
+    <!-- File Pattern -->
+    <springProperty scope="context"
+                    name="FILE_PATTERN"
+                    source="reyga.custom.logging.file-pattern"
+                    defaultValue="[%d{yyyy-MM-dd HH:mm:ss.SSS}] | %X{x-request-id} | %-5level | %logger{36} | - %msg%n"/>
+
+    <springProperty scope="context"
+                    name="ENABLE_ROLLING"
+                    source="reyga.custom.logging.enable-rolling-file"
+                    defaultValue="false"/>
+
+    <springProperty scope="context"
+                    name="ENABLE_SUMMARY_LOG"
+                    source="reyga.custom.logging.enable-summary-log"
+                    defaultValue="true"/>
+
+    <springProperty scope="context"
+                    name="ROLLING_FILE"
+                    source="reyga.custom.logging.rolling-file"
+                    defaultValue="logs/"/>
+
+    <springProperty scope="context"
+                    name="ROLLING_FILE_NAME"
+                    source="reyga.custom.logging.rolling-file-name"
+                    defaultValue="${ROLLING_FILE}/%d{dd-MM-yyyy}.app.%i.log.gz"/>
+
+    <springProperty scope="context"
+                    name="ROLLING_SUMMARY_NAME"
+                    source="reyga.custom.logging.rolling-summary-file-name"
+                    defaultValue="${ROLLING_FILE}/monitoring/%d{dd-MM-yyyy}.summary.%i.log.gz"/>
+
+
+    <springProperty scope="context"
+                    name="MAX_HISTORY"
+                    source="reyga.custom.logging.rolling-max-history"
+                    defaultValue="30"/>
+
+    <springProperty scope="context"
+                    name="MAX_FILE_SIZE"
+                    source="reyga.custom.logging.rolling-max-file-size"
+                    defaultValue="20MB"/>
+
+    <!-- ======================= -->
+    <!-- APPENDERS               -->
+    <!-- ======================= -->
+
+    <!-- Console Appender -->
+    <appender name="CONSOLE_LOG" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Rolling File Appender -->
+    <if condition='property("ENABLE_ROLLING").equals("true")'>
+        <then>
+            <appender name="ROLLING_LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
+                <file>${ROLLING_FILE_NAME}</file>
+                <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+                    <fileNamePattern>${ROLLING_FILE_NAME}</fileNamePattern>
+                    <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
+                    <maxHistory>${MAX_HISTORY}</maxHistory>
+                </rollingPolicy>
+                <encoder>
+                    <pattern>${FILE_PATTERN}</pattern>
+                </encoder>
+            </appender>
+        </then>
+    </if>
+
+    <!-- Summary Log Appender -->
+    <if condition='property("ENABLE_SUMMARY_LOG").equals("true")'>
+        <then>
+            <appender name="SUMMARY_LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
+                <file>${ROLLING_SUMMARY_NAME}</file>
+                <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+                    <fileNamePattern>${ROLLING_SUMMARY_NAME}</fileNamePattern>
+                    <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
+                    <maxHistory>${MAX_HISTORY}</maxHistory>
+                </rollingPolicy>
+                <encoder>
+                    <pattern>${FILE_PATTERN}</pattern>
+                </encoder>
+                <!-- Filter log AFTER_COMPLETION -->
+                <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+                    <evaluator>
+                        <expression>return mdc.get("x-summary-log") == "AFTER COMPLETION";</expression>
+                    </evaluator>
+                    <OnMismatch>DENY</OnMismatch>
+                    <OnMatch>ACCEPT</OnMatch>
+                </filter>
+            </appender>
+        </then>
+    </if>
+
+    <!-- ======================= -->
+    <!-- ROOT LOGGER             -->
+    <!-- ======================= -->
+
+    <!-- Root Logger -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE_LOG"/>
+        <if condition='property("ENABLE_ROLLING").equals("true")'>
+            <then>
+                <appender-ref ref="ROLLING_LOG"/>
+            </then>
+        </if>
+        <if condition='property("ENABLE_SUMMARY_LOG").equals("true")'>
+            <then>
+                <appender-ref ref="SUMMARY_LOG"/>
+            </then>
+        </if>
+    </root>
+</configuration>

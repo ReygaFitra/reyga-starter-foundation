@@ -18,7 +18,8 @@ public enum HeaderEnum {
     REQUEST("x-request"),
     RESPONSE("x-response"),
     USER_AGENT("user-agent"),
-    RESPONSE_TIME("x-response-time");
+    RESPONSE_TIME("x-response-time"),
+    SUMMARY_LOG("x-summary-log");
 
     private final String value;
 }

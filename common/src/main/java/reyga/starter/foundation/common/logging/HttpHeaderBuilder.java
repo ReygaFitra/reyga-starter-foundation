@@ -80,7 +80,7 @@ public class HttpHeaderBuilder {
         return url;
     }
 
-    public Map<String, String> buildHeadersMap(HttpServletRequest request) {
+    public static Map<String, String> buildHeadersMap(HttpServletRequest request) {
         Map<String, String> map = new HashMap<>();
 
         Enumeration<String> headerNames = request.getHeaderNames();
