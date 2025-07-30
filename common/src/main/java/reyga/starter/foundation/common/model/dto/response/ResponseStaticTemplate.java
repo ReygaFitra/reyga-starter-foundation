@@ -9,22 +9,7 @@ import reyga.starter.foundation.common.util.DateUtil;
 import java.time.LocalDateTime;
 
 @NoArgsConstructor
-public class ResponseTemplate {
-
-    public static <T> ResponseEntity<T> createResponse(T data, HttpStatus status) {
-        return new ResponseEntity<>(data, status);
-    }
-
-    public static <T> ResponseEntity<ResponseData<T>> createResponse(
-            T data, HttpStatus status, String code, String message
-    ) {
-        ResponseData<T> responseData = new ResponseData<>();
-        responseData.setStatus(ServiceStatusResponseEnum.SUCCESS.getValue());
-        responseData.setCode(code);
-        responseData.setMessage(message);
-        responseData.setData(data);
-        return new ResponseEntity<>(responseData, status);
-    }
+public class ResponseStaticTemplate {
 
     public static ResponseEntity<ResponseError> createErrorResponse(
             HttpStatus status, String code, String message

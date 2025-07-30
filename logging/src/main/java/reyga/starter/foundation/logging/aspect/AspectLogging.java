@@ -16,6 +16,7 @@ import reyga.starter.foundation.common.enumeration.HeaderEnum;
 import reyga.starter.foundation.common.logging.CustomLogger;
 import reyga.starter.foundation.common.logging.HttpHeaderBuilder;
 import reyga.starter.foundation.common.model.dto.request.RequestLogging;
+import reyga.starter.foundation.logging.config.properties.LoggingProperties;
 
 import java.lang.reflect.Method;
 import java.util.UUID;
@@ -25,6 +26,7 @@ import java.util.UUID;
 public class AspectLogging {
 
     private final CustomLogger logger;
+    private final LoggingProperties loggingProperties;
 
     @Pointcut(value = "@annotation(reyga.starter.foundation.logging.annotation.AspectLogExecution)")
     private void pointCut(){
@@ -38,8 +40,13 @@ public class AspectLogging {
         if (requestAttributes != null) {
             request = ((ServletRequestAttributes) requestAttributes).getRequest();
         }
+        if (!loggingProperties.isEnableAspect()) {
+            return joinPoint.proceed();
+        }
 
-        MDC.put(HeaderEnum.REQUEST_ID.getValue(), UUID.randomUUID().toString());
+        if (MDC.get(HeaderEnum.REQUEST_ID.getValue()) == null) {
+            MDC.put(HeaderEnum.REQUEST_ID.getValue(), UUID.randomUUID().toString());
+        }
         Method method = ((MethodSignature) joinPoint.getSignature()).getMethod();
         RequestLogging requestDto = new RequestLogging();
         HttpHeaderBuilder.constructRequestBodyAndRequestMultiPart(joinPoint.getArgs(), method, requestDto);

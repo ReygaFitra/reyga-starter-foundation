@@ -15,7 +15,7 @@ import reyga.starter.foundation.common.enumeration.HeaderEnum;
 import reyga.starter.foundation.common.exception.AppFaultException;
 import reyga.starter.foundation.common.logging.CustomLogger;
 import reyga.starter.foundation.common.model.dto.response.ResponseError;
-import reyga.starter.foundation.common.model.dto.response.ResponseTemplate;
+import reyga.starter.foundation.common.model.dto.response.ResponseStaticTemplate;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -61,7 +61,7 @@ public class GlobalExceptionHandler {
             }
         }
         this.logger.exception(exceptionType.toUpperCase(), null,e);
-        return ResponseTemplate.createErrorResponse(httpStatus, code, message);
+        return ResponseStaticTemplate.createErrorResponse(httpStatus, code, message);
     }
 
     @ExceptionHandler({JpaSystemException.class, JDBCException.class})
@@ -90,14 +90,14 @@ public class GlobalExceptionHandler {
             }
         }
         this.logger.exception(exceptionType.toUpperCase(), null,e);
-        return ResponseTemplate.createErrorResponse(INTERNAL_SERVER_ERROR, "99", "DATABASE ERROR");
+        return ResponseStaticTemplate.createErrorResponse(INTERNAL_SERVER_ERROR, "99", "DATABASE ERROR");
     }
 
     @ExceptionHandler(AppFaultException.class)
     public ResponseEntity<ResponseError> handleAppFaultException(AppFaultException appFaultException, HttpServletRequest request) {
         request.setAttribute(HeaderEnum.EXCEPTION.getValue(), appFaultException);
         this.logger.exception("AppFaultException".toUpperCase(), appFaultException.getFaultInfo(),appFaultException);
-        return ResponseTemplate.createErrorResponse(
+        return ResponseStaticTemplate.createErrorResponse(
                 appFaultException.getStatusCode(), appFaultException.getErrorCode(), appFaultException.getErrorMessage()
         );
     }

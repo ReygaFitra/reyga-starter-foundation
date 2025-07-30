@@ -26,7 +26,9 @@ public class LogInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler) throws Exception {
         Map<String, String> headersMap = HttpHeaderBuilder.buildHeadersMap(request);
-        headersMap.put(HeaderEnum.REQUEST_ID.getValue(), UUID.randomUUID().toString());
+        if (headersMap.get(HeaderEnum.REQUEST_ID.getValue()) == null) {
+            headersMap.put(HeaderEnum.REQUEST_ID.getValue(), UUID.randomUUID().toString());
+        }
         headersMap.put(HeaderEnum.METHOD.getValue(), request.getMethod());
         headersMap.put(HeaderEnum.REQUEST_ENDPOINT.getValue(), request.getRequestURI());
         headersMap.put(HeaderEnum.FORWARDED_FOR.getValue(), request.getRemoteAddr());

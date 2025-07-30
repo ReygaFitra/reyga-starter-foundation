@@ -2,9 +2,9 @@ package reyga.starter.foundation.logging.config;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import reyga.starter.foundation.common.logging.CustomLogger;
@@ -14,7 +14,7 @@ import reyga.starter.foundation.logging.interceptor.LogInterceptor;
 
 @Configuration
 @RequiredArgsConstructor
-@EnableConfigurationProperties(LoggingProperties.class)
+@Import(LoggingProperties.class)
 public class LogInterceptorConfig implements WebMvcConfigurer {
 
     private final LogInterceptor logInterceptor;
@@ -32,7 +32,7 @@ public class LogInterceptorConfig implements WebMvcConfigurer {
 
     @Bean
     @ConditionalOnProperty(name = "reyga.custom.logging.enable-aspect", havingValue = "true")
-    public AspectLogging loggingAspect() {
-        return new AspectLogging(customLogger);
+    public AspectLogging loggingAspect(LoggingProperties loggingProperties) {
+        return new AspectLogging(customLogger, loggingProperties);
     }
 }
