@@ -1,4 +1,4 @@
-package reyga.starter.foundation.common.exception.handler;
+package reyga.starter.foundation.core.exception.handler;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,10 +12,10 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import reyga.starter.foundation.common.enumeration.HeaderEnum;
-import reyga.starter.foundation.common.exception.AppFaultException;
+import reyga.starter.foundation.core.exception.AppFaultException;
 import reyga.starter.foundation.common.logging.CustomLogger;
-import reyga.starter.foundation.common.model.dto.response.ResponseError;
-import reyga.starter.foundation.common.model.dto.response.ResponseStaticTemplate;
+import reyga.starter.foundation.core.dto.response.ResponseError;
+import reyga.starter.foundation.core.dto.response.ResponseStaticTemplate;
 
 import java.util.HashMap;
 import java.util.Map;

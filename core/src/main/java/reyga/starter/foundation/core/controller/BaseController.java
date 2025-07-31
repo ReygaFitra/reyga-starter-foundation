@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import reyga.starter.foundation.common.enumeration.ServiceStatusResponseEnum;
-import reyga.starter.foundation.common.model.dto.response.ResponseData;
-import reyga.starter.foundation.common.model.dto.response.ResponseStaticTemplate;
+import reyga.starter.foundation.core.dto.response.ResponseData;
+import reyga.starter.foundation.core.dto.response.ResponseStaticTemplate;
 
 @RequiredArgsConstructor
 public abstract class BaseController extends ResponseStaticTemplate {

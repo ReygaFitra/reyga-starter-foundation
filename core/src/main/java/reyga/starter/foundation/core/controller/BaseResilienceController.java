@@ -9,7 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import reyga.starter.foundation.common.enumeration.ServiceCodeEnum;
 import reyga.starter.foundation.common.enumeration.ServiceStatusResponseEnum;
-import reyga.starter.foundation.common.model.dto.response.ResponseData;
+import reyga.starter.foundation.core.dto.response.ResponseData;
 import reyga.starter.foundation.core.service.ResilienceService;
 
 import java.util.concurrent.ConcurrentHashMap;

@@ -1,4 +1,4 @@
-package reyga.starter.foundation.common.exception;
+package reyga.starter.foundation.core.exception;
 
 import java.util.*;
 

@@ -1,9 +1,8 @@
-package reyga.starter.foundation.common.model.dto.response;
+package reyga.starter.foundation.core.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.NoArgsConstructor;
-import reyga.starter.foundation.core.dto.response.BaseResponse;
 
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)

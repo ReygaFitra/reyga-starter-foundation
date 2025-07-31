@@ -1,4 +1,4 @@
-package reyga.starter.foundation.common.model.dto.response;
+package reyga.starter.foundation.core.dto.response;
 
 import lombok.NoArgsConstructor;
 import org.springframework.http.HttpStatus;

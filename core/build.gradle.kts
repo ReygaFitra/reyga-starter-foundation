@@ -19,6 +19,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation:3.5.3")
     implementation("jakarta.validation:jakarta.validation-api:3.1.1")
     implementation("io.github.resilience4j:resilience4j-all:2.3.0")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.5.3")
 }
 
 java {

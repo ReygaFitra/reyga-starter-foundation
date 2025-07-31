@@ -7,8 +7,8 @@ import jakarta.validation.ValidatorFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
-import reyga.starter.foundation.common.exception.AppFaultContent;
-import reyga.starter.foundation.common.exception.AppFaultException;
+import reyga.starter.foundation.core.exception.AppFaultContent;
+import reyga.starter.foundation.core.exception.AppFaultException;
 import reyga.starter.foundation.common.logging.CustomLogger;
 
 import java.util.HashMap;
@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static reyga.starter.foundation.common.util.ServiceUtil.buildAppFaultContent;
+import static reyga.starter.foundation.core.exception.AppFaultContent.buildAppFaultContent;
 
 @Component
 @RequiredArgsConstructor

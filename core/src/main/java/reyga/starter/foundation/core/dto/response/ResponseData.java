@@ -1,7 +1,6 @@
-package reyga.starter.foundation.common.model.dto.response;
+package reyga.starter.foundation.core.dto.response;
 
 import lombok.experimental.SuperBuilder;
-import reyga.starter.foundation.core.dto.response.BaseResponse;
 
 @SuperBuilder(toBuilder = true)
 public class ResponseData<T> extends BaseResponse {
