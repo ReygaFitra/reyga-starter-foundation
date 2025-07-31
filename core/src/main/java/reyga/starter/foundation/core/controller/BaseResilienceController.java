@@ -6,6 +6,7 @@ import io.github.resilience4j.ratelimiter.RateLimiterConfig;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 import reyga.starter.foundation.common.enumeration.ServiceCodeEnum;
 import reyga.starter.foundation.common.enumeration.ServiceStatusResponseEnum;
 import reyga.starter.foundation.common.model.dto.response.ResponseData;
@@ -13,6 +14,7 @@ import reyga.starter.foundation.core.service.ResilienceService;
 
 import java.util.concurrent.ConcurrentHashMap;
 
+@Component
 @RequiredArgsConstructor
 public abstract class BaseResilienceController extends BaseController {
     private final ResilienceService resilienceService;

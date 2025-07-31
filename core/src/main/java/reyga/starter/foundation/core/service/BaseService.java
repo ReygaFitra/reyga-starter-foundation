@@ -1,6 +1,6 @@
 package reyga.starter.foundation.core.service;
 
-import reyga.starter.foundation.common.model.dto.request.BaseRequest;
+import reyga.starter.foundation.core.dto.request.BaseRequest;
 
 public abstract class BaseService<REQ extends BaseRequest, RES> implements FoundationService<REQ, RES> {
 

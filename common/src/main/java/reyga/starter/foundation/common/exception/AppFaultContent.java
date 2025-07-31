@@ -2,9 +2,7 @@ package reyga.starter.foundation.common.exception;
 
 import lombok.*;
 import org.springframework.http.HttpStatus;
-import reyga.starter.foundation.common.model.dto.content.BaseContent;
-
-import java.io.Serializable;
+import reyga.starter.foundation.core.dto.content.BaseContent;
 
 @Data
 @Builder(toBuilder = true)

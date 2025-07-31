@@ -2,6 +2,7 @@ package reyga.starter.foundation.common.model.dto.request;
 
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
+import reyga.starter.foundation.core.dto.request.BaseRequest;
 
 import java.util.Map;
 

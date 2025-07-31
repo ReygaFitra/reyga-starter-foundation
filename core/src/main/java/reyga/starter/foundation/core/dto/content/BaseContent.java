@@ -1,4 +1,4 @@
-package reyga.starter.foundation.common.model.dto.content;
+package reyga.starter.foundation.core.dto.content;
 
 import java.io.Serializable;
 

@@ -17,11 +17,12 @@ public abstract class BaseController extends ResponseStaticTemplate {
     protected <T> ResponseEntity<ResponseData<T>> createResponse(
             T data, HttpStatus status, String code, String message
     ) {
-        ResponseData<T> responseData = new ResponseData<>();
-        responseData.setStatus(ServiceStatusResponseEnum.SUCCESS.getValue());
-        responseData.setCode(code);
-        responseData.setMessage(message);
-        responseData.setData(data);
+        ResponseData<T> responseData = ResponseData.<T>builder()
+                .status(ServiceStatusResponseEnum.SUCCESS.getValue())
+                .code(code)
+                .message(message)
+                .data(data)
+                .build();
         return new ResponseEntity<>(responseData, status);
     }
 }
