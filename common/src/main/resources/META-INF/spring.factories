@@ -1,2 +1,0 @@
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-  reyga.starter.foundation.common.config.CommonConfig
