@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import reyga.starter.foundation.common.enumeration.HeaderEnum;
+import reyga.starter.foundation.common.logging.BaseLogging;
 import reyga.starter.foundation.core.exception.AppFaultException;
-import reyga.starter.foundation.common.logging.CustomLogger;
 import reyga.starter.foundation.core.dto.response.ResponseError;
 import reyga.starter.foundation.core.dto.response.ResponseStaticTemplate;
 
@@ -24,9 +24,7 @@ import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 
 @RestControllerAdvice
 @RequiredArgsConstructor
-public class GlobalExceptionHandler {
-
-    private final CustomLogger logger;
+public class GlobalExceptionHandler extends BaseLogging {
 
     @ExceptionHandler({Exception.class})
     public ResponseEntity<ResponseError> handleGlobalErrorException(Exception e, HttpServletRequest request) {
@@ -44,9 +42,9 @@ public class GlobalExceptionHandler {
             message = "GENERAL ERROR";
             errors.put("illegalArgumentException", e.getStackTrace()[0].toString());
             try {
-                this.logger.warn("ILLEGAL ARGUMENT EXCEPTION ERROR :", mapper.writeValueAsString(errors));
+                log.warn("ILLEGAL ARGUMENT EXCEPTION ERROR :", mapper.writeValueAsString(errors));
             } catch (JsonProcessingException e1) {
-                this.logger.error("write_log_error", e1.getMessage());
+                log.error("write_log_error", e1.getMessage());
             }
         } else {
             code = "99";
@@ -55,12 +53,12 @@ public class GlobalExceptionHandler {
             message = "INTERNAL SERVER ERROR";
             errors.put("Global Error", e.getStackTrace()[0].toString());
             try {
-                this.logger.warn("GLOBAL ERROR :", mapper.writeValueAsString(errors));
+                log.warn("GLOBAL ERROR :", mapper.writeValueAsString(errors));
             } catch (JsonProcessingException e1) {
-                this.logger.error("write_log_error", e1.getMessage());
+                log.error("write_log_error", e1.getMessage());
             }
         }
-        this.logger.exception(exceptionType.toUpperCase(), null,e);
+        log.exception(exceptionType.toUpperCase(), null,e);
         return ResponseStaticTemplate.createErrorResponse(httpStatus, code, message);
     }
 
@@ -75,28 +73,28 @@ public class GlobalExceptionHandler {
             exceptionType = "JpaSystemException";
             errors.put("JPA-SYSTEM-ERROR", e.getStackTrace()[0].toString());
             try {
-                this.logger.warn("JPA ERROR :", mapper.writeValueAsString(errors));
+                log.warn("JPA ERROR :", mapper.writeValueAsString(errors));
             } catch (JsonProcessingException e1) {
-                this.logger.error("write_log_error", e1.getMessage());
+                log.error("write_log_error", e1.getMessage());
             }
         }
         if (e instanceof JDBCException) {
             exceptionType = "JDBCException";
             errors.put("JDBC-ERROR", e.getStackTrace()[0].toString());
             try {
-                this.logger.warn("JDBC ERROR :", mapper.writeValueAsString(errors));
+                log.warn("JDBC ERROR :", mapper.writeValueAsString(errors));
             } catch (JsonProcessingException e1) {
-                this.logger.error("write_log_error", e1.getMessage());
+                log.error("write_log_error", e1.getMessage());
             }
         }
-        this.logger.exception(exceptionType.toUpperCase(), null,e);
+        log.exception(exceptionType.toUpperCase(), null,e);
         return ResponseStaticTemplate.createErrorResponse(INTERNAL_SERVER_ERROR, "99", "DATABASE ERROR");
     }
 
     @ExceptionHandler(AppFaultException.class)
     public ResponseEntity<ResponseError> handleAppFaultException(AppFaultException appFaultException, HttpServletRequest request) {
         request.setAttribute(HeaderEnum.EXCEPTION.getValue(), appFaultException);
-        this.logger.exception("AppFaultException".toUpperCase(), appFaultException.getFaultInfo(),appFaultException);
+        log.exception("AppFaultException".toUpperCase(), appFaultException.getFaultInfo(),appFaultException);
         return ResponseStaticTemplate.createErrorResponse(
                 appFaultException.getStatusCode(), appFaultException.getErrorCode(), appFaultException.getErrorMessage()
         );

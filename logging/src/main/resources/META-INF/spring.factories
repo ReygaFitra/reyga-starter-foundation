@@ -1,0 +1,4 @@
+org.springframework.boot.logging.LoggingSystem=org.springframework.boot.logging.logback.LogbackLoggingSystem
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  reyga.starter.foundation.logging.config.LogInterceptorConfig,\
+  reyga.starter.foundation.logging.config.AsyncLoggingConfig

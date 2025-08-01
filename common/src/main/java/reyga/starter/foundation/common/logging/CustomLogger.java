@@ -66,9 +66,9 @@ public class CustomLogger {
         this.logger.info(serviceEndLog(serviceName));
     }
 
-    public void infoAspectLog(String token, String userName, String reqId, String Method, Integer status, String reqEndpoint,
+    public void infoAspectLog(String reqId, String token, String userName, String Method, Integer status, String reqEndpoint,
                               String ipAddr, String pkg, String error, String request, String response, String userAgent, String respTime) {
-        this.logger.info(aspectLogFormat(token, userName, reqId, Method, status, reqEndpoint, ipAddr, pkg, error, request, response, userAgent, respTime));
+        this.logger.info(aspectLogFormat(reqId, token, userName, Method, status, reqEndpoint, ipAddr, pkg, error, request, response, userAgent, respTime));
     }
 
     private String serviceStartLog(String object) {
@@ -79,12 +79,12 @@ public class CustomLogger {
         return String.format("==================== %s End ====================", object);
     }
 
-    private String aspectLogFormat(String token, String userName, String reqId, String Method, Integer status, String reqEndpoint,
+    private String aspectLogFormat(String reqId, String token, String userName, String Method, Integer status, String reqEndpoint,
                                    String ipAddr, String pkg, String error, String request, String response, String userAgent, String respTime) {
         return String.format(
                 DEFAULT_PREFIX_VAR + String.join(
                         DEFAULT_SPACE_VAR + DEFAULT_DELIMETER_VAR + DEFAULT_SPACE_VAR,
-                        token, userName, reqId, Method, status.toString(), reqEndpoint, ipAddr, pkg, error, request, response, userAgent, respTime
+                        reqId, token, userName, Method, status.toString(), reqEndpoint, ipAddr, pkg, error, request, response, userAgent, respTime
                 ) + DEFAULT_SUFFIX_VAR);
     }
 

@@ -7,9 +7,9 @@ import jakarta.validation.ValidatorFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import reyga.starter.foundation.common.logging.BaseLogging;
 import reyga.starter.foundation.core.exception.AppFaultContent;
 import reyga.starter.foundation.core.exception.AppFaultException;
-import reyga.starter.foundation.common.logging.CustomLogger;
 
 import java.util.HashMap;
 import java.util.List;
@@ -21,14 +21,13 @@ import static reyga.starter.foundation.core.exception.AppFaultContent.buildAppFa
 
 @Component
 @RequiredArgsConstructor
-public class ValidationProcessor {
+public class ValidationProcessor extends BaseLogging {
 
     private final ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
     private final Validator validator = factory.getValidator();
-    private final CustomLogger logger;
 
     private void throwErrorWithLog(String infoMsg, Object valueMsg) throws AppFaultException {
-        logger.warn(infoMsg, valueMsg);
+        log.warn(infoMsg, valueMsg);
         AppFaultContent faultContent = buildAppFaultContent(
                 "Validation Exception", "01", "Invalid Request", valueMsg, HttpStatus.BAD_REQUEST
         );

@@ -7,7 +7,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import reyga.starter.foundation.common.logging.CustomLogger;
 import reyga.starter.foundation.logging.aspect.AspectLogging;
 import reyga.starter.foundation.logging.config.properties.LoggingProperties;
 import reyga.starter.foundation.logging.interceptor.LogInterceptor;
@@ -18,7 +17,6 @@ import reyga.starter.foundation.logging.interceptor.LogInterceptor;
 public class LogInterceptorConfig implements WebMvcConfigurer {
 
     private final LogInterceptor logInterceptor;
-    private final CustomLogger customLogger;
 
     @Bean
     public LogInterceptor logInterceptor() {
@@ -33,6 +31,6 @@ public class LogInterceptorConfig implements WebMvcConfigurer {
     @Bean
     @ConditionalOnProperty(name = "reyga.custom.logging.enable-aspect", havingValue = "true")
     public AspectLogging loggingAspect(LoggingProperties loggingProperties) {
-        return new AspectLogging(customLogger, loggingProperties);
+        return new AspectLogging(loggingProperties);
     }
 }

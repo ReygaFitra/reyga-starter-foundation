@@ -23,6 +23,7 @@ public abstract class BaseResilienceController extends BaseController {
     protected <T> ResponseEntity<T> createResponseWithRateLimiter(
             T data, RateLimiterConfig rlConfig, String rlKey, String serviceName
     ) {
+        setMDCResponse(data);
         return resilienceService.useRateLimiter(rlConfig, concurrentHashMapRateLimit, rlKey, serviceName,
                 () -> new ResponseEntity<>(data, HttpStatus.OK), ()-> new ResponseEntity<>(data, HttpStatus.TOO_MANY_REQUESTS)
         );
@@ -31,6 +32,7 @@ public abstract class BaseResilienceController extends BaseController {
     protected <T> ResponseEntity<ResponseData<T>> createResponseWithRateLimiter(
             T data, String code, String message, RateLimiterConfig rlConfig, String rlKey, String serviceName
     ) {
+        setMDCResponse(data);
         return resilienceService.useRateLimiter(rlConfig, concurrentHashMapRateLimit, rlKey, serviceName,
                 () -> new ResponseEntity<>(
                         ResponseData.<T>builder()
@@ -53,6 +55,7 @@ public abstract class BaseResilienceController extends BaseController {
     protected <T> ResponseEntity<T> createResponseWithCircuitBreaker(
             T data, CircuitBreakerConfig cbConfig, String serviceName
     ) {
+        setMDCResponse(data);
         return resilienceService.useCircuitBreaker(cbConfig, serviceName,
                 () -> new ResponseEntity<>(data, HttpStatus.OK), ()-> new ResponseEntity<>(data, HttpStatus.INTERNAL_SERVER_ERROR)
         );
@@ -61,6 +64,7 @@ public abstract class BaseResilienceController extends BaseController {
     protected <T> ResponseEntity<ResponseData<T>> createResponseWithCircuitBreaker(
             T data, String code, String message, CircuitBreakerConfig cbConfig, String serviceName
     ) {
+        setMDCResponse(data);
         return resilienceService.useCircuitBreaker(cbConfig, serviceName,
                 () -> new ResponseEntity<>(
                         ResponseData.<T>builder()

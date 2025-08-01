@@ -9,7 +9,7 @@
     <springProperty scope="context"
                     name="CONSOLE_PATTERN"
                     source="reyga.custom.logging.console-pattern"
-                    defaultValue="[%d{yyyy-MM-dd HH:mm:ss.SSS}] x-request-id %-5level %logger{36} - %msg%n"/>
+                    defaultValue="[%d{yyyy-MM-dd HH:mm:ss.SSS}] %X{x-request-id} %-5level %logger{36} - %msg%n"/>
 
     <!-- File Pattern -->
     <springProperty scope="context"
@@ -35,12 +35,12 @@
     <springProperty scope="context"
                     name="ROLLING_FILE_NAME"
                     source="reyga.custom.logging.rolling-file-name"
-                    defaultValue="${ROLLING_FILE}/%d{dd-MM-yyyy}.app.%i.log.gz"/>
+                    defaultValue="${ROLLING_FILE}%d{dd-MM-yyyy}.app.log.%i.gz"/>
 
     <springProperty scope="context"
                     name="ROLLING_SUMMARY_NAME"
                     source="reyga.custom.logging.rolling-summary-file-name"
-                    defaultValue="${ROLLING_FILE}/monitoring/%d{dd-MM-yyyy}.summary.%i.log.gz"/>
+                    defaultValue="${ROLLING_FILE}monitoring/%d{dd-MM-yyyy}.summary.log.%i.gz"/>
 
 
     <springProperty scope="context"
@@ -59,6 +59,7 @@
 
     <!-- Console Appender -->
     <appender name="CONSOLE_LOG" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="reyga.starter.foundation.logging.filter.DefaultLogFilter"/>
         <encoder>
             <pattern>${CONSOLE_PATTERN}</pattern>
         </encoder>
@@ -68,12 +69,12 @@
     <if condition='property("ENABLE_ROLLING").equals("true")'>
         <then>
             <appender name="ROLLING_LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
-                <file>${ROLLING_FILE_NAME}</file>
                 <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
                     <fileNamePattern>${ROLLING_FILE_NAME}</fileNamePattern>
                     <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
                     <maxHistory>${MAX_HISTORY}</maxHistory>
                 </rollingPolicy>
+                <filter class="reyga.starter.foundation.logging.filter.DefaultLogFilter"/>
                 <encoder>
                     <pattern>${FILE_PATTERN}</pattern>
                 </encoder>
@@ -85,26 +86,45 @@
     <if condition='property("ENABLE_SUMMARY_LOG").equals("true")'>
         <then>
             <appender name="SUMMARY_LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
-                <file>${ROLLING_SUMMARY_NAME}</file>
                 <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
                     <fileNamePattern>${ROLLING_SUMMARY_NAME}</fileNamePattern>
                     <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
                     <maxHistory>${MAX_HISTORY}</maxHistory>
                 </rollingPolicy>
+                <filter class="reyga.starter.foundation.logging.filter.SummaryLogFilter"/>
                 <encoder>
                     <pattern>${FILE_PATTERN}</pattern>
                 </encoder>
                 <!-- Filter log AFTER_COMPLETION -->
-                <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
-                    <evaluator>
-                        <expression>return mdc.get("x-summary-log") == "AFTER COMPLETION";</expression>
-                    </evaluator>
-                    <OnMismatch>DENY</OnMismatch>
-                    <OnMatch>ACCEPT</OnMatch>
-                </filter>
             </appender>
         </then>
     </if>
+
+    <!-- Loggers untuk package lainnya -->
+    <logger name="org.springframework" level="INFO" additivity="false">
+        <appender-ref ref="ROLLING_LOG" />
+        <appender-ref ref="CONSOLE_LOG" />
+    </logger>
+
+    <logger name="org.apache" level="INFO" additivity="false">
+        <appender-ref ref="ROLLING_LOG" />
+        <appender-ref ref="CONSOLE_LOG" />
+    </logger>
+
+    <logger name="com.netflix" level="INFO" additivity="false">
+        <appender-ref ref="ROLLING_LOG" />
+        <appender-ref ref="CONSOLE_LOG" />
+    </logger>
+
+    <logger name="org.hibernate" level="INFO" additivity="false">
+        <appender-ref ref="ROLLING_LOG" />
+        <appender-ref ref="CONSOLE_LOG" />
+    </logger>
+
+    <logger name="com.zaxxer" level="INFO" additivity="false">
+        <appender-ref ref="ROLLING_LOG" />
+        <appender-ref ref="CONSOLE_LOG" />
+    </logger>
 
     <!-- ======================= -->
     <!-- ROOT LOGGER             -->
@@ -113,15 +133,23 @@
     <!-- Root Logger -->
     <root level="INFO">
         <appender-ref ref="CONSOLE_LOG"/>
-        <if condition='property("ENABLE_ROLLING").equals("true")'>
-            <then>
-                <appender-ref ref="ROLLING_LOG"/>
-            </then>
-        </if>
-        <if condition='property("ENABLE_SUMMARY_LOG").equals("true")'>
-            <then>
-                <appender-ref ref="SUMMARY_LOG"/>
-            </then>
-        </if>
     </root>
+
+    <if condition='property("ENABLE_ROLLING").equals("true")'>
+        <then>
+            <logger name="ROOT" level="INFO" additivity="true">
+                <appender-ref ref="ROLLING_LOG"/>
+            </logger>
+        </then>
+    </if>
+
+    <if condition='property("ENABLE_SUMMARY_LOG").equals("true")'>
+        <then>
+            <logger name="ROOT" level="INFO" additivity="true">
+                <appender-ref ref="SUMMARY_LOG"/>
+            </logger>
+        </then>
+    </if>
+
+
 </configuration>

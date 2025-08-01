@@ -13,7 +13,7 @@ import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import reyga.starter.foundation.common.enumeration.HeaderEnum;
-import reyga.starter.foundation.common.logging.CustomLogger;
+import reyga.starter.foundation.common.logging.BaseLogging;
 import reyga.starter.foundation.common.logging.HttpHeaderBuilder;
 import reyga.starter.foundation.common.model.dto.request.RequestLogging;
 import reyga.starter.foundation.logging.config.properties.LoggingProperties;
@@ -23,9 +23,8 @@ import java.util.UUID;
 
 @Aspect
 @RequiredArgsConstructor
-public class AspectLogging {
+public class AspectLogging extends BaseLogging {
 
-    private final CustomLogger logger;
     private final LoggingProperties loggingProperties;
 
     @Pointcut(value = "@annotation(reyga.starter.foundation.logging.annotation.AspectLogExecution)")
@@ -56,14 +55,14 @@ public class AspectLogging {
         MDC.put(HeaderEnum.REQUEST.getValue(), requestDto.toString());
         try {
             stopWatch.start();
-            this.logger.infoServiceStart(joinPoint.getSignature().getName());
+            log.infoServiceStart(joinPoint.getSignature().getName());
             return joinPoint.proceed();
         } finally {
             stopWatch.stop();
             long executionTime = stopWatch.getTotalTimeMillis();
             MDC.put(HeaderEnum.RESPONSE_TIME.getValue(), executionTime + " ms");
             MDC.put(HeaderEnum.PACKAGE_INFO.getValue(), joinPoint.getTarget().getClass().getName());
-            this.logger.infoServiceEnd(joinPoint.getSignature().getName());
+            log.infoServiceEnd(joinPoint.getSignature().getName());
             MDC.clear();
         }
     }
