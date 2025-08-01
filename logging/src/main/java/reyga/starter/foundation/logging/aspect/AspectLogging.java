@@ -63,7 +63,6 @@ public class AspectLogging extends BaseLogging {
             MDC.put(HeaderEnum.RESPONSE_TIME.getValue(), executionTime + " ms");
             MDC.put(HeaderEnum.PACKAGE_INFO.getValue(), joinPoint.getTarget().getClass().getName());
             log.infoServiceEnd(joinPoint.getSignature().getName());
-            MDC.clear();
         }
     }
 }

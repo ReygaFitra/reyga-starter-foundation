@@ -3,7 +3,6 @@ package reyga.starter.foundation.logging.interceptor;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.MDC;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
@@ -11,15 +10,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 import reyga.starter.foundation.common.enumeration.HeaderEnum;
-import reyga.starter.foundation.common.logging.BaseLogging;
-import reyga.starter.foundation.common.logging.CustomLogger;
+import reyga.starter.foundation.common.logging.BaseLogging;;
 import reyga.starter.foundation.common.logging.HttpHeaderBuilder;
 
 import java.util.Map;
 import java.util.UUID;
 
 @Component
-@RequiredArgsConstructor
 public class LogInterceptor extends BaseLogging implements HandlerInterceptor {
 
     @Override
