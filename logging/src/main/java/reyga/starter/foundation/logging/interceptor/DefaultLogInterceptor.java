@@ -8,22 +8,20 @@ import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
-import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.servlet.ModelAndView;
 import reyga.starter.foundation.common.enumeration.HeaderEnum;
-import reyga.starter.foundation.common.logging.BaseLogging;;
 import reyga.starter.foundation.common.logging.HttpHeaderBuilder;
 
 import java.util.Map;
 import java.util.UUID;
 
 @Component
-public class LogInterceptor extends BaseLogging implements HandlerInterceptor {
+public class DefaultLogInterceptor extends BaseLogInterceptor {
 
     @Override
-    public boolean preHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler) throws Exception {
+    public boolean preHandleProcess(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler) {
         Map<String, String> headersMap = HttpHeaderBuilder.buildHeadersMap(request);
 
-        // Tetap isi headersMap
         headersMap.computeIfAbsent(HeaderEnum.REQUEST_ID.getValue(), k -> UUID.randomUUID().toString());
         headersMap.put(HeaderEnum.METHOD.getValue(), request.getMethod());
         headersMap.put(HeaderEnum.REQUEST_ENDPOINT.getValue(), request.getRequestURI());
@@ -33,7 +31,6 @@ public class LogInterceptor extends BaseLogging implements HandlerInterceptor {
         headersMap.put(HeaderEnum.REQUEST.getValue(), MDC.get(HeaderEnum.REQUEST.getValue()));
         headersMap.put(HeaderEnum.USER_AGENT.getValue(), request.getHeader(HeaderEnum.USER_AGENT.getValue()));
 
-        // Manual MDC.put dan setAttribute
         String requestId     = headersMap.get(HeaderEnum.REQUEST_ID.getValue());
         String method        = headersMap.get(HeaderEnum.METHOD.getValue());
         String endpoint      = headersMap.get(HeaderEnum.REQUEST_ENDPOINT.getValue());
@@ -80,9 +77,12 @@ public class LogInterceptor extends BaseLogging implements HandlerInterceptor {
         return true;
     }
 
+    @Override
+    public void postHandleProcess(HttpServletRequest request, HttpServletResponse response, Object handler, @Nullable ModelAndView modelAndView) {
+    }
 
     @Override
-    public void afterCompletion(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler, @Nullable Exception ex) throws Exception {
+    public void afterCompletionProcess(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler, @Nullable Exception ex) {
         if (DispatcherType.REQUEST.name().equals(request.getDispatcherType().name()) && handler instanceof HandlerMethod) {
             MDC.put(HeaderEnum.SUMMARY_LOG.getValue(), "AFTER COMPLETION");
             String requestId      = MDC.get(HeaderEnum.REQUEST_ID.getValue());

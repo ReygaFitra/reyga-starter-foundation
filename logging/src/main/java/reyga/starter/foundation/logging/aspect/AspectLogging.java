@@ -39,7 +39,7 @@ public class AspectLogging extends BaseLogging {
         if (requestAttributes != null) {
             request = ((ServletRequestAttributes) requestAttributes).getRequest();
         }
-        if (!loggingProperties.isEnableAspect()) {
+        if (!loggingProperties.isEnableAspectLogging()) {
             return joinPoint.proceed();
         }
 

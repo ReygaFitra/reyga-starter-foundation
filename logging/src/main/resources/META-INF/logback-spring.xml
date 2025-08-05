@@ -8,48 +8,54 @@
     <!-- Console Pattern -->
     <springProperty scope="context"
                     name="CONSOLE_PATTERN"
-                    source="reyga.custom.logging.console-pattern"
+                    source="reyga.custom.logging.console.pattern"
                     defaultValue="[%d{yyyy-MM-dd HH:mm:ss.SSS}] %X{x-request-id} %-5level %logger{150} - %msg%n"/>
 
     <!-- File Pattern -->
     <springProperty scope="context"
                     name="FILE_PATTERN"
-                    source="reyga.custom.logging.file-pattern"
+                    source="reyga.custom.logging.rolling.pattern"
                     defaultValue="[%d{yyyy-MM-dd HH:mm:ss.SSS}] | %X{x-request-id} | %-5level | %logger{150} | - %msg%n"/>
+
+    <!-- Summary Pattern -->
+    <springProperty scope="context"
+                    name="SUMMARY_PATTERN"
+                    source="reyga.custom.logging.summary.pattern"
+                    defaultValue="%d{yyyy-MM-dd HH:mm:ss.SSS} | %X{x-request-id} | %-5level | %logger{150} | - %msg%n"/>
 
     <springProperty scope="context"
                     name="ENABLE_ROLLING"
-                    source="reyga.custom.logging.enable-rolling-file"
+                    source="reyga.custom.logging.rolling.enable"
                     defaultValue="false"/>
 
     <springProperty scope="context"
                     name="ENABLE_SUMMARY_LOG"
-                    source="reyga.custom.logging.enable-summary-log"
+                    source="reyga.custom.logging.summary.enable"
                     defaultValue="true"/>
 
     <springProperty scope="context"
                     name="ROLLING_FILE"
-                    source="reyga.custom.logging.rolling-file"
+                    source="reyga.custom.logging.rolling.file-path"
                     defaultValue="logs/"/>
 
     <springProperty scope="context"
                     name="ROLLING_FILE_NAME"
-                    source="reyga.custom.logging.rolling-file-name"
-                    defaultValue="${ROLLING_FILE}%d{dd-MM-yyyy}.app.log.%i.gz"/>
+                    source="reyga.custom.logging.rolling.file-name"
+                    defaultValue="%d{dd-MM-yyyy}.app.log.%i.gz"/>
 
     <springProperty scope="context"
                     name="ROLLING_SUMMARY_NAME"
-                    source="reyga.custom.logging.rolling-summary-file-name"
-                    defaultValue="${ROLLING_FILE}monitoring/%d{dd-MM-yyyy}.summary.log.%i.gz"/>
+                    source="reyga.custom.logging.rolling.summary-file-name"
+                    defaultValue="monitoring/%d{dd-MM-yyyy}.summary.log.%i.gz"/>
 
     <springProperty scope="context"
                     name="MAX_HISTORY"
-                    source="reyga.custom.logging.rolling-max-history"
+                    source="reyga.custom.logging.rolling.max-history"
                     defaultValue="30"/>
 
     <springProperty scope="context"
                     name="MAX_FILE_SIZE"
-                    source="reyga.custom.logging.rolling-max-file-size"
+                    source="reyga.custom.logging.rolling.max-file-size"
                     defaultValue="20MB"/>
 
     <!-- ======================= -->
@@ -58,7 +64,7 @@
 
     <!-- Console Appender -->
     <appender name="CONSOLE_LOG" class="ch.qos.logback.core.ConsoleAppender">
-        <filter class="reyga.starter.foundation.logging.filter.DefaultLogFilter"/>
+        <filter class="reyga.starter.foundation.logging.filter.ConsoleLogFilter"/>
         <encoder>
             <pattern>${CONSOLE_PATTERN}</pattern>
         </encoder>
@@ -68,12 +74,12 @@
     <if condition='property("ENABLE_ROLLING").equals("true")'>
         <then>
             <appender name="ROLLING_LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
-                <filter class="reyga.starter.foundation.logging.filter.DefaultLogFilter"/>
+                <filter class="reyga.starter.foundation.logging.filter.RollingLogFilter"/>
                 <encoder>
                     <pattern>${FILE_PATTERN}</pattern>
                 </encoder>
                 <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-                    <fileNamePattern>${ROLLING_FILE_NAME}</fileNamePattern>
+                    <fileNamePattern>${ROLLING_FILE}${ROLLING_FILE_NAME}</fileNamePattern>
                     <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
                     <maxHistory>${MAX_HISTORY}</maxHistory>
                 </rollingPolicy>
@@ -88,10 +94,10 @@
                 <!-- Filter log AFTER_COMPLETION -->
                 <filter class="reyga.starter.foundation.logging.filter.SummaryLogFilter"/>
                 <encoder>
-                    <pattern>${FILE_PATTERN}</pattern>
+                    <pattern>${SUMMARY_PATTERN}</pattern>
                 </encoder>
                 <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-                    <fileNamePattern>${ROLLING_SUMMARY_NAME}</fileNamePattern>
+                    <fileNamePattern>${ROLLING_FILE}${ROLLING_SUMMARY_NAME}</fileNamePattern>
                     <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
                     <maxHistory>${MAX_HISTORY}</maxHistory>
                 </rollingPolicy>
