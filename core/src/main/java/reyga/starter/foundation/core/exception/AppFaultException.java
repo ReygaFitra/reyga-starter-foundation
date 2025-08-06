@@ -5,7 +5,7 @@ import lombok.Setter;
 import org.springframework.http.HttpStatus;
 
 @Setter @Getter
-public class AppFaultException extends Exception {
+public class AppFaultException extends RuntimeException {
 
     private Object faultInfo;
     private String errorCode;
@@ -28,4 +28,13 @@ public class AppFaultException extends Exception {
         this.statusCode = faultContent.getStatusCode();
     }
 
+    @Override
+    public String toString() {
+        return "AppFaultException{" +
+                "faultInfo=" + faultInfo +
+                ", errorCode='" + errorCode + '\'' +
+                ", errorMessage='" + errorMessage + '\'' +
+                ", statusCode=" + statusCode +
+                '}';
+    }
 }

@@ -29,4 +29,14 @@ public class ResponseData<T> extends BaseResponse {
     public void setData(T data) {
         this.data = data;
     }
+
+    @Override
+    public String toString() {
+        return "{" +
+                "status='" + status + '\'' +
+                ", code='" + code + '\'' +
+                ", message='" + message + '\'' +
+                ", data=" + data +
+                '}';
+    }
 }
