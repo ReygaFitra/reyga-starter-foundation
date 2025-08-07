@@ -6,7 +6,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.MDC;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
-import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.ModelAndView;
 import reyga.starter.foundation.common.enumeration.HeaderEnum;
@@ -16,7 +15,6 @@ import reyga.starter.foundation.common.model.dto.request.RequestLogging;
 import java.util.Map;
 import java.util.UUID;
 
-@Component
 public class DefaultLogInterceptor extends BaseLogInterceptor {
 
     @Override

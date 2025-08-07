@@ -8,9 +8,9 @@ import org.hibernate.JDBCException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.jpa.JpaSystemException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
 import reyga.starter.foundation.common.enumeration.HeaderEnum;
 import reyga.starter.foundation.common.logging.BaseLogging;
 import reyga.starter.foundation.core.exception.AppFaultException;
@@ -22,7 +22,7 @@ import java.util.Map;
 
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 
-@RestControllerAdvice
+@ControllerAdvice
 @RequiredArgsConstructor
 public class GlobalExceptionHandler extends BaseLogging {
 
