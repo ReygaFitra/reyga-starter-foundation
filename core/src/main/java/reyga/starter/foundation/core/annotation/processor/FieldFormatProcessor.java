@@ -3,12 +3,12 @@ package reyga.starter.foundation.core.annotation.processor;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import reyga.starter.foundation.common.enumeration.FieldFormatTypeEnum;
-import reyga.starter.foundation.core.annotation.FieldValidation;
+import reyga.starter.foundation.core.annotation.FieldFormat;
 
 import java.util.Arrays;
 import java.util.List;
 
-public class FieldValidationProcessor implements ConstraintValidator<FieldValidation, Object> {
+public class FieldFormatProcessor implements ConstraintValidator<FieldFormat, Object> {
 
     private String message;
     private String fieldName;
@@ -18,7 +18,7 @@ public class FieldValidationProcessor implements ConstraintValidator<FieldValida
     private int[] onlyNumbers;
 
     @Override
-    public void initialize(FieldValidation constraintAnnotation) {
+    public void initialize(FieldFormat constraintAnnotation) {
         this.message = constraintAnnotation.message();
         this.fieldName = constraintAnnotation.fieldName();
         this.formatType = constraintAnnotation.formatType();
