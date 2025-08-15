@@ -3,19 +3,14 @@ package reyga.starter.foundation.core.exception.handler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
 import org.hibernate.JDBCException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import reyga.starter.foundation.common.enumeration.HeaderEnum;
-import reyga.starter.foundation.common.logging.BaseLogging;
-import reyga.starter.foundation.core.exception.AppFaultException;
 import reyga.starter.foundation.core.dto.response.ResponseError;
 import reyga.starter.foundation.core.dto.response.ResponseStaticTemplate;
+import reyga.starter.foundation.core.exception.AppFaultException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,24 +18,21 @@ import java.util.Map;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 
 @ControllerAdvice
-@RequiredArgsConstructor
-public class GlobalExceptionHandler extends BaseLogging {
-
-    @ExceptionHandler({Exception.class})
-    public ResponseEntity<ResponseError> handleGlobalErrorException(Exception e, HttpServletRequest request) {
-        request.setAttribute(HeaderEnum.EXCEPTION.getValue(), e);
+public class DefaultExceptionHandler extends BaseExceptionHandler<ResponseError> {
+    @Override
+    protected ResponseEntity<ResponseError> processGlobalErrorHandler(Exception exception, HttpServletRequest servletRequest) {
         String code;
         String exceptionType;
         HttpStatus httpStatus;
         String message;
         ObjectMapper mapper = new ObjectMapper();
         final Map<String, Object> errors = new HashMap<>();
-        if (e instanceof IllegalArgumentException) {
+        if (exception instanceof IllegalArgumentException) {
             code = "91";
             exceptionType = "IllegalArgumentException";
             httpStatus = HttpStatus.BAD_REQUEST;
             message = "GENERAL ERROR";
-            errors.put("illegalArgumentException", e.getStackTrace()[0].toString());
+            errors.put("illegalArgumentException", exception.getStackTrace()[0].toString());
             try {
                 log.warn("ILLEGAL ARGUMENT EXCEPTION ERROR :", mapper.writeValueAsString(errors));
             } catch (JsonProcessingException e1) {
@@ -51,53 +43,49 @@ public class GlobalExceptionHandler extends BaseLogging {
             exceptionType = "Global Error";
             httpStatus = INTERNAL_SERVER_ERROR;
             message = "INTERNAL SERVER ERROR";
-            errors.put("Global Error", e.getStackTrace()[0].toString());
+            errors.put("Global Error", exception.getStackTrace()[0].toString());
             try {
                 log.warn("GLOBAL ERROR :", mapper.writeValueAsString(errors));
             } catch (JsonProcessingException e1) {
                 log.error("write_log_error", e1.getMessage());
             }
         }
-        log.exception(exceptionType.toUpperCase(), null,e);
+        log.exception(exceptionType.toUpperCase(), null, exception);
         return ResponseStaticTemplate.createErrorResponse(httpStatus, code, message);
     }
 
-    @ExceptionHandler({JpaSystemException.class, JDBCException.class})
-    @ResponseStatus(INTERNAL_SERVER_ERROR)
-    public ResponseEntity<ResponseError> handleDatabaseErrorException(Exception e, HttpServletRequest request) {
-        request.setAttribute(HeaderEnum.EXCEPTION.getValue(), e);
+    @Override
+    protected ResponseEntity<ResponseError> processDatabaseErrorHandler(Exception exception, HttpServletRequest servletRequest) {
         String exceptionType = "";
         ObjectMapper mapper = new ObjectMapper();
         final Map<String, Object> errors = new HashMap<>();
-        if (e instanceof JpaSystemException) {
+        if (exception instanceof JpaSystemException) {
             exceptionType = "JpaSystemException";
-            errors.put("JPA-SYSTEM-ERROR", e.getStackTrace()[0].toString());
+            errors.put("JPA-SYSTEM-ERROR", exception.getStackTrace()[0].toString());
             try {
                 log.warn("JPA ERROR :", mapper.writeValueAsString(errors));
             } catch (JsonProcessingException e1) {
                 log.error("write_log_error", e1.getMessage());
             }
         }
-        if (e instanceof JDBCException) {
+        if (exception instanceof JDBCException) {
             exceptionType = "JDBCException";
-            errors.put("JDBC-ERROR", e.getStackTrace()[0].toString());
+            errors.put("JDBC-ERROR", exception.getStackTrace()[0].toString());
             try {
                 log.warn("JDBC ERROR :", mapper.writeValueAsString(errors));
             } catch (JsonProcessingException e1) {
                 log.error("write_log_error", e1.getMessage());
             }
         }
-        log.exception(exceptionType.toUpperCase(), null,e);
+        log.exception(exceptionType.toUpperCase(), null, exception);
         return ResponseStaticTemplate.createErrorResponse(INTERNAL_SERVER_ERROR, "99", "DATABASE ERROR");
     }
 
-    @ExceptionHandler(AppFaultException.class)
-    public ResponseEntity<ResponseError> handleAppFaultException(AppFaultException appFaultException, HttpServletRequest request) {
-        request.setAttribute(HeaderEnum.EXCEPTION.getValue(), appFaultException);
+    @Override
+    protected ResponseEntity<ResponseError> processAppFaultErrorHandler(AppFaultException appFaultException, HttpServletRequest servletRequest) {
         log.exception("AppFaultException".toUpperCase(), appFaultException.getFaultInfo(),appFaultException);
         return ResponseStaticTemplate.createErrorResponse(
                 appFaultException.getStatusCode(), appFaultException.getErrorCode(), appFaultException.getErrorMessage()
         );
     }
-
 }
