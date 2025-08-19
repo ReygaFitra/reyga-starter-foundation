@@ -1,13 +1,7 @@
 package reyga.starter.foundation.core.validation;
 
 import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validation;
-import jakarta.validation.Validator;
-import jakarta.validation.ValidatorFactory;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Component;
-import reyga.starter.foundation.common.logging.BaseLogging;
 import reyga.starter.foundation.core.exception.AppFaultContent;
 import reyga.starter.foundation.core.exception.AppFaultException;
 
@@ -19,41 +13,10 @@ import java.util.stream.Collectors;
 
 import static reyga.starter.foundation.core.exception.AppFaultContent.buildAppFaultContent;
 
-@Component
-@RequiredArgsConstructor
-public class ValidationProcessor extends BaseLogging {
+public class ValidationProcessor extends BaseValidationProcessor {
 
-    private final ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
-    private final Validator validator = factory.getValidator();
-
-    private void throwErrorWithLog(String infoMsg, Object valueMsg) throws AppFaultException {
-        log.warn(infoMsg, valueMsg);
-        AppFaultContent faultContent = buildAppFaultContent(
-                "Validation Exception", "01", "Invalid Request", valueMsg, HttpStatus.BAD_REQUEST
-        );
-        throw new AppFaultException(faultContent);
-    }
-
-    public <T> void validateRequest(T request, boolean useMapPattern) throws AppFaultException {
-        Set<ConstraintViolation<T>> violations = validator.validate(request);
-        if (useMapPattern) {
-            violationsMapHandle(violations);
-        } else {
-            violationsSetHandle(violations);
-        }
-    }
-
-    @SafeVarargs
-    public final <T, GT> void validateRequest(T request, boolean useMapPattern, Class<GT>... validationGroup) throws AppFaultException {
-        Set<ConstraintViolation<T>> violations = validator.validate(request, validationGroup);
-        if (useMapPattern) {
-            violationsMapHandle(violations);
-        } else {
-            violationsSetHandle(violations);
-        }
-    }
-
-    private <T> void violationsSetHandle(Set<ConstraintViolation<T>> violations) throws AppFaultException {
+    @Override
+    public <T> void violationsSetHandle(Set<ConstraintViolation<T>> violations) throws AppFaultException {
         if (!violations.isEmpty()) {
             Set<String> validationMessage = violations
                     .stream()
@@ -63,7 +26,8 @@ public class ValidationProcessor extends BaseLogging {
         }
     }
 
-    private <T> void violationsMapHandle(Set<ConstraintViolation<T>> violations) throws AppFaultException {
+    @Override
+    public <T> void violationsMapHandle(Set<ConstraintViolation<T>> violations) throws AppFaultException {
         if (!violations.isEmpty()) {
             List<Map<String, String>> validationMessage = violations
                     .stream()
@@ -75,4 +39,13 @@ public class ValidationProcessor extends BaseLogging {
             throwErrorWithLog("Validation Message", validationMessage);
         }
     }
+
+    private void throwErrorWithLog(String infoMsg, Object valueMsg) throws AppFaultException {
+        log.warn(infoMsg, valueMsg);
+        AppFaultContent faultContent = buildAppFaultContent(
+                "Validation Exception", "01", "Invalid Request", valueMsg, HttpStatus.BAD_REQUEST
+        );
+        throw new AppFaultException(faultContent);
+    }
+
 }
