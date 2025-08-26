@@ -25,7 +25,7 @@ public abstract class BaseResilienceController extends BaseController {
     private final CircuitBreakerRegistry circuitBreakerRegistry;
 
     protected <T> ResponseEntity<T> createResponseWithRateLimiter(
-            T data, RateLimiterConfig rlConfig, String rlKey, String serviceName
+            T data, RateLimiterConfig rlConfig, String rlKey
     ) {
         setMDCResponse(data);
         return resilienceService.useRateLimiter(rlConfig, rateLimiterRegistry, localCache, rlKey,
@@ -35,7 +35,7 @@ public abstract class BaseResilienceController extends BaseController {
     }
 
     protected <T> ResponseEntity<ResponseData<T>> createResponseWithRateLimiter(
-            T data, String code, String message, RateLimiterConfig rlConfig, String rlKey, String serviceName
+            T data, String code, String message, RateLimiterConfig rlConfig, String rlKey
     ) {
         setMDCResponse(data);
         return resilienceService.useRateLimiter(rlConfig, rateLimiterRegistry, localCache, rlKey,
