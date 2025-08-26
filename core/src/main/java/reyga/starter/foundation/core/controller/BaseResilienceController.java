@@ -1,8 +1,11 @@
 package reyga.starter.foundation.core.controller;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.ratelimiter.RateLimiter;
 import io.github.resilience4j.ratelimiter.RateLimiterConfig;
+import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,20 +15,22 @@ import reyga.starter.foundation.common.enumeration.ServiceStatusResponseEnum;
 import reyga.starter.foundation.core.dto.response.ResponseData;
 import reyga.starter.foundation.core.service.ResilienceService;
 
-import java.util.concurrent.ConcurrentHashMap;
-
 @Component
 @RequiredArgsConstructor
 public abstract class BaseResilienceController extends BaseController {
+
     private final ResilienceService resilienceService;
-    private final ConcurrentHashMap<String, RateLimiter> concurrentHashMapRateLimit = new ConcurrentHashMap<>();
+    private final Cache<String, RateLimiter> localCache;
+    private final RateLimiterRegistry rateLimiterRegistry;
+    private final CircuitBreakerRegistry circuitBreakerRegistry;
 
     protected <T> ResponseEntity<T> createResponseWithRateLimiter(
             T data, RateLimiterConfig rlConfig, String rlKey, String serviceName
     ) {
         setMDCResponse(data);
-        return resilienceService.useRateLimiter(rlConfig, concurrentHashMapRateLimit, rlKey, serviceName,
-                () -> new ResponseEntity<>(data, HttpStatus.OK), ()-> new ResponseEntity<>(data, HttpStatus.TOO_MANY_REQUESTS)
+        return resilienceService.useRateLimiter(rlConfig, rateLimiterRegistry, localCache, rlKey,
+                () -> new ResponseEntity<>(data, HttpStatus.OK),
+                ()-> new ResponseEntity<>(data, HttpStatus.TOO_MANY_REQUESTS)
         );
     }
 
@@ -33,7 +38,7 @@ public abstract class BaseResilienceController extends BaseController {
             T data, String code, String message, RateLimiterConfig rlConfig, String rlKey, String serviceName
     ) {
         setMDCResponse(data);
-        return resilienceService.useRateLimiter(rlConfig, concurrentHashMapRateLimit, rlKey, serviceName,
+        return resilienceService.useRateLimiter(rlConfig, rateLimiterRegistry, localCache, rlKey,
                 () -> new ResponseEntity<>(
                         ResponseData.<T>builder()
                                 .status(ServiceStatusResponseEnum.SUCCESS.getValue())
@@ -53,19 +58,19 @@ public abstract class BaseResilienceController extends BaseController {
     }
 
     protected <T> ResponseEntity<T> createResponseWithCircuitBreaker(
-            T data, CircuitBreakerConfig cbConfig, String serviceName
+            T data, CircuitBreakerConfig cbConfig, String cbName
     ) {
         setMDCResponse(data);
-        return resilienceService.useCircuitBreaker(cbConfig, serviceName,
+        return resilienceService.useCircuitBreaker(cbConfig, circuitBreakerRegistry, cbName,
                 () -> new ResponseEntity<>(data, HttpStatus.OK), ()-> new ResponseEntity<>(data, HttpStatus.INTERNAL_SERVER_ERROR)
         );
     }
 
     protected <T> ResponseEntity<ResponseData<T>> createResponseWithCircuitBreaker(
-            T data, String code, String message, CircuitBreakerConfig cbConfig, String serviceName
+            T data, String code, String message, CircuitBreakerConfig cbConfig, String cbName
     ) {
         setMDCResponse(data);
-        return resilienceService.useCircuitBreaker(cbConfig, serviceName,
+        return resilienceService.useCircuitBreaker(cbConfig, circuitBreakerRegistry, cbName,
                 () -> new ResponseEntity<>(
                         ResponseData.<T>builder()
                                 .status(ServiceStatusResponseEnum.SUCCESS.getValue())
