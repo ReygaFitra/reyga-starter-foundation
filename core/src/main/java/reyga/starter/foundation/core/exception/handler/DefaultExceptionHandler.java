@@ -9,7 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import reyga.starter.foundation.core.dto.response.ResponseError;
-import reyga.starter.foundation.core.dto.response.ResponseStaticTemplate;
+import reyga.starter.foundation.core.controller.BaseResponseError;
 import reyga.starter.foundation.core.exception.AppFaultException;
 
 import java.util.HashMap;
@@ -51,7 +51,7 @@ public class DefaultExceptionHandler extends BaseExceptionHandler<ResponseError>
             }
         }
         log.exception(exceptionType.toUpperCase(), null, exception);
-        return ResponseStaticTemplate.createErrorResponse(httpStatus, code, message);
+        return BaseResponseError.createErrorResponse(httpStatus, code, message);
     }
 
     @Override
@@ -78,13 +78,13 @@ public class DefaultExceptionHandler extends BaseExceptionHandler<ResponseError>
             }
         }
         log.exception(exceptionType.toUpperCase(), null, exception);
-        return ResponseStaticTemplate.createErrorResponse(INTERNAL_SERVER_ERROR, "99", "DATABASE ERROR");
+        return BaseResponseError.createErrorResponse(INTERNAL_SERVER_ERROR, "99", "DATABASE ERROR");
     }
 
     @Override
     protected ResponseEntity<ResponseError> processAppFaultErrorHandler(AppFaultException appFaultException, HttpServletRequest servletRequest) {
         log.exception("AppFaultException".toUpperCase(), appFaultException.getFaultInfo(),appFaultException);
-        return ResponseStaticTemplate.createErrorResponse(
+        return BaseResponseError.createErrorResponse(
                 appFaultException.getStatusCode(), appFaultException.getErrorCode(), appFaultException.getErrorMessage()
         );
     }

@@ -29,8 +29,7 @@ public abstract class BaseResilienceController extends BaseController {
     ) {
         setMDCResponse(data);
         return resilienceService.useRateLimiter(rlConfig, rateLimiterRegistry, localCache, rlKey,
-                () -> new ResponseEntity<>(data, HttpStatus.OK),
-                ()-> new ResponseEntity<>(data, HttpStatus.TOO_MANY_REQUESTS)
+                () -> new ResponseEntity<>(data, HttpStatus.OK), ()-> new ResponseEntity<>(data, HttpStatus.TOO_MANY_REQUESTS)
         );
     }
 
@@ -40,19 +39,10 @@ public abstract class BaseResilienceController extends BaseController {
         setMDCResponse(data);
         return resilienceService.useRateLimiter(rlConfig, rateLimiterRegistry, localCache, rlKey,
                 () -> new ResponseEntity<>(
-                        ResponseData.<T>builder()
-                                .status(ServiceStatusResponseEnum.SUCCESS.getValue())
-                                .code(code)
-                                .message(message)
-                                .data(data)
-                                .build(), HttpStatus.OK
+                        buildResponseData(data, ServiceStatusResponseEnum.SUCCESS.getValue(), code, message), HttpStatus.OK
                 ), ()-> new ResponseEntity<>(
-                        ResponseData.<T>builder()
-                                .status(ServiceStatusResponseEnum.FAILED.getValue())
-                                .code(ServiceCodeEnum.RATE_LIMIT_EXCEEDED.getCode())
-                                .message(ServiceCodeEnum.RATE_LIMIT_EXCEEDED.getMessage())
-                                .data(null)
-                                .build(), HttpStatus.TOO_MANY_REQUESTS
+                        buildResponseData(null, ServiceStatusResponseEnum.FAILED.getValue(), ServiceCodeEnum.RATE_LIMIT_EXCEEDED.getCode(),
+                                ServiceCodeEnum.RATE_LIMIT_EXCEEDED.getMessage()), HttpStatus.TOO_MANY_REQUESTS
                 )
         );
     }
@@ -72,20 +62,12 @@ public abstract class BaseResilienceController extends BaseController {
         setMDCResponse(data);
         return resilienceService.useCircuitBreaker(cbConfig, circuitBreakerRegistry, cbName,
                 () -> new ResponseEntity<>(
-                        ResponseData.<T>builder()
-                                .status(ServiceStatusResponseEnum.SUCCESS.getValue())
-                                .code(code)
-                                .message(message)
-                                .data(data)
-                                .build(), HttpStatus.OK
+                        buildResponseData(data, ServiceStatusResponseEnum.SUCCESS.getValue(), code, message), HttpStatus.OK
                 ), ()-> new ResponseEntity<>(
-                        ResponseData.<T>builder()
-                                .status(ServiceStatusResponseEnum.FAILED.getValue())
-                                .code(ServiceCodeEnum.GLOBAL_ERROR.getCode())
-                                .message(ServiceCodeEnum.GLOBAL_ERROR.getMessage())
-                                .data(null)
-                                .build(), HttpStatus.INTERNAL_SERVER_ERROR
+                        buildResponseData(null, ServiceStatusResponseEnum.FAILED.getValue(), ServiceCodeEnum.GLOBAL_ERROR.getCode(),
+                                ServiceCodeEnum.GLOBAL_ERROR.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR
                 )
         );
     }
+
 }

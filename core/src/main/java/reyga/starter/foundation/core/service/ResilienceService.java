@@ -37,4 +37,27 @@ public interface ResilienceService {
         }
     }
 
+    default void useRateLimiterVoid(
+            RateLimiterConfig config, RateLimiterRegistry registry, Cache<String, RateLimiter> localCache, String rateLimitkey,
+            Runnable suppliedProcess, Runnable fallbackSuppliedProcess
+    ) {
+        RateLimiter rl =  localCache.get(rateLimitkey, k -> registry.rateLimiter(rateLimitkey, config));
+        try {
+            RateLimiter.decorateRunnable(rl, suppliedProcess).run();
+        } catch (Exception e) {
+            fallbackSuppliedProcess.run();
+        }
+    }
+
+    default void useCircuitBreakerVoid(
+            CircuitBreakerConfig config, CircuitBreakerRegistry registry, String cbName, Runnable suppliedProcess, Runnable fallbackSuppliedProcess
+    ) {
+        CircuitBreaker circuitBreaker = registry.circuitBreaker(cbName, config);
+        try {
+            CircuitBreaker.decorateRunnable(circuitBreaker, suppliedProcess).run();
+        } catch (Exception e) {
+            fallbackSuppliedProcess.run();
+        }
+    }
+
 }

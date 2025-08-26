@@ -5,10 +5,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import reyga.starter.foundation.common.enumeration.ServiceStatusResponseEnum;
 import reyga.starter.foundation.core.dto.response.ResponseData;
-import reyga.starter.foundation.core.dto.response.ResponseStaticTemplate;
 
 @RequiredArgsConstructor
-public abstract class BaseController extends ResponseStaticTemplate {
+public abstract class BaseController extends BaseResponseError {
 
     protected <T> ResponseEntity<T> createResponse(T data, HttpStatus status) {
         setMDCResponse(data);
@@ -18,12 +17,7 @@ public abstract class BaseController extends ResponseStaticTemplate {
     protected <T> ResponseEntity<ResponseData<T>> createResponse(
             T data, HttpStatus status, String code, String message
     ) {
-        ResponseData<T> responseData = ResponseData.<T>builder()
-                .status(ServiceStatusResponseEnum.SUCCESS.getValue())
-                .code(code)
-                .message(message)
-                .data(data)
-                .build();
+        ResponseData<T> responseData = buildResponseData(data, ServiceStatusResponseEnum.SUCCESS.getValue(), code, message);
         setMDCResponse(responseData);
         return new ResponseEntity<>(responseData, status);
     }
