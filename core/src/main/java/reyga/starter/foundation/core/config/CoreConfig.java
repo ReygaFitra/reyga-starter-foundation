@@ -3,6 +3,7 @@ package reyga.starter.foundation.core.config;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.ratelimiter.RateLimiter;
 import io.github.resilience4j.ratelimiter.RateLimiterConfig;
 import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
@@ -74,6 +75,11 @@ public class CoreConfig {
                 .waitDurationInOpenState(Duration.ofSeconds(circuitBreakerProperty.getSlowCallDurationThresholdSeconds()))
                 .automaticTransitionFromOpenToHalfOpenEnabled(circuitBreakerProperty.isAutomaticTransitionFromOpenToHalfOpenEnabled())
                 .build();
+    }
+
+    @Bean
+    public CircuitBreakerRegistry circuitBreakerRegistry(CircuitBreakerConfig defaultConfig) {
+        return CircuitBreakerRegistry.of(defaultConfig);
     }
 
 }
