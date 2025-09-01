@@ -5,6 +5,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Component;
 import reyga.starter.foundation.common.logging.BaseLogging;
 import reyga.starter.foundation.common_database.util.QueryBuilder;
 import reyga.starter.foundation.common_database.util.SafeQueryBuilder;
@@ -15,8 +16,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+@Component
 @RequiredArgsConstructor
-public abstract class QueryProcessor extends BaseLogging {
+public class QueryProcessor extends BaseLogging {
 
     private final JdbcTemplate jdbcTemplate;
 
