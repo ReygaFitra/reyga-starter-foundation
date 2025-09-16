@@ -5,6 +5,8 @@ import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.lang.annotation.Annotation;
@@ -54,6 +56,11 @@ public class HttpBuilder {
 
     public static String getCurrentServiceMethodName() {
         return Thread.currentThread().getStackTrace()[2].getMethodName();
+    }
+
+    public static HttpServletRequest getCurrentHttpServletRequest() {
+        ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        return attrs != null ? attrs.getRequest() : null;
     }
 
 }

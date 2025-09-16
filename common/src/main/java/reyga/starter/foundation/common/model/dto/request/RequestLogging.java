@@ -3,10 +3,11 @@ package reyga.starter.foundation.common.model.dto.request;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.util.Map;
 
 @NoArgsConstructor @AllArgsConstructor
-public class RequestLogging extends BaseRequest {
+public class RequestLogging implements Serializable {
     private Map<String, Object> requestParams;
     private Map<String, Object> requestMultiPart;
     private Map<String, Object> requestPathVariable;

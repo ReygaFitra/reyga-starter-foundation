@@ -44,6 +44,8 @@ subprojects {
          */
         api("jakarta.persistence:jakarta.persistence-api:3.1.0")
         implementation("org.springframework.boot:spring-boot-starter:3.5.3")
+        implementation("org.springframework.boot:spring-boot-autoconfigure:3.5.3")
+        implementation("org.springframework.boot:spring-boot-starter-web:3.5.3")
         compileOnly("org.projectlombok:lombok:1.18.30")
         annotationProcessor("org.projectlombok:lombok:1.18.30")
 
