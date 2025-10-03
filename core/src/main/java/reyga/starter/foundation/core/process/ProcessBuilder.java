@@ -12,15 +12,21 @@ import java.util.function.Supplier;
 /**
  * ProcessBuilder: Build a service process flow using builder pattern.
  */
-public class ProcessBuilder extends AbstractProcessBuilder {
+public class ProcessBuilder<T> extends AbstractProcessBuilder {
+
+    private final Map<String, Object> contentService = new HashMap<>();
+    private final List<String> processIdStack = new ArrayList<>();
+    private final Map<String, LinkedHashMap<String, ProcessNode>> subProcessMap = new HashMap<>();
+
+    private final LinkedHashMap<String, ProcessNode> mainProcesses = new LinkedHashMap<>();
 
     private ProcessBuilder() {}
 
-    public static ProcessBuilder start() {
-        return new ProcessBuilder();
+    public static <T> ProcessBuilder<T> start() {
+        return new ProcessBuilder<>();
     }
 
-    public ProcessBuilder customProcessConstruction(String processId, Function<java.util.Map<String, Object>, ?> process) {
+    public ProcessBuilder<T> customProcessConstruction(String processId, Function<Map<String, Object>, ?> process) {
         addNode(new ProcessNode(processId, () -> {
             Object result = process.apply(contentService);
             if (result != null) {
@@ -31,7 +37,7 @@ public class ProcessBuilder extends AbstractProcessBuilder {
         return this;
     }
 
-    public ProcessBuilder validate(String processId, Predicate<java.util.Map<String, Object>> validator) {
+    public ProcessBuilder<T> validate(String processId, Predicate<Map<String, Object>> validator) {
         addNode(new ProcessNode(processId, () -> {
             if (!validator.test(contentService)) {
                 throw new IllegalStateException("Validation failed at processId: " + processId);
@@ -41,117 +47,126 @@ public class ProcessBuilder extends AbstractProcessBuilder {
         return this;
     }
 
-    public <T> ProcessBuilder createDto(String processId, Supplier<T> supplier) {
+    public <R> ProcessBuilder<T> createDto(String processId, Supplier<R> supplier) {
         addNode(new ProcessNode(processId, () -> {
-            T result = supplier.get();
+            R result = supplier.get();
             contentService.put(processId, result);
             return result;
         }));
         return this;
     }
 
-    public <T> ProcessBuilder doingQuery(String processId, Supplier<T> querySupplier) {
+    public <R> ProcessBuilder<T> doingQuery(String processId, Supplier<R> querySupplier) {
         addNode(new ProcessNode(processId, () -> {
-            T result = querySupplier.get();
+            R result = querySupplier.get();
             contentService.put(processId, result);
             return result;
         }));
         return this;
     }
 
-    public <T> ProcessBuilder doLooping(String processId, Supplier<List<T>> loopSupplier, Function<T, ?> action) {
+    public <E> ProcessBuilder<T> doLooping(String processId, Function<Map<String, Object>, List<E>> loopSupplier) {
         initializeSubProcess(processId);
         addNode(new ProcessNode(processId, () -> {
-            List<T> items = loopSupplier.get();
+            List<E> items = loopSupplier.apply(contentService);
             if (items != null) {
-                for (T item : items) {
-                    action.apply(item);
+                for (E item : items) {
+                    contentService.put(processId + "_item", item);
+                    executeSubProcesses(processId);
                 }
+                contentService.remove(processId + "_item");
             }
             return null;
         }));
-        processIdList.add(processId);
+        processIdStack.add(processId);
         return this;
     }
 
-    public ProcessBuilder endLooping() {
+    public ProcessBuilder<T> endLooping() {
         closeLastProcess("doLooping");
         return this;
     }
 
-    public ProcessBuilder doWhile(String processId, Supplier<Boolean> condition, Runnable action) {
+    public ProcessBuilder<T> doWhile(String processId, Supplier<Boolean> condition) {
         initializeSubProcess(processId);
         addNode(new ProcessNode(processId, () -> {
             while (condition.get()) {
-                action.run();
+                executeSubProcesses(processId);
             }
             return null;
         }));
-        processIdList.add(processId);
+        processIdStack.add(processId);
         return this;
     }
 
-    public ProcessBuilder endWhile() {
+    public ProcessBuilder<T> endWhile() {
         closeLastProcess("doWhile");
         return this;
     }
 
-    public ProcessBuilder doIf(String processId, Supplier<Boolean> condition) {
+    public ProcessBuilder<T> doIf(String processId, Supplier<Boolean> condition) {
         initializeSubProcess(processId);
         ProcessNode node = new ProcessNode(processId, () -> null);
         node.setIfContext(new IfContext(condition));
         addNode(node);
-        processIdList.add(processId);
+        processIdStack.add(processId);
         return this;
     }
 
-    public ProcessBuilder doElseIf(String processId, Supplier<Boolean> condition) {
+    public ProcessBuilder<T> doElseIf(String processId, Supplier<Boolean> condition) {
         initializeSubProcess(processId);
         ProcessNode node = new ProcessNode(processId, () -> null);
         node.setIfContext(new IfContext(condition));
         addNode(node);
-        processIdList.add(processId);
+        processIdStack.add(processId);
         return this;
     }
 
-    public ProcessBuilder doElse(String processId) {
+    public ProcessBuilder<T> doElse(String processId) {
         initializeSubProcess(processId);
         ProcessNode node = new ProcessNode(processId, () -> null);
         node.setIfContext(new IfContext(() -> true));
         addNode(node);
-        processIdList.add(processId);
+        processIdStack.add(processId);
         return this;
     }
 
-    public ProcessBuilder endIf() {
-        closeLastProcess("doIf / doElseIf / doElse");
+    public ProcessBuilder<T> endIf() {
+        closeLastProcess("doIf/doElseIf/doElse");
         return this;
     }
 
-    public ProcessBuilder useTry(String processId) {
+    public ProcessBuilder<T> useTry(String processId) {
         initializeSubProcess(processId);
         addNode(new ProcessNode(processId, () -> null));
-        processIdList.add(processId);
+        processIdStack.add(processId);
         return this;
     }
 
-    public ProcessBuilder useCatch(String processId, Function<Exception, ?> handler) {
-        if (processIdList.isEmpty()) {
+    public ProcessBuilder<T> useCatch(String processId, Function<Exception, ?> handler) {
+        if (processIdStack.isEmpty()) {
             throw new IllegalStateException("useCatch must be after useTry");
         }
-        String tryId = processIdList.get(processIdList.size() - 1);
+        String tryId = processIdStack.get(processIdStack.size() - 1);
         ProcessNode tryNode = getNode(tryId);
         tryNode.setExceptionHandler(handler);
         return this;
     }
 
-    public ProcessBuilder useFinally(String processId, Runnable finalizer) {
-        if (processIdList.isEmpty()) {
+    public ProcessBuilder<T> useFinally(String processId, Runnable finalizer) {
+        if (processIdStack.isEmpty()) {
             throw new IllegalStateException("useFinally must be after useTry");
         }
-        String tryId = processIdList.get(processIdList.size() - 1);
+        String tryId = processIdStack.get(processIdStack.size() - 1);
         ProcessNode tryNode = getNode(tryId);
         tryNode.setFinalizer(finalizer);
         return this;
     }
+
+    public void end() {
+        for (ProcessNode node : mainProcesses.values()) {
+            node.execute(contentService);
+        }
+    }
+
 }

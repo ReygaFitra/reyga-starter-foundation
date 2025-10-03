@@ -8,8 +8,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-@Setter
-public class ProcessNode  {
+public class ProcessNode {
     @Getter
     private final String processId;
     private final Supplier<Object> action;

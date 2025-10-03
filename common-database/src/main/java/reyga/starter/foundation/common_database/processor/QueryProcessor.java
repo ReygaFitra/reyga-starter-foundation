@@ -2,6 +2,7 @@ package reyga.starter.foundation.common_database.processor;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -44,6 +45,18 @@ public class QueryProcessor extends BaseLogging {
     public <T> Optional<T> fetchOne(SafeQueryBuilder builder, RowMapper<T> rowMapper) {
         List<T> results = fetch(builder, rowMapper);
         return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
+    }
+
+    public <T> Optional<T> fetchOneBy(QueryBuilder builder, RowMapper<T> rowMapper) {
+        String sql = builder.build();
+        List<Object> params = builder.getParameters();
+        return this.queryForObject(sql, rowMapper, params);
+    }
+
+    public <T> Optional<T> fetchOneBy(SafeQueryBuilder safeBuilder, RowMapper<T> rowMapper) {
+        String sql = safeBuilder.build();
+        List<Object> params = safeBuilder.getParameters();
+        return this.queryForObject(sql, rowMapper, params);
     }
 
     public int execute(QueryBuilder builder) {
@@ -121,7 +134,25 @@ public class QueryProcessor extends BaseLogging {
         return jdbcTemplate.query(sql, rowMapper, params);
     }
 
+    public <T> Optional<T> fetchOneRaw(String sql, RowMapper<T> rowMapper, Object... params) {
+        log.info("Raw queryForObject: " + sql);
+        try {
+            return Optional.ofNullable(jdbcTemplate.queryForObject(sql, rowMapper, params));
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
     public int executeRaw(String sql, Object... params) throws DataAccessException {
         return jdbcTemplate.update(sql, params);
+    }
+
+    private <T> Optional<T> queryForObject(String sql, RowMapper<T> rowMapper, List<Object> params) {
+        log.info("Constructed queryForObject: " + sql);
+        try {
+            return Optional.ofNullable(jdbcTemplate.queryForObject(sql, rowMapper, params.toArray()));
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
     }
 }
