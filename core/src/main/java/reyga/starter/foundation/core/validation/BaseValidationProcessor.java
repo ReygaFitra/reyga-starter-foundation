@@ -10,11 +10,19 @@ import reyga.starter.foundation.common.logging.BaseLogging;
 import java.util.List;
 import java.util.Set;
 
-@RequiredArgsConstructor
 public abstract class BaseValidationProcessor extends BaseLogging {
 
-    private final ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
-    private final Validator validator = factory.getValidator();
+    private final Validator validator;
+
+    protected BaseValidationProcessor() {
+        try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
+            this.validator = factory.getValidator();
+        } catch (Exception e) {
+            log.error("Error Occurred in ValidatorFactory: ", e.getMessage());
+            throw new IllegalArgumentException(e);
+        }
+    }
+
 
     protected <T> void validateRequest(T request, boolean useMapPattern) {
         Set<ConstraintViolation<T>> violations = validator.validate(request);

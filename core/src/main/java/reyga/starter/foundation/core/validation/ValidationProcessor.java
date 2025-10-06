@@ -32,7 +32,10 @@ public class ValidationProcessor extends BaseValidationProcessor {
             List<Map<String, String>> validationMessage = violations
                     .stream()
                     .map(errors -> new HashMap<String, String>() {{
-                                put(errors.getMessage().concat(" "), " ".concat(errors.getInvalidValue().toString()));
+                        put(
+                                errors.getPropertyPath().toString().concat(" "),
+                                " ".concat(errors.getMessage())
+                        );
                             }}
                     )
                     .collect(Collectors.toList());
