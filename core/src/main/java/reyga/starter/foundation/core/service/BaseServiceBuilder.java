@@ -1,32 +1,43 @@
 package reyga.starter.foundation.core.service;
 
-import reyga.starter.foundation.common.logging.BaseLogging;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import reyga.starter.foundation.core.component.BaseTransactionalExecutor;
+import reyga.starter.foundation.core.component.TransactionalExecutor;
 import reyga.starter.foundation.core.dto.content.BaseContent;
 import reyga.starter.foundation.core.dto.request.BaseRequest;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
-public abstract class BaseServiceBuilder<T extends BaseServiceBuilder<T, Q, R, C>, Q extends BaseRequest, R, C extends BaseContent> extends BaseLogging implements FoundationService<Q, R, C> {
+public abstract class BaseServiceBuilder<T extends BaseServiceBuilder<T, Q, R, C>, Q extends BaseRequest, R, C extends BaseContent> extends BaseTransactionalExecutor implements FoundationService<Q, R, C> {
+
+    private final List<Supplier<?>> processes = new ArrayList<>();
+    private Q request;
+    private C content;
+    private Supplier<R> endProcess;
+    private boolean asyncMode = false;
+    private boolean transactionalMode = false;
+    private Function<Throwable, R> transactionalFallback;
 
     @Override
     public R execute(Q req, C content) {
         logInformation(req);
         return processFlow(req, content);
-    };
+    }
 
     protected abstract R processFlow(Q req, C content);
 
     protected void logInformation(Q req) {
         log.info("Executing Service...");
-        log.info("Request : ", req.toString());
+        log.info("Request : {}", req.toString());
     }
-
-    private final List<Supplier<?>> processes = new ArrayList<>();
-    private Q request;
-    private C content;
-    private Supplier<R> endProcess; // terminal process
 
     @SuppressWarnings("unchecked")
     public T service(Q request, C content) {
@@ -34,6 +45,31 @@ public abstract class BaseServiceBuilder<T extends BaseServiceBuilder<T, Q, R, C
         this.content = content;
         processes.clear();
         registerProcesses(request, content);
+        this.asyncMode = false;
+        this.transactionalMode = false;
+        return (T) this;
+    }
+
+    @SuppressWarnings("unchecked")
+    public T withAsync() {
+        this.asyncMode = true;
+        return (T) this;
+    }
+
+    @SuppressWarnings("unchecked")
+    public T withTransactional() {
+        this.transactionalMode = true;
+
+        if (transactionalExecutor == null) {
+            transactionalExecutor = context.getBean(TransactionalExecutor.class);
+        }
+
+        return (T) this;
+    }
+
+    @SuppressWarnings("unchecked")
+    public T onTransactionalFallback(Function<Throwable, R> fallback) {
+        this.transactionalFallback = fallback;
         return (T) this;
     }
 
@@ -62,14 +98,25 @@ public abstract class BaseServiceBuilder<T extends BaseServiceBuilder<T, Q, R, C
     }
 
     public R build() {
-        for (Supplier<?> process : processes) {
-            process.get();
+        if (asyncMode) {
+            CompletableFuture<R> future = CompletableFuture.supplyAsync(this::executeProcesses);
+            return future.join();
         }
 
-        if (endProcess == null) {
-            throw new IllegalStateException("endProcess must be defined");
+        if (transactionalMode) {
+            return transactionalExecutor.runInTransaction(
+                    this::executeProcesses,
+                    ex -> {
+                        log.error("Transaction fallback process message: {}", ex.getMessage(), ex);
+                        if (transactionalFallback != null) {
+                            return transactionalFallback.apply(ex);
+                        }
+                        throw new RuntimeException(ex);
+                    }
+            );
         }
-        return endProcess.get();
+
+        return executeProcesses();
     }
 
     protected Q getRequest() {
@@ -78,5 +125,39 @@ public abstract class BaseServiceBuilder<T extends BaseServiceBuilder<T, Q, R, C
 
     protected C getContent() {
         return content;
+    }
+
+    protected HttpServletRequest getHttpServletRequest() {
+        RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
+        HttpServletRequest servlRequest = null;
+
+        if (requestAttributes instanceof ServletRequestAttributes) {
+            servlRequest = ((ServletRequestAttributes) requestAttributes).getRequest();
+        }
+
+        return servlRequest;
+    }
+
+    protected HttpServletResponse getHttpServletResponse() {
+        RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
+        HttpServletResponse servlResponse = null;
+
+        if (requestAttributes instanceof ServletRequestAttributes) {
+            servlResponse = ((ServletRequestAttributes) requestAttributes).getResponse();
+        }
+
+        return servlResponse;
+    }
+
+    private R executeProcesses() {
+        for (Supplier<?> process : processes) {
+            process.get();
+        }
+
+        if (endProcess == null) {
+            throw new IllegalStateException("endProcess must be defined before build()");
+        }
+
+        return endProcess.get();
     }
 }

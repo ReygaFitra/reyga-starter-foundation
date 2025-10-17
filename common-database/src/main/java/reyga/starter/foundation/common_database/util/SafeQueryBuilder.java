@@ -15,14 +15,18 @@ public class SafeQueryBuilder {
     private String offset;
 
     private List<String> whereConditions = new ArrayList<>();
-    private final List<List<Object>> insertValues = new ArrayList<>();
+    private final List<String> insertValues = new ArrayList<>();
     private final List<String> setClauses = new ArrayList<>();
 
     private final List<Object> parameters = new LinkedList<>();
 
+    // =============================
+    // ==== BUILDER OPERATIONS =====
+    // =============================
+
     public SafeQueryBuilder select(String... cols) {
         this.type = QueryType.SELECT;
-        Collections.addAll(columns, cols);
+        for (String col : cols) columns.add(col);
         return this;
     }
 
@@ -41,12 +45,12 @@ public class SafeQueryBuilder {
     }
 
     public SafeQueryBuilder orderBy(String... cols) {
-        Collections.addAll(orderBy, cols);
+        for (String col : cols) orderBy.add(col);
         return this;
     }
 
     public SafeQueryBuilder groupBy(String... cols) {
-        Collections.addAll(groupBy, cols);
+        for (String col : cols) groupBy.add(col);
         return this;
     }
 
@@ -81,10 +85,10 @@ public class SafeQueryBuilder {
 
     public SafeQueryBuilder values(Object... vals) {
         if (vals != null) {
-            List<Object> row = new ArrayList<>();
-            row.addAll(Arrays.asList(vals));
-            this.insertValues.add(row);
-            this.parameters.addAll(row);
+            for (Object v : vals) {
+                this.insertValues.add("?");
+                this.parameters.add(v);
+            }
         }
         return this;
     }
@@ -107,9 +111,17 @@ public class SafeQueryBuilder {
         return this;
     }
 
+    public SafeQueryBuilder toDate(String dateString, String format) {
+        return this;
+    }
+
     public List<Object> getParameters() {
         return this.parameters;
     }
+
+    // =============================
+    // ==== QUERY BUILDER CORE =====
+    // =============================
 
     public String build() {
         StringBuilder sql = new StringBuilder();
@@ -141,19 +153,14 @@ public class SafeQueryBuilder {
                 break;
 
             case INSERT:
-                if (!columns.isEmpty() && !insertValues.isEmpty() && columns.size() != insertValues.get(0).size()) {
+                if (!columns.isEmpty() && !insertValues.isEmpty() && columns.size() != insertValues.size()) {
                     throw new IllegalStateException("Columns count and values count do not match.");
                 }
                 sql.append("INSERT INTO ").append(table);
                 if (!columns.isEmpty()) {
                     sql.append(" (").append(String.join(", ", columns)).append(")");
                 }
-                sql.append(" VALUES ");
-                List<String> rows = new ArrayList<>();
-                for (List<Object> row : insertValues) {
-                    rows.add("(" + String.join(", ", Collections.nCopies(row.size(), "?")) + ")");
-                }
-                sql.append(String.join(", ", rows));
+                sql.append(" VALUES (").append(String.join(", ", insertValues)).append(")");
                 break;
 
             case UPDATE:
@@ -175,13 +182,18 @@ public class SafeQueryBuilder {
         return sql.toString().trim();
     }
 
-    private SafeQueryBuilder addCondition(String condition, Object... values) {
+    private SafeQueryBuilder addCondition(String condition) {
         this.whereConditions.add(condition);
-        if (values != null) {
-            this.parameters.addAll(Arrays.asList(values));
-        }
         return this;
     }
+
+    private String formatValue(Object v) {
+        return "?";
+    }
+
+    // =============================
+    // ==== WHERE BUILDER ==========
+    // =============================
 
     public static class WhereBuilder {
         private final SafeQueryBuilder parent;
@@ -192,40 +204,39 @@ public class SafeQueryBuilder {
         }
 
         public WhereBuilder equals(String column, Object value) {
-            return addCondition(column + " = ?", value);
+            return addCondition(column, "=", value);
         }
 
         public WhereBuilder notEquals(String column, Object value) {
-            return addCondition(column + " <> ?", value);
+            return addCondition(column, "<>", value);
         }
 
         public WhereBuilder greaterThan(String column, Object value) {
-            return addCondition(column + " > ?", value);
+            return addCondition(column, ">", value);
         }
 
         public WhereBuilder lessThan(String column, Object value) {
-            return addCondition(column + " < ?", value);
+            return addCondition(column, "<", value);
         }
 
         public WhereBuilder like(String column, String value) {
-            return addCondition(column + " LIKE ?", "%" + value + "%");
-        }
-
-        public WhereBuilder between(String column, Object value) {
-            parent.addCondition(column + " BETWEEN ?", value);
+            parent.addCondition(column + " LIKE ?");
+            parent.parameters.add("%" + value + "%");
             lastConditionAdded = true;
             return this;
         }
 
-        public WhereBuilder between(String column, Object start, Object end) {
-            parent.addCondition(column + " BETWEEN ? AND ?", start, end);
+        public WhereBuilder between(String column, Object value) {
+            parent.addCondition(column + " BETWEEN ?");
+            parent.parameters.add(value);
             lastConditionAdded = true;
             return this;
         }
 
         public WhereBuilder in(String column, Object... values) {
             String placeholders = String.join(", ", Collections.nCopies(values.length, "?"));
-            parent.addCondition(column + " IN (" + placeholders + ")", values);
+            parent.addCondition(column + " IN (" + placeholders + ")");
+            parent.parameters.addAll(Arrays.asList(values));
             lastConditionAdded = true;
             return this;
         }
@@ -242,15 +253,16 @@ public class SafeQueryBuilder {
             return this;
         }
 
-        private WhereBuilder addCondition(String condition, Object... values) {
-            parent.addCondition(condition, values);
+        private WhereBuilder addCondition(String column, String operator, Object value) {
+            parent.addCondition(column + " " + operator + " ?");
+            parent.parameters.add(value);
             lastConditionAdded = true;
             return this;
         }
 
         public WhereBuilder and() {
             if (lastConditionAdded) {
-                parent.whereConditions.add("AND");
+                parent.addCondition("AND");
                 lastConditionAdded = false;
             }
             return this;
@@ -258,7 +270,7 @@ public class SafeQueryBuilder {
 
         public WhereBuilder or() {
             if (lastConditionAdded) {
-                parent.whereConditions.add("OR");
+                parent.addCondition("OR");
                 lastConditionAdded = false;
             }
             return this;
@@ -269,4 +281,5 @@ public class SafeQueryBuilder {
         }
     }
 }
+
 
