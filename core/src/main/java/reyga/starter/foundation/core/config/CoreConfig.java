@@ -42,6 +42,7 @@ public class CoreConfig {
     }
 
     @Bean
+    @ConditionalOnProperty(name = "reyga.config.rate-limiter.required", havingValue = "true")
     public RateLimiterConfig defaultRateLimiterConfig(ConfigProperties.RateLimiter rateLimiterProperty) {
         return RateLimiterConfig.custom()
                 .limitRefreshPeriod(Duration.ofSeconds(rateLimiterProperty.getRefreshPeriodSeconds()))
@@ -51,6 +52,7 @@ public class CoreConfig {
     }
 
     @Bean
+    @ConditionalOnProperty(name = "reyga.config.rate-limiter.required", havingValue = "true")
     public RateLimiterRegistry rateLimiterRegistry(RateLimiterConfig defaultConfig) {
         return RateLimiterRegistry.of(defaultConfig);
     }
@@ -64,6 +66,7 @@ public class CoreConfig {
     }
 
     @Bean
+    @ConditionalOnProperty(name = "reyga.config.circuit-breaker.required", havingValue = "true")
     public CircuitBreakerConfig defaultCircuitBreakerConfig(ConfigProperties.CircuitBreaker circuitBreakerProperty) {
         return CircuitBreakerConfig.custom()
                 .failureRateThreshold(circuitBreakerProperty.getFailureRateThreshold())
@@ -78,6 +81,7 @@ public class CoreConfig {
     }
 
     @Bean
+    @ConditionalOnProperty(name = "reyga.config.circuit-breaker.required", havingValue = "true")
     public CircuitBreakerRegistry circuitBreakerRegistry(CircuitBreakerConfig defaultConfig) {
         return CircuitBreakerRegistry.of(defaultConfig);
     }

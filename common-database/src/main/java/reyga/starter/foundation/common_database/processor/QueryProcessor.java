@@ -9,7 +9,6 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 import reyga.starter.foundation.common.logging.BaseLogging;
 import reyga.starter.foundation.common_database.util.QueryBuilder;
-import reyga.starter.foundation.common_database.util.SafeQueryBuilder;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -30,19 +29,7 @@ public class QueryProcessor extends BaseLogging {
         return jdbcTemplate.query(sql, rowMapper, params.toArray());
     }
 
-    public <T> List<T> fetch(SafeQueryBuilder builder, RowMapper<T> rowMapper) {
-        String sql = builder.build();
-        log.info("Constructed query: " + sql);
-        List<Object> params = builder.getParameters();
-        return jdbcTemplate.query(sql, rowMapper, params.toArray());
-    }
-
     public <T> Optional<T> fetchOne(QueryBuilder builder, RowMapper<T> rowMapper) {
-        List<T> results = fetch(builder, rowMapper);
-        return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
-    }
-
-    public <T> Optional<T> fetchOne(SafeQueryBuilder builder, RowMapper<T> rowMapper) {
         List<T> results = fetch(builder, rowMapper);
         return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
     }
@@ -53,20 +40,7 @@ public class QueryProcessor extends BaseLogging {
         return this.queryForObject(sql, rowMapper, params);
     }
 
-    public <T> Optional<T> fetchOneBy(SafeQueryBuilder safeBuilder, RowMapper<T> rowMapper) {
-        String sql = safeBuilder.build();
-        List<Object> params = safeBuilder.getParameters();
-        return this.queryForObject(sql, rowMapper, params);
-    }
-
     public int execute(QueryBuilder builder) {
-        String sql = builder.build();
-        log.info("Constructed query: " + sql);
-        List<Object> params = builder.getParameters();
-        return jdbcTemplate.update(sql, params.toArray());
-    }
-
-    public int execute(SafeQueryBuilder builder) {
         String sql = builder.build();
         log.info("Constructed query: " + sql);
         List<Object> params = builder.getParameters();
@@ -79,36 +53,12 @@ public class QueryProcessor extends BaseLogging {
         return jdbcTemplate.batchUpdate(sql, batchParams);
     }
 
-    public int[] batchExecute(SafeQueryBuilder builder, List<Object[]> batchParams) {
-        String sql = builder.build();
-        log.info("Constructed query: " + sql);
-        return jdbcTemplate.batchUpdate(sql, batchParams);
-    }
-
     public int[] batchExecute(List<QueryBuilder> builders) {
         List<Integer> results = new ArrayList<>();
         for (QueryBuilder builder : builders) {
             String sql = builder.build();
             log.info("Query ==> : " + sql);
             results.add(jdbcTemplate.update(sql, builder.getParameters().toArray()));
-        }
-        return results.stream().mapToInt(Integer::intValue).toArray();
-    }
-
-    public int[] batchExecute(List<QueryBuilder> builders, List<SafeQueryBuilder> safeBuilders, boolean isSafeBuilder) {
-        List<Integer> results = new ArrayList<>();
-        if (isSafeBuilder) {
-            for (SafeQueryBuilder safeBuilder : safeBuilders) {
-                String sql = safeBuilder.build();
-                log.info("Query ==> : " + sql);
-                results.add(jdbcTemplate.update(sql, safeBuilder.getParameters().toArray()));
-            }
-        } else {
-            for (QueryBuilder builder : builders) {
-                String sql = builder.build();
-                log.info("Query ==> : " + sql);
-                results.add(jdbcTemplate.update(sql, builder.getParameters().toArray()));
-            }
         }
         return results.stream().mapToInt(Integer::intValue).toArray();
     }

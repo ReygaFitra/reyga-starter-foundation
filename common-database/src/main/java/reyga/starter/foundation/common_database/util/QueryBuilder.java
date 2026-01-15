@@ -1,24 +1,21 @@
 package reyga.starter.foundation.common_database.util;
 
+import reyga.starter.foundation.common_database.enumeration.QueryJoinType;
 import reyga.starter.foundation.common_database.enumeration.QueryType;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-
-import java.util.Arrays;
+import java.util.*;
 
 public class QueryBuilder {
     private QueryType type;
     private String table;
-    private List<String> columns = new ArrayList<>();
-    private List<String> joins = new ArrayList<>();
-    private List<String> groupBy = new ArrayList<>();
-    private List<String> orderBy = new ArrayList<>();
+    private final List<String> columns = new ArrayList<>();
+    private final List<String> joins = new ArrayList<>();
+    private final List<String> groupBy = new ArrayList<>();
+    private final List<String> orderBy = new ArrayList<>();
     private String limit;
     private String offset;
 
-    private List<String> whereConditions = new ArrayList<>();
+    private final List<String> whereConditions = new ArrayList<>();
     private final List<String> insertValues = new ArrayList<>();
     private final List<String> setClauses = new ArrayList<>();
 
@@ -26,7 +23,7 @@ public class QueryBuilder {
 
     public QueryBuilder select(String... cols) {
         this.type = QueryType.SELECT;
-        for (String col : cols) columns.add(col);
+        columns.addAll(Arrays.asList(cols));
         return this;
     }
 
@@ -35,40 +32,51 @@ public class QueryBuilder {
         return this;
     }
 
-    public QueryBuilder join(String joinClause) {
-        this.joins.add(joinClause);
-        return this;
+    public QueryBuilder joinOn(String table, String leftColumn, String op, String rightColumn) {
+        return join(table).on(leftColumn, op, rightColumn).done();
     }
 
-    public WhereBuilder where() {
-        return new WhereBuilder(this);
+    public JoinBuilder join(String table, String alias) {
+        return new JoinBuilder(this, QueryJoinType.INNER, table, alias);
+    }
+
+    public JoinBuilder join(String table) {
+        return new JoinBuilder(this, QueryJoinType.INNER, table, null);
+    }
+
+    public JoinBuilder join(QueryJoinType type, String table) {
+        return new JoinBuilder(this, type, table, null);
+    }
+
+    public JoinBuilder join(QueryJoinType type, String table, String alias) {
+        return new JoinBuilder(this, type, table, alias);
     }
 
     public QueryBuilder orderBy(String... cols) {
-        for (String col : cols) orderBy.add(col);
+        orderBy.addAll(Arrays.asList(cols));
         return this;
     }
 
     public QueryBuilder groupBy(String... cols) {
-        for (String col : cols) groupBy.add(col);
+        groupBy.addAll(Arrays.asList(cols));
         return this;
     }
 
     public QueryBuilder limit(int limit) {
-        this.limit = String.valueOf(limit);
+        this.limit = "?";
         this.parameters.add(limit);
         return this;
     }
 
     public QueryBuilder offset(int offset) {
-        this.offset = String.valueOf(offset);
+        this.offset = "?";
         this.parameters.add(offset);
         return this;
     }
 
     public QueryBuilder paginate(int page, int pageSize) {
-        this.limit = String.valueOf(pageSize);
-        this.offset = String.valueOf((page - 1) * pageSize);
+        this.limit = "?";
+        this.offset = "?";
         this.parameters.add(pageSize);
         this.parameters.add((page - 1) * pageSize);
         return this;
@@ -77,17 +85,15 @@ public class QueryBuilder {
     public QueryBuilder insertInto(String table, String... cols) {
         this.type = QueryType.INSERT;
         this.table = table;
-        if (cols != null && cols.length > 0) {
-            this.columns.addAll(Arrays.asList(cols));
-        }
+        if (cols != null && cols.length > 0) this.columns.addAll(Arrays.asList(cols));
         return this;
     }
 
     public QueryBuilder values(Object... vals) {
         if (vals != null) {
             for (Object v : vals) {
-                this.insertValues.add(formatValue(v));
-                this.parameters.add(formatValue(v));
+                this.insertValues.add("?");
+                this.parameters.add(v);
             }
         }
         return this;
@@ -100,8 +106,8 @@ public class QueryBuilder {
     }
 
     public QueryBuilder set(String column, Object value) {
-        this.setClauses.add(column + " = " + formatValue(value));
-        this.parameters.add(formatValue(value));
+        this.setClauses.add(column + " = ?");
+        this.parameters.add(value);
         return this;
     }
 
@@ -111,12 +117,16 @@ public class QueryBuilder {
         return this;
     }
 
-    public QueryBuilder toDate(String dateString, String format) {
-        return this;
-    }
-
     public List<Object> getParameters() {
         return this.parameters;
+    }
+
+    public WhereBuilder where() {
+        return new WhereBuilder(this);
+    }
+
+    private void addCondition(String condition) {
+        this.whereConditions.add(condition);
     }
 
     public String build() {
@@ -124,121 +134,94 @@ public class QueryBuilder {
 
         switch (type) {
             case SELECT:
-                sql.append("SELECT ")
-                        .append(columns.isEmpty() ? "*" : String.join(", ", columns))
+                sql.append("SELECT ").append(columns.isEmpty() ? "*" : String.join(", ", columns))
                         .append(" FROM ").append(table);
-
-                if (!joins.isEmpty()) {
-                    sql.append(" ").append(String.join(" ", joins));
-                }
-                if (!whereConditions.isEmpty()) {
-                    sql.append(" WHERE ").append(String.join(" ", whereConditions));
-                }
-                if (!groupBy.isEmpty()) {
-                    sql.append(" GROUP BY ").append(String.join(", ", groupBy));
-                }
-                if (!orderBy.isEmpty()) {
-                    sql.append(" ORDER BY ").append(String.join(", ", orderBy));
-                }
-                if (limit != null) {
-                    sql.append(" LIMIT ").append(limit);
-                }
-                if (offset != null) {
-                    sql.append(" OFFSET ").append(offset);
-                }
+                if (!joins.isEmpty()) sql.append(" ").append(String.join(" ", joins));
+                if (!whereConditions.isEmpty()) sql.append(" WHERE ").append(String.join(" ", whereConditions));
+                if (!groupBy.isEmpty()) sql.append(" GROUP BY ").append(String.join(", ", groupBy));
+                if (!orderBy.isEmpty()) sql.append(" ORDER BY ").append(String.join(", ", orderBy));
+                if (limit != null) sql.append(" LIMIT ").append(limit);
+                if (offset != null) sql.append(" OFFSET ").append(offset);
                 break;
 
             case INSERT:
-                if (!columns.isEmpty() && !insertValues.isEmpty() && columns.size() != insertValues.size()) {
+                if (!columns.isEmpty() && !insertValues.isEmpty() && columns.size() != insertValues.size())
                     throw new IllegalStateException("Columns count and values count do not match.");
-                }
                 sql.append("INSERT INTO ").append(table);
-                if (!columns.isEmpty()) {
-                    sql.append(" (").append(String.join(", ", columns)).append(")");
-                }
+                if (!columns.isEmpty()) sql.append(" (").append(String.join(", ", columns)).append(")");
                 sql.append(" VALUES (").append(String.join(", ", insertValues)).append(")");
                 break;
 
             case UPDATE:
-                sql.append("UPDATE ").append(table)
-                        .append(" SET ").append(String.join(", ", setClauses));
-                if (!whereConditions.isEmpty()) {
-                    sql.append(" WHERE ").append(String.join(" ", whereConditions));
-                }
+                sql.append("UPDATE ").append(table).append(" SET ").append(String.join(", ", setClauses));
+                if (!whereConditions.isEmpty()) sql.append(" WHERE ").append(String.join(" ", whereConditions));
                 break;
 
             case DELETE:
                 sql.append("DELETE FROM ").append(table);
-                if (!whereConditions.isEmpty()) {
-                    sql.append(" WHERE ").append(String.join(" ", whereConditions));
-                }
+                if (!whereConditions.isEmpty()) sql.append(" WHERE ").append(String.join(" ", whereConditions));
                 break;
         }
 
         return sql.toString().trim();
     }
 
-    private QueryBuilder addCondition(String condition) {
-        this.whereConditions.add(condition);
-        return this;
-    }
-
-    private String formatValue(Object v) {
-        if (v == null) return "NULL";
-        if (v instanceof String || v instanceof Character) {
-            String s = v.toString().replace("'", "''");
-            return "'" + s + "'";
-        }
-        return v.toString();
-    }
+    private String formatValue(Object v) { return "?"; }
 
     public static class WhereBuilder {
         private final QueryBuilder parent;
         private boolean lastConditionAdded = false;
 
-        public WhereBuilder(QueryBuilder parent) {
-            this.parent = parent;
-        }
+        public WhereBuilder(QueryBuilder parent) { this.parent = parent; }
 
         public WhereBuilder equals(String column, Object value) {
-            return addCondition(column, "=", value);
+            parent.addCondition(column + " = ?");
+            parent.parameters.add(value);
+            lastConditionAdded = true;
+            return this;
         }
 
         public WhereBuilder notEquals(String column, Object value) {
-            return addCondition(column, "<>", value);
+            parent.addCondition(column + " <> ?");
+            parent.parameters.add(value);
+            lastConditionAdded = true;
+            return this;
         }
 
         public WhereBuilder greaterThan(String column, Object value) {
-            return addCondition(column, ">", value);
+            parent.addCondition(column + " > ?");
+            parent.parameters.add(value);
+            lastConditionAdded = true;
+            return this;
         }
 
         public WhereBuilder lessThan(String column, Object value) {
-            return addCondition(column, "<", value);
+            parent.addCondition(column + " < ?");
+            parent.parameters.add(value);
+            lastConditionAdded = true;
+            return this;
         }
 
         public WhereBuilder like(String column, String value) {
-            return addCondition(column, "LIKE", "%" + value + "%");
+            parent.addCondition(column + " LIKE ?");
+            parent.parameters.add("%" + value + "%");
+            lastConditionAdded = true;
+            return this;
         }
 
-        public WhereBuilder between(String column, Object value) {
-            return addCondition(column, "BETWEEN", value);
+        public WhereBuilder between(String column, Object valueFrom, Object valueTo) {
+            parent.addCondition(column + " BETWEEN ? AND ?");
+            parent.parameters.add(valueFrom);
+            parent.parameters.add(valueTo);
+            lastConditionAdded = true;
+            return this;
         }
 
         public WhereBuilder in(String column, Object... values) {
-            StringBuilder sb = new StringBuilder();
-            sb.append(column).append(" IN (");
-            List<String> valList = new ArrayList<>();
-            for (Object v : values) {
-                if (v == null) {
-                    valList.add("NULL");
-                } else if (v instanceof String || v instanceof Character) {
-                    valList.add("'" + v.toString().replace("'", "''") + "'");
-                } else {
-                    valList.add(v.toString());
-                }
-            }
-            sb.append(String.join(", ", valList)).append(")");
-            parent.addCondition(sb.toString());
+            if (values == null || values.length == 0) throw new IllegalArgumentException("values required");
+            String placeholders = String.join(", ", Collections.nCopies(values.length, "?"));
+            parent.addCondition(column + " IN (" + placeholders + ")");
+            parent.parameters.addAll(Arrays.asList(values));
             lastConditionAdded = true;
             return this;
         }
@@ -248,20 +231,9 @@ public class QueryBuilder {
             lastConditionAdded = true;
             return this;
         }
+
         public WhereBuilder isNotNull(String column) {
             parent.addCondition(column + " IS NOT NULL");
-            lastConditionAdded = true;
-            return this;
-        }
-
-        private WhereBuilder addCondition(String column, String operator, Object value) {
-            String formatted = (value == null)
-                    ? "NULL"
-                    : (value instanceof String || value instanceof Character)
-                    ? "'" + value.toString().replace("'", "''") + "'"
-                    : value.toString();
-            parent.addCondition(column + " " + operator + " " + formatted);
-            parent.parameters.add(formatted);
             lastConditionAdded = true;
             return this;
         }
@@ -282,8 +254,67 @@ public class QueryBuilder {
             return this;
         }
 
+        public QueryBuilder done() { return parent; }
+    }
+
+    public static class JoinBuilder {
+        private final QueryBuilder parent;
+        private final QueryJoinType type;
+        private final String table;
+        private final String alias;
+        private final List<String> onConditions = new ArrayList<>();
+        private boolean lastOnAdded = false;
+
+        JoinBuilder(QueryBuilder parent, QueryJoinType type, String table, String alias) {
+            this.parent = parent;
+            this.type = type;
+            this.table = table;
+            this.alias = alias;
+        }
+
+        public JoinBuilder on(String condition) {
+            onConditions.add(condition);
+            lastOnAdded = true;
+            return this;
+        }
+
+        public JoinBuilder on(String left, String op, String right) {
+            onConditions.add(left + " " + op + " " + right);
+            lastOnAdded = true;
+            return this;
+        }
+
+        public JoinBuilder and() {
+            if (lastOnAdded) {
+                onConditions.add("AND");
+                lastOnAdded = false;
+            }
+            return this;
+        }
+
+        public JoinBuilder or() {
+            if (lastOnAdded) {
+                onConditions.add("OR");
+                lastOnAdded = false;
+            }
+            return this;
+        }
+
+        public QueryBuilder endJoin() {
+            return done();
+        }
+
         public QueryBuilder done() {
+            StringBuilder sb = new StringBuilder();
+            sb.append(type.toString()).append(" ").append(table);
+            if (alias != null && !alias.isBlank()) sb.append(" ").append(alias);
+            if (!onConditions.isEmpty()) sb.append(" ON ").append(String.join(" ", onConditions));
+            parent.joins.add(sb.toString());
             return parent;
         }
+    }
+
+    public JoinBuilder joinBuilder(QueryJoinType type, String table, String alias) {
+        return new JoinBuilder(this, type, table, alias);
     }
 }

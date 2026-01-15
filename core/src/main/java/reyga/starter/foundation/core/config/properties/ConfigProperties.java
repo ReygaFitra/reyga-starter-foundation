@@ -7,6 +7,12 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "reyga.config")
 public class ConfigProperties {
 
+    Exception exception;
+    Validation validation;
+    RateLimiter rateLimiter;
+    CircuitBreaker circuitBreaker;
+    LocalCache localCache;
+
     @Data
     public static class Exception {
         private boolean enableDefault = true;
@@ -20,9 +26,9 @@ public class ConfigProperties {
     @Data
     public static class RateLimiter {
         private boolean required = false;
-        private Integer timeoutMilis;
-        private Integer maxRequest;
-        private Integer refreshPeriodSeconds;
+        private int timeoutMilis = 1;
+        private int maxRequest = 1;
+        private int refreshPeriodSeconds = 1;
     }
 
     @Data
@@ -40,7 +46,7 @@ public class ConfigProperties {
 
     @Data
     public static class LocalCache {
-        private Integer expiresMinutes;
-        private Integer maxSize;
+        private int expiresMinutes;
+        private int maxSize;
     }
 }
