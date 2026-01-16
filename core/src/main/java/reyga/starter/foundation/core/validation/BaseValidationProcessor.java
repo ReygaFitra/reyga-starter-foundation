@@ -24,7 +24,7 @@ public abstract class BaseValidationProcessor extends BaseLogging {
     }
 
 
-    protected <T> void validateRequest(T request, boolean useMapPattern) {
+    public <T> void validateRequest(T request, boolean useMapPattern) {
         Set<ConstraintViolation<T>> violations = validator.validate(request);
         if (useMapPattern) {
             violationsMapHandle(violations);
@@ -33,7 +33,7 @@ public abstract class BaseValidationProcessor extends BaseLogging {
         }
     };
 
-    protected <T, GT> void validateRequest(T request, boolean useMapPattern, List<Class<GT>> validationGroups) {
+    public <T, GT> void validateRequest(T request, boolean useMapPattern, List<Class<GT>> validationGroups) {
         Class<?>[] valGroupArr = validationGroups.toArray(new Class<?>[0]);
         Set<ConstraintViolation<T>> violations = validator.validate(request, valGroupArr);
         if (useMapPattern) {

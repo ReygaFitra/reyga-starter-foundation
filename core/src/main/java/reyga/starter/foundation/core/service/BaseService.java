@@ -6,18 +6,17 @@ import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import reyga.starter.foundation.common.logging.BaseLogging;
-import reyga.starter.foundation.core.dto.content.BaseContent;
 import reyga.starter.foundation.core.dto.request.BaseRequest;
 
-public abstract class BaseService<REQ extends BaseRequest, RES, CTN extends BaseContent> extends BaseLogging implements FoundationService<REQ, RES, CTN> {
+public abstract class BaseService<REQ extends BaseRequest, RES> extends BaseLogging implements FoundationService<REQ, RES> {
 
     @Override
-    public RES execute(REQ req, CTN content) {
+    public RES execute(REQ req) {
         logInformation(req);
-        return processFlow(req, content);
+        return processFlow(req);
     }
 
-    protected abstract RES processFlow(REQ req, CTN content);
+    protected abstract RES processFlow(REQ req);
 
     protected void logInformation(REQ req) {
         log.info("Executing Service...");

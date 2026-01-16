@@ -29,15 +29,37 @@ public class QueryProcessor extends BaseLogging {
         return jdbcTemplate.query(sql, rowMapper, params.toArray());
     }
 
-    public <T> Optional<T> fetchOne(QueryBuilder builder, RowMapper<T> rowMapper) {
+    public <T> Optional<List<T>> optionalFetch(QueryBuilder builder, RowMapper<T> rowMapper) {
+        String sql = builder.build();
+        log.info("Constructed query : " + sql);
+        List<Object> params = builder.getParameters();
+        try {
+            return Optional.of(jdbcTemplate.query(sql, rowMapper, params.toArray()));
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
+    public <T> T fetchOne(QueryBuilder builder, RowMapper<T> rowMapper) {
+        List<T> results = fetch(builder, rowMapper);
+        return results.get(0);
+    }
+
+    public <T> Optional<T> optionalFetchOne(QueryBuilder builder, RowMapper<T> rowMapper) {
         List<T> results = fetch(builder, rowMapper);
         return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
     }
 
-    public <T> Optional<T> fetchOneBy(QueryBuilder builder, RowMapper<T> rowMapper) {
+    public <T> T fetchOneBy(QueryBuilder builder, RowMapper<T> rowMapper) {
         String sql = builder.build();
         List<Object> params = builder.getParameters();
         return this.queryForObject(sql, rowMapper, params);
+    }
+
+    public <T> Optional<T> optionalFetchOneBy(QueryBuilder builder, RowMapper<T> rowMapper) {
+        String sql = builder.build();
+        List<Object> params = builder.getParameters();
+        return this.optionalQueryForObject(sql, rowMapper, params);
     }
 
     public int execute(QueryBuilder builder) {
@@ -97,7 +119,12 @@ public class QueryProcessor extends BaseLogging {
         return jdbcTemplate.update(sql, params);
     }
 
-    private <T> Optional<T> queryForObject(String sql, RowMapper<T> rowMapper, List<Object> params) {
+    private <T> T queryForObject(String sql, RowMapper<T> rowMapper, List<Object> params) {
+        log.info("Constructed queryForObject: " + sql);
+        return jdbcTemplate.queryForObject(sql, rowMapper, params.toArray());
+    }
+
+    private <T> Optional<T> optionalQueryForObject(String sql, RowMapper<T> rowMapper, List<Object> params) {
         log.info("Constructed queryForObject: " + sql);
         try {
             return Optional.ofNullable(jdbcTemplate.queryForObject(sql, rowMapper, params.toArray()));

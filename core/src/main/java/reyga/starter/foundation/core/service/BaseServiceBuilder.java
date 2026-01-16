@@ -16,7 +16,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public abstract class BaseServiceBuilder<T extends BaseServiceBuilder<T, Q, R, C>, Q extends BaseRequest, R, C extends BaseContent> extends BaseTransactionalExecutor implements FoundationService<Q, R, C> {
+public abstract class BaseServiceBuilder<T extends BaseServiceBuilder<T, Q, R, C>, Q extends BaseRequest, R, C extends BaseContent> extends BaseTransactionalExecutor implements FoundationBuilderService<Q, R, C> {
 
     private final List<Supplier<?>> processes = new ArrayList<>();
     private Q request;
