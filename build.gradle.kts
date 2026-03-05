@@ -6,17 +6,27 @@
  * User Manual available at https://docs.gradle.org/6.9.1/userguide/building_java_projects.html
  */
 
+val projectGroup: String by project
+val projectVersion: String by project
+val javaVersion = providers.gradleProperty("javaVersion").get().toInt()
+val springBootVersion: String by project
+val junitVersion: String by project
+val commonsMathVersion: String by project
+val guavaVersion: String by project
+val jakartaPersistenceApiVersion: String by project
+val lombokVersion: String by project
+
 plugins {
     // Apply the java-library plugin for API and implementation separation.
     java
     `java-library`
-    id("io.spring.dependency-management") version "1.1.5" apply false
-    id("org.springframework.boot") version "3.5.3" apply false
+    id("io.spring.dependency-management") apply false
+    id("org.springframework.boot") apply false
 }
 
 allprojects {
-    group = "com.reyga-dev.starter"
-    version = "1.0.0"
+    group = projectGroup
+    version = projectVersion
 
     repositories {
         // Use Maven Central for resolving dependencies.
@@ -29,25 +39,31 @@ subprojects {
     apply(plugin = "java-library")
     apply(plugin = "io.spring.dependency-management")
 
+    java {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(javaVersion))
+        }
+    }
+
     dependencies {
         // Use JUnit test framework.
-        testImplementation("junit:junit:4.13")
+        testImplementation("junit:junit:$junitVersion")
 
         // This dependency is exported to consumers, that is to say found on their compile classpath.
-        api("org.apache.commons:commons-math3:3.6.1")
+        api("org.apache.commons:commons-math3:$commonsMathVersion")
 
         // This dependency is used internally, and not exposed to consumers on their own compile classpath.
-        implementation("com.google.guava:guava:29.0-jre")
+        implementation("com.google.guava:guava:$guavaVersion")
 
         /**
             Base Dependencies for all module
          */
-        api("jakarta.persistence:jakarta.persistence-api:3.1.0")
-        implementation("org.springframework.boot:spring-boot-starter:3.5.3")
-        implementation("org.springframework.boot:spring-boot-autoconfigure:3.5.3")
-        implementation("org.springframework.boot:spring-boot-starter-web:3.5.3")
-        compileOnly("org.projectlombok:lombok:1.18.30")
-        annotationProcessor("org.projectlombok:lombok:1.18.30")
+        api("jakarta.persistence:jakarta.persistence-api:$jakartaPersistenceApiVersion")
+        implementation("org.springframework.boot:spring-boot-starter:$springBootVersion")
+        implementation("org.springframework.boot:spring-boot-autoconfigure:$springBootVersion")
+        implementation("org.springframework.boot:spring-boot-starter-web:$springBootVersion")
+        compileOnly("org.projectlombok:lombok:$lombokVersion")
+        annotationProcessor("org.projectlombok:lombok:$lombokVersion")
 
     }
 }

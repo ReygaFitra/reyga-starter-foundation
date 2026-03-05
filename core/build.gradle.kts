@@ -1,3 +1,9 @@
+val projectGroup: String by project
+val springBootVersion: String by project
+val jakartaValidationApiVersion: String by project
+val resilience4jVersion: String by project
+val caffeineVersion: String by project
+
 plugins {
     `java-library`
     `maven-publish`
@@ -7,20 +13,20 @@ publishing {
     publications {
         create<MavenPublication>("mavenJava") {
             from(components["java"])
-            groupId = "com.reyga-dev.starter"
+            groupId = projectGroup
             artifactId = "core"
-            version = "1.0.0"
+            version = project.version.toString()
         }
     }
 }
 
 dependencies {
     implementation(project(":common"))
-    implementation("org.springframework.boot:spring-boot-starter-validation:3.5.3")
-    implementation("jakarta.validation:jakarta.validation-api:3.1.1")
-    implementation("io.github.resilience4j:resilience4j-all:2.3.0")
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.5.3")
-    implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
+    implementation("org.springframework.boot:spring-boot-starter-validation:$springBootVersion")
+    implementation("jakarta.validation:jakarta.validation-api:$jakartaValidationApiVersion")
+    implementation("io.github.resilience4j:resilience4j-all:$resilience4jVersion")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion")
+    implementation("com.github.ben-manes.caffeine:caffeine:$caffeineVersion")
 }
 
 java {

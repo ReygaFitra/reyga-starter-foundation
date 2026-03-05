@@ -1,3 +1,8 @@
+val projectGroup: String by project
+val springBootVersion: String by project
+val logbackClassicVersion: String by project
+val janinoVersion: String by project
+
 plugins {
     `java-library`
     `maven-publish`
@@ -7,19 +12,19 @@ publishing {
     publications {
         create<MavenPublication>("mavenJava") {
             from(components["java"])
-            groupId = "com.reyga-dev.starter"
+            groupId = projectGroup
             artifactId = "logging"
-            version = "1.0.0"
+            version = project.version.toString()
         }
     }
 }
 
 dependencies {
     implementation(project(":common"))
-    implementation("org.springframework.boot:spring-boot-starter-aop:3.5.3")
+    implementation("org.springframework.boot:spring-boot-starter-aspectj:$springBootVersion")
 
-    api("ch.qos.logback:logback-classic:1.5.18")
-    api("org.codehaus.janino:janino:3.1.12")
+    api("ch.qos.logback:logback-classic:$logbackClassicVersion")
+    api("org.codehaus.janino:janino:$janinoVersion")
 }
 
 java {

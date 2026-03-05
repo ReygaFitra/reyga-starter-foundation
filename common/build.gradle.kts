@@ -1,3 +1,6 @@
+val projectGroup: String by project
+val springBootVersion: String by project
+
 plugins {
     `java-library`
     `maven-publish`
@@ -7,15 +10,15 @@ publishing {
     publications {
         create<MavenPublication>("mavenJava") {
             from(components["java"])
-            groupId = "com.reyga-dev.starter"
+            groupId = projectGroup
             artifactId = "common"
-            version = "1.0.0"
+            version = project.version.toString()
         }
     }
 }
 
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.5.3")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion")
 }
 
 java {
