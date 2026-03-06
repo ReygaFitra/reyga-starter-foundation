@@ -1,15 +1,13 @@
 package reyga.starter.foundation.core.component;
 
-import org.springframework.beans.BeansException;
-import org.springframework.context.ApplicationContext;
+import org.springframework.beans.factory.annotation.Autowired;
 import reyga.starter.foundation.common.logging.BaseLogging;
 
 public abstract class BaseTransactionalExecutor extends BaseLogging {
-    protected static ApplicationContext context;
     protected TransactionalExecutor transactionalExecutor;
 
-    @Override
-    public void setApplicationContext(ApplicationContext context) throws BeansException {
-        super.setApplicationContext(context);
+    @Autowired(required = false)
+    protected void setTransactionalExecutor(TransactionalExecutor transactionalExecutor) {
+        this.transactionalExecutor = transactionalExecutor;
     }
 }

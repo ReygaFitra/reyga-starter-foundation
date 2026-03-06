@@ -9,13 +9,11 @@ import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Component;
 import reyga.starter.foundation.common.enumeration.ServiceCodeEnum;
 import reyga.starter.foundation.common.enumeration.ServiceStatusResponseEnum;
 import reyga.starter.foundation.core.dto.response.ResponseData;
 import reyga.starter.foundation.core.service.ResilienceService;
 
-@Component
 @RequiredArgsConstructor
 public abstract class BaseResilienceController extends BaseController {
 

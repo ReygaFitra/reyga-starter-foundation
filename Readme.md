@@ -10,7 +10,7 @@ Repository: https://github.com/ReygaFitra/reyga-starter-foundation
 
 ## Tech Stack
 
-- Java 17
+- Java 25
 - Spring Boot 4
 - Spring Framework 7
 - Gradle Kotlin DSL (multi-module)
@@ -86,6 +86,9 @@ Semua module sudah dikonfigurasi sebagai Java library + Maven publish:
 - `common-database`
 - `core`
 - `logging`
+
+Module internal (tidak dipublish untuk konsumsi langsung):
+- `foundation-starter-internal` (dipakai internal untuk default implementation + auto-configuration)
 
 Koordinat artifact:
 - `group`: `com.reyga-dev.starter`

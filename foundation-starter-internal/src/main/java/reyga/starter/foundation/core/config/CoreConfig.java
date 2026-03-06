@@ -7,12 +7,18 @@ import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.ratelimiter.RateLimiter;
 import io.github.resilience4j.ratelimiter.RateLimiterConfig;
 import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.transaction.PlatformTransactionManager;
+import reyga.starter.foundation.core.component.DefaultTransactionalExecutor;
+import reyga.starter.foundation.core.component.TransactionalExecutor;
 import reyga.starter.foundation.core.config.properties.ConfigProperties;
 import reyga.starter.foundation.core.exception.handler.DefaultExceptionHandler;
+import reyga.starter.foundation.core.service.DefaultResilienceService;
+import reyga.starter.foundation.core.service.ResilienceService;
 import reyga.starter.foundation.core.validation.ValidationProcessor;
 
 import java.time.Duration;
@@ -39,6 +45,18 @@ public class CoreConfig {
     @ConditionalOnProperty(name = "reyga.config.validation.enable-default", havingValue = "true")
     public ValidationProcessor validationProcessor() {
         return new ValidationProcessor();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(ResilienceService.class)
+    public ResilienceService resilienceService() {
+        return new DefaultResilienceService();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(TransactionalExecutor.class)
+    public TransactionalExecutor transactionalExecutor(PlatformTransactionManager transactionManager) {
+        return new DefaultTransactionalExecutor(transactionManager);
     }
 
     @Bean

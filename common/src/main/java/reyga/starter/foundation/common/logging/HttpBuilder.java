@@ -2,7 +2,6 @@ package reyga.starter.foundation.common.logging;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.NoArgsConstructor;
-import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -13,7 +12,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.*;
 
-@Component
 @NoArgsConstructor
 public class HttpBuilder {
 

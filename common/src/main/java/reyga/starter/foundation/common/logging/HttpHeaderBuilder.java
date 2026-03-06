@@ -3,7 +3,6 @@ package reyga.starter.foundation.common.logging;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.NoArgsConstructor;
 import org.slf4j.MDC;
-import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -18,7 +17,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-@Component
 @NoArgsConstructor
 public class HttpHeaderBuilder {
 

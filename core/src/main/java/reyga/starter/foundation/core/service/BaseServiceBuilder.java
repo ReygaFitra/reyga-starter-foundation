@@ -6,7 +6,6 @@ import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import reyga.starter.foundation.core.component.BaseTransactionalExecutor;
-import reyga.starter.foundation.core.component.TransactionalExecutor;
 import reyga.starter.foundation.core.dto.content.BaseContent;
 import reyga.starter.foundation.core.dto.request.BaseRequest;
 
@@ -59,11 +58,6 @@ public abstract class BaseServiceBuilder<T extends BaseServiceBuilder<T, Q, R, C
     @SuppressWarnings("unchecked")
     public T withTransactional() {
         this.transactionalMode = true;
-
-        if (transactionalExecutor == null) {
-            transactionalExecutor = context.getBean(TransactionalExecutor.class);
-        }
-
         return (T) this;
     }
 
@@ -104,6 +98,9 @@ public abstract class BaseServiceBuilder<T extends BaseServiceBuilder<T, Q, R, C
         }
 
         if (transactionalMode) {
+            if (transactionalExecutor == null) {
+                throw new IllegalStateException("TransactionalExecutor bean is not available. Ensure default starter module is enabled.");
+            }
             return transactionalExecutor.runInTransaction(
                     this::executeProcesses,
                     ex -> {

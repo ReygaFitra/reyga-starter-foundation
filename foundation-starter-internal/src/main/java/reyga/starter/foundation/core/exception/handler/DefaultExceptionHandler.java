@@ -1,9 +1,7 @@
 package reyga.starter.foundation.core.exception.handler;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
-import org.hibernate.JDBCException;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.jpa.JpaSystemException;
@@ -11,6 +9,8 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import reyga.starter.foundation.core.dto.response.ResponseError;
 import reyga.starter.foundation.core.controller.BaseResponseError;
 import reyga.starter.foundation.core.exception.AppFaultException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -35,7 +35,7 @@ public class DefaultExceptionHandler extends BaseExceptionHandler<ResponseError>
             errors.put("illegalArgumentException", exception.getStackTrace()[0].toString());
             try {
                 log.warn("ILLEGAL ARGUMENT EXCEPTION ERROR :", mapper.writeValueAsString(errors));
-            } catch (JsonProcessingException e1) {
+            } catch (JacksonException e1) {
                 log.error("write_log_error", e1.getMessage());
             }
         } else {
@@ -46,7 +46,7 @@ public class DefaultExceptionHandler extends BaseExceptionHandler<ResponseError>
             errors.put("Global Error", exception.getStackTrace()[0].toString());
             try {
                 log.warn("GLOBAL ERROR :", mapper.writeValueAsString(errors));
-            } catch (JsonProcessingException e1) {
+            } catch (JacksonException e1) {
                 log.error("write_log_error", e1.getMessage());
             }
         }
@@ -64,16 +64,16 @@ public class DefaultExceptionHandler extends BaseExceptionHandler<ResponseError>
             errors.put("JPA-SYSTEM-ERROR", exception.getStackTrace()[0].toString());
             try {
                 log.warn("JPA ERROR :", mapper.writeValueAsString(errors));
-            } catch (JsonProcessingException e1) {
+            } catch (JacksonException e1) {
                 log.error("write_log_error", e1.getMessage());
             }
         }
-        if (exception instanceof JDBCException) {
-            exceptionType = "JDBCException";
+        if (exception instanceof DataAccessException) {
+            exceptionType = "DataAccessException";
             errors.put("JDBC-ERROR", exception.getStackTrace()[0].toString());
             try {
                 log.warn("JDBC ERROR :", mapper.writeValueAsString(errors));
-            } catch (JsonProcessingException e1) {
+            } catch (JacksonException e1) {
                 log.error("write_log_error", e1.getMessage());
             }
         }

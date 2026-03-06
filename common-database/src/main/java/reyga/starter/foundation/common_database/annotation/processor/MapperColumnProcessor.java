@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import oracle.sql.TIMESTAMP;
 import org.springframework.jdbc.core.RowMapper;
 import reyga.starter.foundation.common.logging.BaseLogging;
-import reyga.starter.foundation.common.logging.CustomLogger;
 import reyga.starter.foundation.common_database.annotation.MapperColumn;
 
 import java.lang.reflect.InvocationTargetException;

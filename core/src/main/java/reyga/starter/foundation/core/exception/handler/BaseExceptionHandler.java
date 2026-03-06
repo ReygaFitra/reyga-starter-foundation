@@ -1,7 +1,7 @@
 package reyga.starter.foundation.core.exception.handler;
 
 import jakarta.servlet.http.HttpServletRequest;
-import org.hibernate.JDBCException;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -18,7 +18,7 @@ public abstract class BaseExceptionHandler<ER> extends BaseLogging {
         return processGlobalErrorHandler(e, request);
     }
 
-    @ExceptionHandler({JpaSystemException.class, JDBCException.class})
+    @ExceptionHandler({JpaSystemException.class, DataAccessException.class})
     public ResponseEntity<ER> handleDatabaseErrorException(Exception e, HttpServletRequest request) {
         request.setAttribute(HeaderEnum.EXCEPTION.getValue(), e);
         log.exception("DATABASE EXCEPTION", null,e);
