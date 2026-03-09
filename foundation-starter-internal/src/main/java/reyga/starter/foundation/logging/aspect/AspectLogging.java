@@ -28,7 +28,7 @@ public class AspectLogging {
 
     @Around(value = "pointCut()")
     public Object processRequestIntercept(ProceedingJoinPoint joinPoint) throws Throwable {
-        if (!loggingProperties.isEnableAspectLogging()) {
+        if (!loggingProperties.enableAspectLogging()) {
             return joinPoint.proceed();
         }
 

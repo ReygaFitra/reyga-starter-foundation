@@ -1,17 +1,19 @@
 package reyga.starter.foundation.core.config;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
-import io.github.resilience4j.ratelimiter.RateLimiter;
 import io.github.resilience4j.ratelimiter.RateLimiterConfig;
 import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
+import io.github.resilience4j.retry.Retry;
+import io.github.resilience4j.retry.RetryConfig;
+import io.github.resilience4j.retry.RetryRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.transaction.PlatformTransactionManager;
 import reyga.starter.foundation.core.component.DefaultTransactionalExecutor;
 import reyga.starter.foundation.core.component.TransactionalExecutor;
@@ -22,18 +24,12 @@ import reyga.starter.foundation.core.service.ResilienceService;
 import reyga.starter.foundation.core.validation.ValidationProcessor;
 
 import java.time.Duration;
-import java.util.concurrent.TimeUnit;
 
 @Configuration
-@Import({
-        ConfigProperties.class,
-        ConfigProperties.RateLimiter.class,
-        ConfigProperties.CircuitBreaker.class,
-        ConfigProperties.LocalCache.class,
-        ConfigProperties.Exception.class,
-        ConfigProperties.Validation.class
-})
+@EnableConfigurationProperties(ConfigProperties.class)
 public class CoreConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(CoreConfig.class);
 
     @Bean
     @ConditionalOnProperty(name = "reyga.config.exception.enable-default", havingValue = "true")
@@ -61,11 +57,12 @@ public class CoreConfig {
 
     @Bean
     @ConditionalOnProperty(name = "reyga.config.rate-limiter.required", havingValue = "true")
-    public RateLimiterConfig defaultRateLimiterConfig(ConfigProperties.RateLimiter rateLimiterProperty) {
+    public RateLimiterConfig defaultRateLimiterConfig(ConfigProperties properties) {
+        ConfigProperties.RateLimiter rateLimiterProperty = properties.rateLimiter();
         return RateLimiterConfig.custom()
-                .limitRefreshPeriod(Duration.ofSeconds(rateLimiterProperty.getRefreshPeriodSeconds()))
-                .limitForPeriod(rateLimiterProperty.getMaxRequest())
-                .timeoutDuration(Duration.ofMillis(rateLimiterProperty.getTimeoutMilis()))
+                .limitRefreshPeriod(Duration.ofSeconds(rateLimiterProperty.refreshPeriodSeconds()))
+                .limitForPeriod(rateLimiterProperty.maxRequest())
+                .timeoutDuration(Duration.ofMillis(rateLimiterProperty.timeoutMilis()))
                 .build();
     }
 
@@ -76,25 +73,18 @@ public class CoreConfig {
     }
 
     @Bean
-    public Cache<String, RateLimiter> localCache(ConfigProperties.LocalCache cacheProperty) {
-        return Caffeine.newBuilder()
-                .expireAfterAccess(cacheProperty.getExpiresMinutes(), TimeUnit.MINUTES)
-                .maximumSize(cacheProperty.getMaxSize())
-                .build();
-    }
-
-    @Bean
     @ConditionalOnProperty(name = "reyga.config.circuit-breaker.required", havingValue = "true")
-    public CircuitBreakerConfig defaultCircuitBreakerConfig(ConfigProperties.CircuitBreaker circuitBreakerProperty) {
+    public CircuitBreakerConfig defaultCircuitBreakerConfig(ConfigProperties properties) {
+        ConfigProperties.CircuitBreaker circuitBreakerProperty = properties.circuitBreaker();
         return CircuitBreakerConfig.custom()
-                .failureRateThreshold(circuitBreakerProperty.getFailureRateThreshold())
-                .slowCallRateThreshold(circuitBreakerProperty.getSlowCallRateThreshold())
-                .slowCallDurationThreshold(Duration.ofSeconds(circuitBreakerProperty.getSlowCallDurationThresholdSeconds()))
-                .minimumNumberOfCalls(circuitBreakerProperty.getMinimumNumberOfCalls())
-                .slidingWindowSize(circuitBreakerProperty.getSlidingWindowSize())
-                .permittedNumberOfCallsInHalfOpenState(circuitBreakerProperty.getPermittedNumberOfCallsInHalfOpenState())
-                .waitDurationInOpenState(Duration.ofSeconds(circuitBreakerProperty.getSlowCallDurationThresholdSeconds()))
-                .automaticTransitionFromOpenToHalfOpenEnabled(circuitBreakerProperty.isAutomaticTransitionFromOpenToHalfOpenEnabled())
+                .failureRateThreshold(circuitBreakerProperty.failureRateThreshold())
+                .slowCallRateThreshold(circuitBreakerProperty.slowCallRateThreshold())
+                .slowCallDurationThreshold(Duration.ofSeconds(circuitBreakerProperty.slowCallDurationThresholdSeconds()))
+                .minimumNumberOfCalls(circuitBreakerProperty.minimumNumberOfCalls())
+                .slidingWindowSize(circuitBreakerProperty.slidingWindowSize())
+                .permittedNumberOfCallsInHalfOpenState(circuitBreakerProperty.permittedNumberOfCallsInHalfOpenState())
+                .waitDurationInOpenState(Duration.ofSeconds(circuitBreakerProperty.slowCallDurationThresholdSeconds()))
+                .automaticTransitionFromOpenToHalfOpenEnabled(circuitBreakerProperty.automaticTransitionFromOpenToHalfOpenEnabled())
                 .build();
     }
 
@@ -102,6 +92,37 @@ public class CoreConfig {
     @ConditionalOnProperty(name = "reyga.config.circuit-breaker.required", havingValue = "true")
     public CircuitBreakerRegistry circuitBreakerRegistry(CircuitBreakerConfig defaultConfig) {
         return CircuitBreakerRegistry.of(defaultConfig);
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "reyga.config.retry.required", havingValue = "true")
+    public RetryConfig defaultRetryConfig(ConfigProperties properties) {
+        return RetryConfig.custom()
+                .maxAttempts(properties.retry().maxAttempts())
+                .waitDuration(Duration.ofMillis(properties.retry().waitDurationMillis()))
+                .failAfterMaxAttempts(properties.retry().failAfterMaxAttempts())
+                .build();
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "reyga.config.retry.required", havingValue = "true")
+    public RetryRegistry retryRegistry(RetryConfig retryConfig) {
+        RetryRegistry registry = RetryRegistry.of(retryConfig);
+        registry.getEventPublisher()
+                .onEntryAdded(event -> {
+                    Retry addedRetry = event.getAddedEntry();
+                    addedRetry.getEventPublisher().onRetry(retryEvent ->
+                            log.warn(
+                                    "-> Retry triggered [{}] attempt#{} because: {}",
+                                    retryEvent.getName(),
+                                    retryEvent.getNumberOfRetryAttempts(),
+                                    retryEvent.getLastThrowable() != null
+                                            ? retryEvent.getLastThrowable().getMessage()
+                                            : "unknown error"
+                            )
+                    );
+                });
+        return registry;
     }
 
 }

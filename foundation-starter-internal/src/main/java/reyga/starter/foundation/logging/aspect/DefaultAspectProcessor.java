@@ -48,7 +48,7 @@ public class DefaultAspectProcessor extends BaseLogging implements BaseAspectPro
             String requestId      = headersMap.get(HeaderEnum.REQUEST_ID.getValue());
             String accessToken    = headersMap.get(HeaderEnum.ACCESS_TOKEN.getValue());
             String username       = headersMap.get(HeaderEnum.USERNAME.getValue());
-            String headersMethod         = headersMap.get(HeaderEnum.METHOD.getValue());
+            String headersMethod  = headersMap.get(HeaderEnum.METHOD.getValue());
             String endpoint       = headersMap.get(HeaderEnum.REQUEST_ENDPOINT.getValue());
             String forwardedFor   = headersMap.get(HeaderEnum.FORWARDED_FOR.getValue());
             String packageInfo    = headersMap.get(HeaderEnum.PACKAGE_INFO.getValue());

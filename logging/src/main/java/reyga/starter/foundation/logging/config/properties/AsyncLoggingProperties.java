@@ -1,14 +1,13 @@
 package reyga.starter.foundation.logging.config.properties;
 
-import lombok.Getter;
-import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
-@Getter @Setter
 @ConfigurationProperties(prefix = "reyga.custom.logging.async")
-public class AsyncLoggingProperties {
-    private int corePoolSize = 5;
-    private int maxPoolSize = 10;
-    private int queueCapacity = 100;
-    private String threadName = "async-logging";
+public record AsyncLoggingProperties(
+        @DefaultValue("5") int corePoolSize,
+        @DefaultValue("10") int maxPoolSize,
+        @DefaultValue("100") int queueCapacity,
+        @DefaultValue("async-logging") String threadName
+) {
 }

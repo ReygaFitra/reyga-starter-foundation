@@ -7,7 +7,7 @@ import reyga.starter.foundation.common.enumeration.ServiceStatusResponseEnum;
 import reyga.starter.foundation.core.dto.response.ResponseError;
 
 @NoArgsConstructor
-public class BaseResponseError extends ResponseBuilder {
+public class ResponseErrorTemplate extends ResponseBuilder {
 
     public static ResponseEntity<ResponseError> createErrorResponse(
             HttpStatus status, String code, String message

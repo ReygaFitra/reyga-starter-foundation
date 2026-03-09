@@ -1,12 +1,16 @@
 package reyga.starter.foundation.core.service;
 
-import com.github.benmanes.caffeine.cache.Cache;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.ratelimiter.RateLimiter;
 import io.github.resilience4j.ratelimiter.RateLimiterConfig;
 import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
+import io.github.resilience4j.retry.Retry;
+import io.github.resilience4j.retry.RetryConfig;
+import io.github.resilience4j.retry.RetryRegistry;
+import org.springframework.cache.Cache;
 
 import java.util.function.Supplier;
 
@@ -14,13 +18,26 @@ public class DefaultResilienceService implements ResilienceService {
 
     @Override
     public <S> S useRateLimiter(
-            RateLimiterConfig config, RateLimiterRegistry registry, Cache<String, RateLimiter> localCache, String rateLimitkey,
+            RateLimiterConfig config, RateLimiterRegistry registry, String rateLimitkey,
             Supplier<S> suppliedProcess, Supplier<S> fallbackSuppliedProcess
     ) {
-        RateLimiter rl = localCache.get(rateLimitkey, k -> registry.rateLimiter(rateLimitkey, config));
+        RateLimiter rl = registry.rateLimiter(rateLimitkey, config);
         try {
             return RateLimiter.decorateSupplier(rl, suppliedProcess).get();
-        } catch (Exception e) {
+        } catch (RequestNotPermitted e) {
+            return fallbackSuppliedProcess.get();
+        }
+    }
+
+    @Override
+    public <S> S useRateLimiterWithCache(
+            RateLimiterConfig config, RateLimiterRegistry registry, Cache cache, String rateLimitkey,
+            Supplier<S> suppliedProcess, Supplier<S> fallbackSuppliedProcess
+    ) {
+        RateLimiter rl = resolveRateLimiterWithCache(config, registry, cache, rateLimitkey);
+        try {
+            return RateLimiter.decorateSupplier(rl, suppliedProcess).get();
+        } catch (RequestNotPermitted e) {
             return fallbackSuppliedProcess.get();
         }
     }
@@ -38,27 +55,75 @@ public class DefaultResilienceService implements ResilienceService {
     }
 
     @Override
-    public void useRateLimiterVoid(
-            RateLimiterConfig config, RateLimiterRegistry registry, Cache<String, RateLimiter> localCache, String rateLimitkey,
-            Runnable suppliedProcess, Runnable fallbackSuppliedProcess
+    public <S> S useRetry(RetryConfig config, RetryRegistry registry, String name, Supplier<S> suppliedProcess) {
+        Retry retry = registry.retry(name, config);
+        return retry.decorateSupplier(suppliedProcess).get();
+    }
+
+    @Override
+    public void useRateLimiter(
+            RateLimiterConfig config, RateLimiterRegistry registry, String rateLimitkey,
+            Runnable runProcess, Runnable fallbackProcess
     ) {
-        RateLimiter rl = localCache.get(rateLimitkey, k -> registry.rateLimiter(rateLimitkey, config));
+        RateLimiter rl = registry.rateLimiter(rateLimitkey, config);
         try {
-            RateLimiter.decorateRunnable(rl, suppliedProcess).run();
-        } catch (Exception e) {
-            fallbackSuppliedProcess.run();
+            RateLimiter.decorateRunnable(rl, runProcess).run();
+        } catch (RequestNotPermitted e) {
+            fallbackProcess.run();
         }
     }
 
     @Override
-    public void useCircuitBreakerVoid(
-            CircuitBreakerConfig config, CircuitBreakerRegistry registry, String cbName, Runnable suppliedProcess, Runnable fallbackSuppliedProcess
+    public void useRateLimiterWithCache(
+            RateLimiterConfig config, RateLimiterRegistry registry, Cache cache, String rateLimitkey,
+            Runnable runProcess, Runnable fallbackProcess
+    ) {
+        RateLimiter rl = resolveRateLimiterWithCache(config, registry, cache, rateLimitkey);
+        try {
+            RateLimiter.decorateRunnable(rl, runProcess).run();
+        } catch (RequestNotPermitted e) {
+            fallbackProcess.run();
+        }
+    }
+
+    @Override
+    public void useCircuitBreaker(
+            CircuitBreakerConfig config, CircuitBreakerRegistry registry, String cbName, Runnable runProcess, Runnable fallbackProcess
     ) {
         CircuitBreaker circuitBreaker = registry.circuitBreaker(cbName, config);
         try {
-            CircuitBreaker.decorateRunnable(circuitBreaker, suppliedProcess).run();
+            CircuitBreaker.decorateRunnable(circuitBreaker, runProcess).run();
         } catch (Exception e) {
-            fallbackSuppliedProcess.run();
+            fallbackProcess.run();
         }
+    }
+
+    @Override
+    public void useRetry(RetryConfig config, RetryRegistry registry, String name, Runnable process) {
+        Retry retry = registry.retry(name, config);
+        retry.decorateRunnable(process).run();
+    }
+
+    private RateLimiter resolveRateLimiterWithCache(
+            RateLimiterConfig config, RateLimiterRegistry registry, Cache cache, String rateLimitkey
+    ) {
+        try {
+            RateLimiter cachedRateLimiter = cache.get(rateLimitkey, RateLimiter.class);
+            if (cachedRateLimiter != null) {
+                return cachedRateLimiter;
+            }
+        } catch (RuntimeException ignored) {
+            // Fallback to registry if cache implementation cannot deserialize/store RateLimiter.
+        }
+
+        RateLimiter rateLimiter = registry.rateLimiter(rateLimitkey, config);
+
+        try {
+            cache.put(rateLimitkey, rateLimiter);
+        } catch (RuntimeException ignored) {
+            // Fallback to registry-only behavior if cache put is not supported.
+        }
+
+        return rateLimiter;
     }
 }

@@ -1,35 +1,32 @@
 package reyga.starter.foundation.logging.config.properties;
 
-import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
-@Data
 @ConfigurationProperties(prefix = "reyga.custom.logging")
-public class LoggingProperties {
-    private boolean enableAspectLogging = true;
-    private Console console = new Console();
-    private Summary summary = new Summary();
-    private Rolling rolling = new Rolling();
-
-    @Data
-    public static class Console {
-        private String pattern;
+public record LoggingProperties(
+        @DefaultValue("true") boolean enableAspectLogging,
+        @DefaultValue Console console,
+        @DefaultValue Summary summary,
+        @DefaultValue Rolling rolling
+) {
+    public record Console(String pattern) {
     }
 
-    @Data
-    public static class Summary {
-        private boolean enable = true;
-        private String pattern;
+    public record Summary(
+            @DefaultValue("true") boolean enable,
+            String pattern
+    ) {
     }
 
-    @Data
-    public static class Rolling {
-        private boolean enable = false;
-        private String pattern;
-        private String filePath;
-        private String fileName;
-        private String summaryFileName;
-        private Integer maxHistory;
-        private String maxFileSize;
+    public record Rolling(
+            @DefaultValue("false") boolean enable,
+            String pattern,
+            String filePath,
+            String fileName,
+            String summaryFileName,
+            Integer maxHistory,
+            String maxFileSize
+    ) {
     }
 }
