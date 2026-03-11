@@ -47,10 +47,10 @@ public class HttpHeaderBuilder {
     public static void extractRequestParam(HttpServletRequest request, RequestLogging requestDto) {
         if (request != null) {
             Iterator<String> paramsItr = request.getParameterNames().asIterator();
-            Map<String, Object> map = new HashMap();
+            Map<String, Object> map = new HashMap<>();
 
             while(paramsItr.hasNext()) {
-                String paramName = (String)paramsItr.next();
+                String paramName = paramsItr.next();
                 map.put(paramName, request.getParameter(paramName));
             }
 

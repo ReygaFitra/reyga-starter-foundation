@@ -9,19 +9,19 @@
     <springProperty scope="context"
                     name="CONSOLE_PATTERN"
                     source="reyga.custom.logging.console.pattern"
-                    defaultValue="[%d{yyyy-MM-dd HH:mm:ss.SSS}] %X{x-request-id} %-5level %logger{150} - %msg%n"/>
+                    defaultValue="[%d{yyyy-MM-dd HH:mm:ss.SSS}] %X{x-starter-request-id} %-5level %logger{150} - %msg%n"/>
 
     <!-- File Pattern -->
     <springProperty scope="context"
                     name="FILE_PATTERN"
                     source="reyga.custom.logging.rolling.pattern"
-                    defaultValue="[%d{yyyy-MM-dd HH:mm:ss.SSS}] | %X{x-request-id} | %-5level | %logger{150} | - %msg%n"/>
+                    defaultValue="[%d{yyyy-MM-dd HH:mm:ss.SSS}] | %X{x-starter-request-id} | %-5level | %logger{150} | - %msg%n"/>
 
     <!-- Summary Pattern -->
     <springProperty scope="context"
                     name="SUMMARY_PATTERN"
                     source="reyga.custom.logging.summary.pattern"
-                    defaultValue="%d{yyyy-MM-dd HH:mm:ss.SSS} | %X{x-request-id} | %-5level | %logger{150} | - %msg%n"/>
+                    defaultValue="%d{yyyy-MM-dd HH:mm:ss.SSS} | %X{x-starter-request-id} | %-5level | %logger{150} | - %msg%n"/>
 
     <springProperty scope="context"
                     name="ENABLE_ROLLING"

@@ -11,10 +11,11 @@ import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
 import io.github.resilience4j.retry.RetryRegistry;
 import org.springframework.cache.Cache;
+import reyga.starter.foundation.common.logging.BaseLogging;
 
 import java.util.function.Supplier;
 
-public class DefaultResilienceService implements ResilienceService {
+public class DefaultResilienceService extends BaseLogging implements ResilienceService {
 
     @Override
     public <S> S useRateLimiter(
@@ -25,6 +26,7 @@ public class DefaultResilienceService implements ResilienceService {
         try {
             return RateLimiter.decorateSupplier(rl, suppliedProcess).get();
         } catch (RequestNotPermitted e) {
+            this.printRequestNotPermitted(e);
             return fallbackSuppliedProcess.get();
         }
     }
@@ -38,6 +40,7 @@ public class DefaultResilienceService implements ResilienceService {
         try {
             return RateLimiter.decorateSupplier(rl, suppliedProcess).get();
         } catch (RequestNotPermitted e) {
+            this.printRequestNotPermitted(e);
             return fallbackSuppliedProcess.get();
         }
     }
@@ -69,6 +72,7 @@ public class DefaultResilienceService implements ResilienceService {
         try {
             RateLimiter.decorateRunnable(rl, runProcess).run();
         } catch (RequestNotPermitted e) {
+            this.printRequestNotPermitted(e);
             fallbackProcess.run();
         }
     }
@@ -126,4 +130,9 @@ public class DefaultResilienceService implements ResilienceService {
 
         return rateLimiter;
     }
+
+    private void printRequestNotPermitted(RequestNotPermitted requestNotPermitted) {
+        log.warn("Request Not Permitted :", requestNotPermitted.getMessage());
+    }
+
 }

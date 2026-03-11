@@ -19,6 +19,9 @@ import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 
 @ControllerAdvice
 public class DefaultExceptionHandler extends BaseExceptionHandler<ResponseError> {
+
+   private static final String JACKSON_WARN = "write_log_error";
+
     @Override
     protected ResponseEntity<ResponseError> processGlobalErrorHandler(Exception exception, HttpServletRequest servletRequest) {
         String code;
@@ -36,7 +39,7 @@ public class DefaultExceptionHandler extends BaseExceptionHandler<ResponseError>
             try {
                 log.warn("ILLEGAL ARGUMENT EXCEPTION ERROR :", mapper.writeValueAsString(errors));
             } catch (JacksonException e1) {
-                log.error("write_log_error", e1.getMessage());
+                log.error(JACKSON_WARN, e1.getMessage());
             }
         } else {
             code = "99";
@@ -47,7 +50,7 @@ public class DefaultExceptionHandler extends BaseExceptionHandler<ResponseError>
             try {
                 log.warn("GLOBAL ERROR :", mapper.writeValueAsString(errors));
             } catch (JacksonException e1) {
-                log.error("write_log_error", e1.getMessage());
+                log.error(JACKSON_WARN, e1.getMessage());
             }
         }
         log.exception(exceptionType.toUpperCase(), null, exception);

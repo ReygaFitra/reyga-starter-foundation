@@ -6,20 +6,20 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum HeaderEnum {
-    ACCESS_TOKEN("x-access-token"),
-    USERNAME("x-user-name"),
-    REQUEST_ID("x-request-id"),
-    METHOD("x-request-method"),
-    STATUS_CODE("x-status-code"),
-    REQUEST_ENDPOINT("x-request-uri"),
-    FORWARDED_FOR("x-forwarded-for"),
-    PACKAGE_INFO("x-package-name"),
-    EXCEPTION("x-request-exception"),
-    REQUEST("x-request"),
-    RESPONSE("x-response"),
-    USER_AGENT("user-agent"),
-    RESPONSE_TIME("x-response-time"),
-    SUMMARY_LOG("x-summary-log");
+    ACCESS_TOKEN("x-starter-access-token"),
+    USERNAME("x-starter-user-name"),
+    REQUEST_ID("x-starter-request-id"),
+    METHOD("x-starter-request-method"),
+    STATUS_CODE("x-starter-status-code"),
+    REQUEST_ENDPOINT("x-starter-request-uri"),
+    FORWARDED_FOR("x-starter-forwarded-for"),
+    PACKAGE_INFO("x-starter-package-name"),
+    EXCEPTION("x-starter-request-exception"),
+    REQUEST("x-starter-request"),
+    RESPONSE("x-starter-response"),
+    USER_AGENT("x-starter-user-agent"),
+    RESPONSE_TIME("x-starter-response-time"),
+    SUMMARY_LOG("x-starter-summary-log");
 
     private final String value;
 }

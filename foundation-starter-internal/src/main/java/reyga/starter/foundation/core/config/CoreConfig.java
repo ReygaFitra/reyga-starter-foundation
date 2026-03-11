@@ -9,7 +9,6 @@ import io.github.resilience4j.retry.RetryConfig;
 import io.github.resilience4j.retry.RetryRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -32,25 +31,25 @@ public class CoreConfig {
     private static final Logger log = LoggerFactory.getLogger(CoreConfig.class);
 
     @Bean
-    @ConditionalOnProperty(name = "reyga.config.exception.enable-default", havingValue = "true")
+    @ConditionalOnProperty(name = "reyga.config.default-bean.exception-handler", havingValue = "true")
     public DefaultExceptionHandler defaultExceptionHandler() {
         return new DefaultExceptionHandler();
     }
 
     @Bean
-    @ConditionalOnProperty(name = "reyga.config.validation.enable-default", havingValue = "true")
+    @ConditionalOnProperty(name = "reyga.config.default-bean.validation-handler", havingValue = "true")
     public ValidationProcessor validationProcessor() {
         return new ValidationProcessor();
     }
 
     @Bean
-    @ConditionalOnMissingBean(ResilienceService.class)
+    @ConditionalOnProperty(name = "reyga.config.default-bean.utilities", havingValue = "true")
     public ResilienceService resilienceService() {
         return new DefaultResilienceService();
     }
 
     @Bean
-    @ConditionalOnMissingBean(TransactionalExecutor.class)
+    @ConditionalOnProperty(name = "reyga.config.default-bean.utilities", havingValue = "true")
     public TransactionalExecutor transactionalExecutor(PlatformTransactionManager transactionManager) {
         return new DefaultTransactionalExecutor(transactionManager);
     }

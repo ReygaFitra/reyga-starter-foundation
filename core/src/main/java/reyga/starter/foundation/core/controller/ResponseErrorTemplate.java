@@ -13,7 +13,6 @@ public class ResponseErrorTemplate extends ResponseBuilder {
             HttpStatus status, String code, String message
     ) {
        ResponseError error = buildResponseError(ServiceStatusResponseEnum.FAILED.getValue(), code, message);
-       setMDCResponse(error);
        return new ResponseEntity<>(error, status);
     }
 
@@ -21,7 +20,6 @@ public class ResponseErrorTemplate extends ResponseBuilder {
             HttpStatus status, String code, String message, String business, String additionalInfo
     ) {
         ResponseError error = buildResponseError(ServiceStatusResponseEnum.FAILED.getValue(), code, message, business, additionalInfo);
-        setMDCResponse(error);
         return new ResponseEntity<>(error, status);
     }
 

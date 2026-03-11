@@ -5,24 +5,27 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 
 @ConfigurationProperties(prefix = "reyga.config")
 public record ConfigProperties(
-        @DefaultValue ConfigException exception,
-        @DefaultValue Validation validation,
+        @DefaultValue Default defaultBean,
         @DefaultValue RateLimiter rateLimiter,
         @DefaultValue CircuitBreaker circuitBreaker,
         @DefaultValue Retry retry
 ) {
 
-    public record ConfigException(@DefaultValue("true") boolean enableDefault) {
-    }
-
-    public record Validation(@DefaultValue("true") boolean enableDefault) {
+    public record Default(
+            @DefaultValue("false") boolean exceptionHandler,
+            @DefaultValue("false") boolean validationHandler,
+            @DefaultValue("false") boolean loggingHandler,
+            @DefaultValue("false") boolean requestResponseAdvice,
+            @DefaultValue("false") boolean aspectHandler,
+            @DefaultValue("false") boolean utilities
+    ) {
     }
 
     public record RateLimiter(
             @DefaultValue("false") boolean required,
-            @DefaultValue("1") int timeoutMilis,
-            @DefaultValue("1") int maxRequest,
-            @DefaultValue("1") int refreshPeriodSeconds
+            @DefaultValue("60000") int timeoutMilis,
+            @DefaultValue("3") int maxRequest,
+            @DefaultValue("6000") int refreshPeriodSeconds
     ) {
     }
 

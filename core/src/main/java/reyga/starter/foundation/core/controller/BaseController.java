@@ -13,7 +13,6 @@ import reyga.starter.foundation.core.dto.response.ResponseData;
 public abstract class BaseController extends ResponseErrorTemplate {
 
     protected <T> ResponseEntity<T> createResponse(T data, HttpStatus status) {
-        setMDCResponse(data);
         return new ResponseEntity<>(data, status);
     }
 
@@ -21,7 +20,6 @@ public abstract class BaseController extends ResponseErrorTemplate {
             T data, HttpStatus status, String code, String message
     ) {
         ResponseData<T> responseData = buildResponseData(data, ServiceStatusResponseEnum.SUCCESS.getValue(), code, message);
-        setMDCResponse(responseData);
         return new ResponseEntity<>(responseData, status);
     }
 

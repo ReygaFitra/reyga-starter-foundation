@@ -22,7 +22,7 @@ public class ValidationProcessor extends BaseValidationProcessor {
                     .stream()
                     .map(ConstraintViolation::getMessage)
                     .collect(Collectors.toSet());
-            throwErrorWithLog("Validation Message", validationMessage);
+            throwErrorWithLog(validationMessage);
         }
     }
 
@@ -39,12 +39,12 @@ public class ValidationProcessor extends BaseValidationProcessor {
                             }}
                     )
                     .collect(Collectors.toList());
-            throwErrorWithLog("Validation Message", validationMessage);
+            throwErrorWithLog(validationMessage);
         }
     }
 
-    private void throwErrorWithLog(String infoMsg, Object valueMsg) throws AppFaultException {
-        log.warn(infoMsg, valueMsg);
+    private void throwErrorWithLog(Object valueMsg) throws AppFaultException {
+        log.warn("Validation Message", valueMsg);
         AppFaultContent faultContent = buildAppFaultContent(
                 "Validation Exception", "01", "Invalid Request", valueMsg, HttpStatus.BAD_REQUEST
         );

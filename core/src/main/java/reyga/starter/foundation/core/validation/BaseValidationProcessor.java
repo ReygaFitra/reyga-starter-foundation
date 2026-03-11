@@ -4,7 +4,6 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
-import lombok.RequiredArgsConstructor;
 import reyga.starter.foundation.common.logging.BaseLogging;
 
 import java.util.List;
@@ -23,7 +22,6 @@ public abstract class BaseValidationProcessor extends BaseLogging {
         }
     }
 
-
     public <T> void validateRequest(T request, boolean useMapPattern) {
         Set<ConstraintViolation<T>> violations = validator.validate(request);
         if (useMapPattern) {
@@ -31,9 +29,9 @@ public abstract class BaseValidationProcessor extends BaseLogging {
         } else {
             violationsSetHandle(violations);
         }
-    };
+    }
 
-    public <T, GT> void validateRequest(T request, boolean useMapPattern, List<Class<GT>> validationGroups) {
+    public <T, G> void validateRequest(T request, boolean useMapPattern, List<Class<G>> validationGroups) {
         Class<?>[] valGroupArr = validationGroups.toArray(new Class<?>[0]);
         Set<ConstraintViolation<T>> violations = validator.validate(request, valGroupArr);
         if (useMapPattern) {
@@ -41,7 +39,7 @@ public abstract class BaseValidationProcessor extends BaseLogging {
         } else {
             violationsSetHandle(violations);
         }
-    };
+    }
 
     protected abstract <T> void violationsSetHandle(Set<ConstraintViolation<T>> violations);
     protected abstract <T> void violationsMapHandle(Set<ConstraintViolation<T>> violations);

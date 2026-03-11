@@ -23,7 +23,6 @@ public abstract class ResilienceBaseController extends BaseController {
     protected <T> ResponseEntity<T> createResponseWithRateLimiter(
             T data, RateLimiterConfig rlConfig, String rlKey
     ) {
-        setMDCResponse(data);
         return resilienceService.useRateLimiter(rlConfig, rateLimiterRegistry, rlKey,
                 () -> new ResponseEntity<>(data, HttpStatus.OK), ()-> new ResponseEntity<>(data, HttpStatus.TOO_MANY_REQUESTS)
         );
@@ -32,7 +31,6 @@ public abstract class ResilienceBaseController extends BaseController {
     protected <T> ResponseEntity<T> createResponseWithRateLimiter(
             T data, RateLimiterConfig rlConfig, String rlKey, Cache cache
     ) {
-        setMDCResponse(data);
         return resilienceService.useRateLimiterWithCache(rlConfig, rateLimiterRegistry, cache, rlKey,
                 () -> new ResponseEntity<>(data, HttpStatus.OK), () -> new ResponseEntity<>(data, HttpStatus.TOO_MANY_REQUESTS)
         );
@@ -41,7 +39,6 @@ public abstract class ResilienceBaseController extends BaseController {
     protected <T> ResponseEntity<ResponseData<T>> createResponseWithRateLimiter(
             T data, String code, String message, RateLimiterConfig rlConfig, String rlKey
     ) {
-        setMDCResponse(data);
         return resilienceService.useRateLimiter(rlConfig, rateLimiterRegistry, rlKey,
                 () -> new ResponseEntity<>(
                         buildResponseData(data, ServiceStatusResponseEnum.SUCCESS.getValue(), code, message), HttpStatus.OK
@@ -56,7 +53,6 @@ public abstract class ResilienceBaseController extends BaseController {
     protected <T> ResponseEntity<ResponseData<T>> createResponseWithRateLimiter(
             T data, String code, String message, RateLimiterConfig rlConfig, String rlKey, Cache cache
     ) {
-        setMDCResponse(data);
         return resilienceService.useRateLimiterWithCache(rlConfig, rateLimiterRegistry, cache, rlKey,
                 () -> new ResponseEntity<>(
                         buildResponseData(data, ServiceStatusResponseEnum.SUCCESS.getValue(), code, message), HttpStatus.OK
@@ -72,7 +68,6 @@ public abstract class ResilienceBaseController extends BaseController {
     protected <T> ResponseEntity<T> createResponseWithCircuitBreaker(
             T data, CircuitBreakerConfig cbConfig, String cbName
     ) {
-        setMDCResponse(data);
         return resilienceService.useCircuitBreaker(cbConfig, circuitBreakerRegistry, cbName,
                 () -> new ResponseEntity<>(data, HttpStatus.OK), ()-> new ResponseEntity<>(data, HttpStatus.INTERNAL_SERVER_ERROR)
         );
@@ -81,7 +76,6 @@ public abstract class ResilienceBaseController extends BaseController {
     protected <T> ResponseEntity<ResponseData<T>> createResponseWithCircuitBreaker(
             T data, String code, String message, CircuitBreakerConfig cbConfig, String cbName
     ) {
-        setMDCResponse(data);
         return resilienceService.useCircuitBreaker(cbConfig, circuitBreakerRegistry, cbName,
                 () -> new ResponseEntity<>(
                         buildResponseData(data, ServiceStatusResponseEnum.SUCCESS.getValue(), code, message), HttpStatus.OK

@@ -9,18 +9,12 @@ import reyga.starter.foundation.logging.aspect.AspectLogging;
 import reyga.starter.foundation.logging.aspect.BaseAspectProcessor;
 import reyga.starter.foundation.logging.aspect.DefaultAspectProcessor;
 import reyga.starter.foundation.logging.config.properties.LoggingProperties;
-import reyga.starter.foundation.logging.interceptor.BaseLogInterceptor;
-import reyga.starter.foundation.logging.interceptor.DefaultLogInterceptor;
+import reyga.starter.foundation.logging.service.DefaultLoggingService;
+import reyga.starter.foundation.logging.service.LoggingService;
 
 @Configuration
 @EnableConfigurationProperties(LoggingProperties.class)
 public class LoggingConfig {
-
-    @Bean
-    @ConditionalOnMissingBean(BaseLogInterceptor.class)
-    public BaseLogInterceptor logInterceptor() {
-        return new DefaultLogInterceptor();
-    }
 
     @Bean
     @ConditionalOnProperty(name = "reyga.custom.logging.enable-aspect-logging", havingValue = "true")
@@ -34,4 +28,9 @@ public class LoggingConfig {
         return new DefaultAspectProcessor();
     }
 
+    @Bean
+    @ConditionalOnProperty(name = "reyga.config.default-bean.logging-handler", havingValue = "true")
+    public LoggingService loggingService() {
+        return new DefaultLoggingService();
+    }
 }
