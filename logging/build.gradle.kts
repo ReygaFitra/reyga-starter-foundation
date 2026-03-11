@@ -21,7 +21,6 @@ publishing {
 
 dependencies {
     implementation(project(":common"))
-    implementation("org.springframework.boot:spring-boot-starter-aspectj:$springBootVersion")
 
     api("ch.qos.logback:logback-classic:$logbackClassicVersion")
     api("org.codehaus.janino:janino:$janinoVersion")

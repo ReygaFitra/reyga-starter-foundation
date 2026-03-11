@@ -1,4 +1,4 @@
-package reyga.starter.foundation.logging.aspect;
+package reyga.starter.foundation.core.aspect;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @RequiredArgsConstructor
-public class DefaultAspectProcessor extends BaseLogging implements BaseAspectProcessor  {
+public class DefaultAspectProcessor extends BaseLogging implements BaseAspectProcessor {
 
     @Override
     public Object process(ProceedingJoinPoint joinPoint, Method method, HttpServletRequest request, HttpServletResponse response) throws Throwable {
@@ -45,16 +45,16 @@ public class DefaultAspectProcessor extends BaseLogging implements BaseAspectPro
             stopWatch.stop();
             long executionTime = stopWatch.getTotalTimeMillis();
 
-            String requestId      = headersMap.get(HeaderEnum.REQUEST_ID.getValue());
-            String accessToken    = headersMap.get(HeaderEnum.ACCESS_TOKEN.getValue());
-            String username       = headersMap.get(HeaderEnum.USERNAME.getValue());
-            String headersMethod  = headersMap.get(HeaderEnum.METHOD.getValue());
-            String endpoint       = headersMap.get(HeaderEnum.REQUEST_ENDPOINT.getValue());
-            String forwardedFor   = headersMap.get(HeaderEnum.FORWARDED_FOR.getValue());
-            String packageInfo    = headersMap.get(HeaderEnum.PACKAGE_INFO.getValue());
-            String requestBody    = headersMap.get(HeaderEnum.REQUEST.getValue());
-            String userAgent      = headersMap.get(HeaderEnum.USER_AGENT.getValue());
-            String responseTime   = executionTime + "ms";
+            String requestId = headersMap.get(HeaderEnum.REQUEST_ID.getValue());
+            String accessToken = headersMap.get(HeaderEnum.ACCESS_TOKEN.getValue());
+            String username = headersMap.get(HeaderEnum.USERNAME.getValue());
+            String headersMethod = headersMap.get(HeaderEnum.METHOD.getValue());
+            String endpoint = headersMap.get(HeaderEnum.REQUEST_ENDPOINT.getValue());
+            String forwardedFor = headersMap.get(HeaderEnum.FORWARDED_FOR.getValue());
+            String packageInfo = headersMap.get(HeaderEnum.PACKAGE_INFO.getValue());
+            String requestBody = headersMap.get(HeaderEnum.REQUEST.getValue());
+            String userAgent = headersMap.get(HeaderEnum.USER_AGENT.getValue());
+            String responseTime = executionTime + "ms";
 
             String exception = request.getAttribute(HeaderEnum.EXCEPTION.getValue()) != null
                     ? request.getAttribute(HeaderEnum.EXCEPTION.getValue()).toString()
@@ -71,5 +71,4 @@ public class DefaultAspectProcessor extends BaseLogging implements BaseAspectPro
             log.infoServiceEnd(joinPoint.getSignature().getName());
         }
     }
-
 }

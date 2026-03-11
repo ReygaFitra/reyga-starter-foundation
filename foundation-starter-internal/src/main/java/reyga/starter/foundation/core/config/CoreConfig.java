@@ -9,11 +9,15 @@ import io.github.resilience4j.retry.RetryConfig;
 import io.github.resilience4j.retry.RetryRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
+import reyga.starter.foundation.core.aspect.AspectLogging;
+import reyga.starter.foundation.core.aspect.BaseAspectProcessor;
+import reyga.starter.foundation.core.aspect.DefaultAspectProcessor;
 import reyga.starter.foundation.core.component.DefaultTransactionalExecutor;
 import reyga.starter.foundation.core.component.TransactionalExecutor;
 import reyga.starter.foundation.core.config.properties.ConfigProperties;
@@ -21,6 +25,7 @@ import reyga.starter.foundation.core.exception.handler.DefaultExceptionHandler;
 import reyga.starter.foundation.core.service.DefaultResilienceService;
 import reyga.starter.foundation.core.service.ResilienceService;
 import reyga.starter.foundation.core.validation.ValidationProcessor;
+import reyga.starter.foundation.logging.config.properties.LoggingProperties;
 
 import java.time.Duration;
 
@@ -52,6 +57,18 @@ public class CoreConfig {
     @ConditionalOnProperty(name = "reyga.config.default-bean.utilities", havingValue = "true")
     public TransactionalExecutor transactionalExecutor(PlatformTransactionManager transactionManager) {
         return new DefaultTransactionalExecutor(transactionManager);
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "reyga.custom.logging.enable-aspect-logging", havingValue = "true")
+    public AspectLogging loggingAspect(LoggingProperties loggingProperties, BaseAspectProcessor baseAspectProcessor) {
+        return new AspectLogging(loggingProperties.enableAspectLogging(), baseAspectProcessor);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(BaseAspectProcessor.class)
+    public BaseAspectProcessor defaultAspectProcessor() {
+        return new DefaultAspectProcessor();
     }
 
     @Bean

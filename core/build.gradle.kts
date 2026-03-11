@@ -27,6 +27,7 @@ dependencies {
     implementation("io.github.resilience4j:resilience4j-all:$resilience4jVersion")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion")
     implementation("com.github.ben-manes.caffeine:caffeine:$caffeineVersion")
+    implementation("org.springframework.boot:spring-boot-starter-aspectj:${springBootVersion}")
 }
 
 java {

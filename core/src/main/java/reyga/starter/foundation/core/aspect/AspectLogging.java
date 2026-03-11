@@ -1,4 +1,4 @@
-package reyga.starter.foundation.logging.aspect;
+package reyga.starter.foundation.core.aspect;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -11,7 +11,6 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-import reyga.starter.foundation.logging.config.properties.LoggingProperties;
 
 import java.lang.reflect.Method;
 
@@ -19,16 +18,16 @@ import java.lang.reflect.Method;
 @RequiredArgsConstructor
 public class AspectLogging {
 
-    private final LoggingProperties loggingProperties;
+    private final boolean enableAspectLogging;
     private final BaseAspectProcessor baseAspectProcessor;
 
-    @Pointcut(value = "@annotation(reyga.starter.foundation.logging.annotation.AspectLogExecution)")
-    private void pointCut(){
-    };
+    @Pointcut(value = "@annotation(reyga.starter.foundation.core.annotation.AspectLogExecution)")
+    private void pointCut() {
+    }
 
     @Around(value = "pointCut()")
     public Object processRequestIntercept(ProceedingJoinPoint joinPoint) throws Throwable {
-        if (!loggingProperties.enableAspectLogging()) {
+        if (!enableAspectLogging) {
             return joinPoint.proceed();
         }
 

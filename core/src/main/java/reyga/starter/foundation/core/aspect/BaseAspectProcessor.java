@@ -1,4 +1,4 @@
-package reyga.starter.foundation.logging.aspect;
+package reyga.starter.foundation.core.aspect;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
