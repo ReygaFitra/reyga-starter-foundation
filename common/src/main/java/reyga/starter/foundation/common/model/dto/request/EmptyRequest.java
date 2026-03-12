@@ -1,4 +1,4 @@
-package reyga.starter.foundation.core.dto.request;
+package reyga.starter.foundation.common.model.dto.request;
 
 import lombok.NoArgsConstructor;
 

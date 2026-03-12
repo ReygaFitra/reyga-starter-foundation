@@ -1,8 +1,8 @@
 package reyga.starter.foundation.core.service;
 
 import reyga.starter.foundation.core.component.BaseTransactionalExecutor;
-import reyga.starter.foundation.core.dto.content.BaseContent;
-import reyga.starter.foundation.core.dto.request.BaseRequest;
+import reyga.starter.foundation.common.model.dto.content.BaseContent;
+import reyga.starter.foundation.common.model.dto.request.BaseRequest;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,4 +1,4 @@
-package reyga.starter.foundation.core.dto.response;
+package reyga.starter.foundation.common.model.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;

@@ -4,7 +4,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import reyga.starter.foundation.common.enumeration.ServiceStatusResponseEnum;
-import reyga.starter.foundation.core.dto.response.ResponseError;
+import reyga.starter.foundation.common.model.dto.response.ResponseError;
 
 @NoArgsConstructor
 public class ResponseErrorTemplate extends ResponseBuilder {

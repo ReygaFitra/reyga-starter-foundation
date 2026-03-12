@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
-import reyga.starter.foundation.core.dto.response.ResponseError;
+import reyga.starter.foundation.common.model.dto.response.ResponseError;
 import reyga.starter.foundation.core.controller.ResponseErrorTemplate;
 import reyga.starter.foundation.core.exception.AppFaultException;
 import tools.jackson.core.JacksonException;

@@ -10,7 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import reyga.starter.foundation.common.enumeration.ServiceCodeEnum;
 import reyga.starter.foundation.common.enumeration.ServiceStatusResponseEnum;
-import reyga.starter.foundation.core.dto.response.ResponseData;
+import reyga.starter.foundation.common.model.dto.response.ResponseData;
 import reyga.starter.foundation.core.service.ResilienceService;
 
 @RequiredArgsConstructor

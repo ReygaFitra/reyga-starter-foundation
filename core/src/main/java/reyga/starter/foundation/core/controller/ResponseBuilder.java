@@ -3,9 +3,9 @@ package reyga.starter.foundation.core.controller;
 import lombok.NoArgsConstructor;
 import reyga.starter.foundation.common.logging.BaseLogging;
 import reyga.starter.foundation.common.util.DateUtil;
-import reyga.starter.foundation.core.dto.response.ResponseData;
-import reyga.starter.foundation.core.dto.response.ResponseError;
-import reyga.starter.foundation.core.dto.response.ResponseErrorDetail;
+import reyga.starter.foundation.common.model.dto.response.ResponseData;
+import reyga.starter.foundation.common.model.dto.response.ResponseError;
+import reyga.starter.foundation.common.model.dto.response.ResponseErrorDetail;
 
 import java.time.LocalDateTime;
 

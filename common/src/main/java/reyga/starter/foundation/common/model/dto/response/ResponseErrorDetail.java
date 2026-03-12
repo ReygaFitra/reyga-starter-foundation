@@ -1,4 +1,4 @@
-package reyga.starter.foundation.core.dto.response;
+package reyga.starter.foundation.common.model.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

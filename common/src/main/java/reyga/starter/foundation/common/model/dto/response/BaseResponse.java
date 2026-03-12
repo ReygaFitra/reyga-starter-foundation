@@ -1,8 +1,6 @@
-package reyga.starter.foundation.core.dto.request;
+package reyga.starter.foundation.common.model.dto.response;
 
 import jakarta.persistence.MappedSuperclass;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,9 +13,8 @@ import java.io.Serializable;
 @MappedSuperclass
 @SuperBuilder(toBuilder = true)
 @NoArgsConstructor @AllArgsConstructor
-public abstract class BaseRequest implements Serializable {
-
-    private transient HttpServletRequest servletRequest;
-    private transient HttpServletResponse servletResponse;
-
+public abstract class BaseResponse implements Serializable {
+    protected String status;
+    protected String code;
+    protected String message;
 }

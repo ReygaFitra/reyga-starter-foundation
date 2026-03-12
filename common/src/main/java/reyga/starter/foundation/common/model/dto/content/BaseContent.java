@@ -1,4 +1,4 @@
-package reyga.starter.foundation.core.dto.response;
+package reyga.starter.foundation.common.model.dto.content;
 
 import jakarta.persistence.MappedSuperclass;
 import lombok.AllArgsConstructor;
@@ -8,13 +8,13 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 import java.io.Serializable;
+import java.util.Map;
+import java.util.UUID;
 
 @Getter @Setter
 @MappedSuperclass
 @SuperBuilder(toBuilder = true)
 @NoArgsConstructor @AllArgsConstructor
-public abstract class BaseResponse implements Serializable {
-    protected String status;
-    protected String code;
-    protected String message;
+public abstract class BaseContent implements Serializable {
+    protected transient Map<String, UUID> nodeId;
 }
