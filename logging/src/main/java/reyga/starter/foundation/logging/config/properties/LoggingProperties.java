@@ -5,7 +5,6 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 
 @ConfigurationProperties(prefix = "reyga.custom.logging")
 public record LoggingProperties(
-        @DefaultValue("true") boolean enableAspectLogging,
         @DefaultValue Console console,
         @DefaultValue Summary summary,
         @DefaultValue Rolling rolling

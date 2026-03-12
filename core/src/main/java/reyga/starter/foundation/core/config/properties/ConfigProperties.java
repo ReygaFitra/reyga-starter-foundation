@@ -8,7 +8,8 @@ public record ConfigProperties(
         @DefaultValue Default defaultBean,
         @DefaultValue RateLimiter rateLimiter,
         @DefaultValue CircuitBreaker circuitBreaker,
-        @DefaultValue Retry retry
+        @DefaultValue Retry retry,
+        @DefaultValue Aspect aspect
 ) {
 
     public record Default(
@@ -16,8 +17,15 @@ public record ConfigProperties(
             @DefaultValue("false") boolean validationHandler,
             @DefaultValue("false") boolean loggingHandler,
             @DefaultValue("false") boolean requestResponseAdvice,
-            @DefaultValue("false") boolean aspectHandler,
             @DefaultValue("false") boolean utilities
+    ) {
+    }
+
+    public record Aspect(
+            @DefaultValue("false") boolean around,
+            @DefaultValue("false") boolean before,
+            @DefaultValue("false") boolean afterReturning,
+            @DefaultValue("false") boolean afterThrowing
     ) {
     }
 
