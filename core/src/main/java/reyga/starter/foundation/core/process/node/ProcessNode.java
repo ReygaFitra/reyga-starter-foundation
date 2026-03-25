@@ -29,8 +29,8 @@ public class ProcessNode {
     public void execute(Map<String, Object> contentService) {
         try {
             if (ifContext != null) {
-                if (ifContext.condition.get() && !ifContext.executed) {
-                    ifContext.executed = true;
+                if (ifContext.condition.get() && !ifContext.executed.get()) {
+                    ifContext.executed.set(true);
                     for (ProcessNode sub : subProcesses.values()) {
                         sub.execute(contentService);
                     }

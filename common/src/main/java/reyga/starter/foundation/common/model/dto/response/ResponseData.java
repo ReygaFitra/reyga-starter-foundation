@@ -1,10 +1,13 @@
 package reyga.starter.foundation.common.model.dto.response;
 
+import lombok.Getter;
+import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
+@Setter @Getter
 @SuperBuilder(toBuilder = true)
 public class ResponseData<T> extends BaseResponse {
-    private T data;
+    private transient T data;
 
     public ResponseData() {
     }
@@ -19,14 +22,6 @@ public class ResponseData<T> extends BaseResponse {
 
     public ResponseData(String status, String code, String message, T data) {
         super(status, code, message);
-        this.data = data;
-    }
-
-    public T getData() {
-        return data;
-    }
-
-    public void setData(T data) {
         this.data = data;
     }
 

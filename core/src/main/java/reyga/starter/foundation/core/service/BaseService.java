@@ -15,7 +15,7 @@ public abstract class BaseService<T extends BaseRequest, R> extends BaseLogging 
 
     protected void logInformation(T req) {
         log.info("Executing Service...");
-        log.info("Request : ", req.toString());
+        log.info("Request : ", String.valueOf(req));
     }
 
 }

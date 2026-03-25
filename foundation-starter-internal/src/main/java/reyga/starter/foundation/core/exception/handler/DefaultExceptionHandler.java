@@ -68,7 +68,7 @@ public class DefaultExceptionHandler extends BaseExceptionHandler<ResponseError>
             try {
                 log.warn("JPA ERROR :", mapper.writeValueAsString(errors));
             } catch (JacksonException e1) {
-                log.error("write_log_error", e1.getMessage());
+                log.error(JACKSON_WARN, e1.getMessage());
             }
         }
         if (exception instanceof DataAccessException) {
@@ -77,7 +77,7 @@ public class DefaultExceptionHandler extends BaseExceptionHandler<ResponseError>
             try {
                 log.warn("JDBC ERROR :", mapper.writeValueAsString(errors));
             } catch (JacksonException e1) {
-                log.error("write_log_error", e1.getMessage());
+                log.error(JACKSON_WARN, e1.getMessage());
             }
         }
         log.exception(exceptionType.toUpperCase(), null, exception);

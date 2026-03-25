@@ -4,9 +4,9 @@ import java.util.*;
 
 public abstract class AbstractProcessBuilder {
     protected final Map<String, Object> contentService = new HashMap<>();
-    private final List<String> processIdStack = new ArrayList<>();
+    protected final List<String> processIdStack = new ArrayList<>();
     protected final Map<String, Map<String, ProcessNode>> subProcessMap = new HashMap<>();
-    private final LinkedHashMap<String, ProcessNode> mainProcesses = new LinkedHashMap<>();
+    protected final LinkedHashMap<String, ProcessNode> mainProcesses = new LinkedHashMap<>();
 
     public <R> R getContent(String processId, Class<R> type) {
         Object value = contentService.get(processId);
@@ -43,7 +43,6 @@ public abstract class AbstractProcessBuilder {
         Map<String, ProcessNode> subNodes = subProcessMap.get(lastId);
         ProcessNode parentNode = getNode(lastId);
         parentNode.setSubProcesses(subNodes);
-        subProcessMap.remove(lastId);
     }
 
     public void executeSubProcesses(String processId) {

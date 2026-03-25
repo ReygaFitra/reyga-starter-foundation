@@ -22,7 +22,7 @@ public class ResponseBuilder extends BaseLogging {
     }
 
     protected static ResponseError buildResponseError(String status, String code, String message) {
-        return ResponseError.Builder.newBuilder()
+        return ResponseError.builder()
                 .status(status)
                 .code(code)
                 .message(message)
@@ -30,11 +30,11 @@ public class ResponseBuilder extends BaseLogging {
     }
 
     protected static ResponseError buildResponseError(String status, String code, String message, String business, String additionalInfo) {
-        return ResponseError.Builder.newBuilder()
+        return ResponseError.builder()
                 .status(status)
                 .code(code)
                 .message(message)
-                .details(ResponseErrorDetail.Builder.newBuilder()
+                .details(ResponseErrorDetail.builder()
                         .business(business)
                         .additionalInfo(additionalInfo)
                         .timestamp(DateUtil.getTimestamp(LocalDateTime.now()))
