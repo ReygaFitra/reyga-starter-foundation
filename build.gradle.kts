@@ -12,7 +12,8 @@ val projectGroup: String by project
 val projectVersion: String by project
 val javaVersion = providers.gradleProperty("javaVersion").get().toInt()
 val springBootVersion: String by project
-val junitVersion: String by project
+val junitJupiterVersion: String by project
+val mockitoVersion: String by project
 val commonsMathVersion: String by project
 val guavaVersion: String by project
 val jakartaPersistenceApiVersion: String by project
@@ -48,8 +49,12 @@ subprojects {
     }
 
     dependencies {
-        // Use JUnit test framework.
-        testImplementation("junit:junit:$junitVersion")
+        // Use JUnit 5 + Mockito for tests.
+        testImplementation("org.junit.jupiter:junit-jupiter-api:$junitJupiterVersion")
+        testImplementation("org.junit.jupiter:junit-jupiter-params:$junitJupiterVersion")
+        testImplementation("org.mockito:mockito-core:$mockitoVersion")
+        testImplementation("org.mockito:mockito-junit-jupiter:$mockitoVersion")
+        testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitJupiterVersion")
 
         // This dependency is exported to consumers, that is to say found on their compile classpath.
         api("org.apache.commons:commons-math3:$commonsMathVersion")
@@ -68,5 +73,8 @@ subprojects {
         annotationProcessor("org.projectlombok:lombok:$lombokVersion")
 
     }
-}
 
+    tasks.test {
+        useJUnitPlatform()
+    }
+}
