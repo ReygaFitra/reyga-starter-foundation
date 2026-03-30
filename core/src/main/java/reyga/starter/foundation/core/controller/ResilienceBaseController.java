@@ -41,10 +41,10 @@ public abstract class ResilienceBaseController extends BaseController {
     ) {
         return resilienceService.useRateLimiter(rlConfig, rateLimiterRegistry, rlKey,
                 () -> new ResponseEntity<>(
-                        buildResponseData(data, ServiceStatusResponseEnum.SUCCESS.getValue(), code, message), HttpStatus.OK
+                        buildResponseData(data, ServiceStatusResponseEnum.SUCCESS.getLabel(), code, message), HttpStatus.OK
                 ),
                 ()-> new ResponseEntity<>(
-                        buildResponseData(null, ServiceStatusResponseEnum.FAILED.getValue(), ServiceCodeEnum.RATE_LIMIT_EXCEEDED.getCode(),
+                        buildResponseData(null, ServiceStatusResponseEnum.FAILED.getLabel(), ServiceCodeEnum.RATE_LIMIT_EXCEEDED.getCode(),
                                 ServiceCodeEnum.RATE_LIMIT_EXCEEDED.getMessage()), HttpStatus.TOO_MANY_REQUESTS
                 )
         );
@@ -55,10 +55,10 @@ public abstract class ResilienceBaseController extends BaseController {
     ) {
         return resilienceService.useRateLimiterWithCache(rlConfig, rateLimiterRegistry, cache, rlKey,
                 () -> new ResponseEntity<>(
-                        buildResponseData(data, ServiceStatusResponseEnum.SUCCESS.getValue(), code, message), HttpStatus.OK
+                        buildResponseData(data, ServiceStatusResponseEnum.SUCCESS.getLabel(), code, message), HttpStatus.OK
                 ), () -> new ResponseEntity<>(
                         buildResponseData(
-                                null, ServiceStatusResponseEnum.FAILED.getValue(), ServiceCodeEnum.RATE_LIMIT_EXCEEDED.getCode(),
+                                null, ServiceStatusResponseEnum.FAILED.getLabel(), ServiceCodeEnum.RATE_LIMIT_EXCEEDED.getCode(),
                                 ServiceCodeEnum.RATE_LIMIT_EXCEEDED.getMessage()
                         ), HttpStatus.TOO_MANY_REQUESTS
                 )
@@ -78,10 +78,10 @@ public abstract class ResilienceBaseController extends BaseController {
     ) {
         return resilienceService.useCircuitBreaker(cbConfig, circuitBreakerRegistry, cbName,
                 () -> new ResponseEntity<>(
-                        buildResponseData(data, ServiceStatusResponseEnum.SUCCESS.getValue(), code, message), HttpStatus.OK
+                        buildResponseData(data, ServiceStatusResponseEnum.SUCCESS.getLabel(), code, message), HttpStatus.OK
                 ),
                 ()-> new ResponseEntity<>(
-                        buildResponseData(null, ServiceStatusResponseEnum.FAILED.getValue(), ServiceCodeEnum.GLOBAL_ERROR.getCode(),
+                        buildResponseData(null, ServiceStatusResponseEnum.FAILED.getLabel(), ServiceCodeEnum.GLOBAL_ERROR.getCode(),
                                 ServiceCodeEnum.GLOBAL_ERROR.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR
                 )
         );

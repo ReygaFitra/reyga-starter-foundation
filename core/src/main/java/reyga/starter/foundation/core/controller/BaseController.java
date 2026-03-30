@@ -19,7 +19,7 @@ public abstract class BaseController extends ResponseErrorTemplate {
     protected <T> ResponseEntity<ResponseData<T>> createResponse(
             T data, HttpStatus status, String code, String message
     ) {
-        ResponseData<T> responseData = buildResponseData(data, ServiceStatusResponseEnum.SUCCESS.getValue(), code, message);
+        ResponseData<T> responseData = buildResponseData(data, ServiceStatusResponseEnum.SUCCESS.getLabel(), code, message);
         return new ResponseEntity<>(responseData, status);
     }
 

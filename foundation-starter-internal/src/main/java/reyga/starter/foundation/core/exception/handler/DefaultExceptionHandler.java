@@ -5,7 +5,11 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.jpa.JpaSystemException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
+import reyga.starter.foundation.common.enumeration.ServiceCodeEnum;
+import reyga.starter.foundation.common.enumeration.ServiceStatusResponseEnum;
+import reyga.starter.foundation.common.model.dto.response.FieldErrorDetail;
 import reyga.starter.foundation.common.model.dto.response.ResponseError;
 import reyga.starter.foundation.core.controller.ResponseErrorTemplate;
 import reyga.starter.foundation.core.exception.AppFaultException;
@@ -13,6 +17,7 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
@@ -89,6 +94,15 @@ public class DefaultExceptionHandler extends BaseExceptionHandler<ResponseError>
         log.exception("AppFaultException".toUpperCase(), appFaultException.getFaultInfo(),appFaultException);
         return ResponseErrorTemplate.createErrorResponse(
                 appFaultException.getStatusCode(), appFaultException.getErrorCode(), appFaultException.getErrorMessage()
+        );
+    }
+
+    @Override
+    protected ResponseEntity<ResponseError> processMethodArgumentNotValidException(MethodArgumentNotValidException methodArgumentNotValidException, HttpServletRequest servletRequest, List<FieldErrorDetail> fieldErrorDetails) {
+        log.exception("MethodArgumentNotValidException".toUpperCase(), fieldErrorDetails, methodArgumentNotValidException);
+        return ResponseErrorTemplate.createErrorResponse(
+                HttpStatus.BAD_REQUEST, ServiceCodeEnum.VALIDATION_ERROR.getCode(), ServiceCodeEnum.VALIDATION_ERROR.getMessage(),
+                null, null, fieldErrorDetails
         );
     }
 }

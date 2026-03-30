@@ -18,7 +18,7 @@ class ResponseErrorTemplateTest {
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals(ServiceStatusResponseEnum.FAILED.getValue(), response.getBody().getStatus());
+        assertEquals(ServiceStatusResponseEnum.FAILED.getLabel(), response.getBody().getStatus());
         assertEquals("01", response.getBody().getCode());
         assertEquals("invalid", response.getBody().getMessage());
     }

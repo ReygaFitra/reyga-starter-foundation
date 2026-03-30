@@ -8,5 +8,5 @@ import lombok.Getter;
 public enum ServiceStatusResponseEnum {
     SUCCESS("SUCCESS"), FAILED("FAILED");
 
-    private final String value;
+    private final String label;
 }

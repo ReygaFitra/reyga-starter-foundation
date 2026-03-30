@@ -3,11 +3,14 @@ package reyga.starter.foundation.core.exception.handler;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import reyga.starter.foundation.common.enumeration.HeaderEnum;
+import reyga.starter.foundation.common.model.dto.response.FieldErrorDetail;
 import reyga.starter.foundation.core.exception.AppFaultContent;
 import reyga.starter.foundation.core.exception.AppFaultException;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -86,6 +89,12 @@ class BaseExceptionHandlerTest {
         protected ResponseEntity<String> processAppFaultErrorHandler(AppFaultException appFaultException, HttpServletRequest servletRequest) {
             lastHandler = "app";
             return ResponseEntity.ok("APP");
+        }
+
+        @Override
+        protected ResponseEntity<String> processMethodArgumentNotValidException(MethodArgumentNotValidException methodArgumentNotValidException, HttpServletRequest servletRequest, List<FieldErrorDetail> fieldErrorDetails) {
+            lastHandler = "field";
+            return ResponseEntity.badRequest().body("FIELD");
         }
     }
 }

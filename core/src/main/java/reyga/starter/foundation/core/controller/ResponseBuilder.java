@@ -2,12 +2,14 @@ package reyga.starter.foundation.core.controller;
 
 import lombok.NoArgsConstructor;
 import reyga.starter.foundation.common.logging.BaseLogging;
+import reyga.starter.foundation.common.model.dto.response.FieldErrorDetail;
 import reyga.starter.foundation.common.util.DateUtil;
 import reyga.starter.foundation.common.model.dto.response.ResponseData;
 import reyga.starter.foundation.common.model.dto.response.ResponseError;
 import reyga.starter.foundation.common.model.dto.response.ResponseErrorDetail;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @NoArgsConstructor
 public class ResponseBuilder extends BaseLogging {
@@ -30,14 +32,22 @@ public class ResponseBuilder extends BaseLogging {
     }
 
     protected static ResponseError buildResponseError(String status, String code, String message, String business, String additionalInfo) {
-        return ResponseError.builder()
-                .status(status)
-                .code(code)
-                .message(message)
+        return buildResponseError(status, code, message).toBuilder()
                 .details(ResponseErrorDetail.builder()
                         .business(business)
                         .additionalInfo(additionalInfo)
                         .timestamp(DateUtil.getTimestamp(LocalDateTime.now()))
+                        .build())
+                .build();
+    }
+
+    protected static ResponseError buildResponseError(String status, String code, String message, String business, String additionalInfo, List<FieldErrorDetail> fieldErrorDetails) {
+        return buildResponseError(status, code, message).toBuilder()
+                .details(ResponseErrorDetail.builder()
+                        .business(business)
+                        .additionalInfo(additionalInfo)
+                        .timestamp(DateUtil.getTimestamp(LocalDateTime.now()))
+                        .fieldErrorDetails(fieldErrorDetails)
                         .build())
                 .build();
     }

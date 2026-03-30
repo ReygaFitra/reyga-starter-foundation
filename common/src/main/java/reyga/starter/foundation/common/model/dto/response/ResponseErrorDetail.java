@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.sql.Timestamp;
+import java.util.List;
 
 @Getter @Setter
 @Builder(toBuilder = true)
@@ -15,4 +16,5 @@ public class ResponseErrorDetail {
     private String business;
     private String additionalInfo;
     private Timestamp timestamp;
+    private List<FieldErrorDetail> fieldErrorDetails;
 }
