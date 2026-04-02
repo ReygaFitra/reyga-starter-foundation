@@ -22,6 +22,7 @@ publishing {
 
 dependencies {
     implementation(project(":common"))
+    implementation(project(":common-io"))
     implementation("org.springframework.boot:spring-boot-starter-validation:$springBootVersion")
     implementation("jakarta.validation:jakarta.validation-api:$jakartaValidationApiVersion")
     implementation("io.github.resilience4j:resilience4j-all:$resilience4jVersion")

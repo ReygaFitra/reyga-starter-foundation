@@ -9,10 +9,10 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 
-public class DateUtil {
+public class DateUtility {
     public static final String DEFAULT_TIMEZONE_ID = "UTC";
 
-    public DateUtil() {
+    public DateUtility() {
     }
 
     public static LocalDateTime now() {

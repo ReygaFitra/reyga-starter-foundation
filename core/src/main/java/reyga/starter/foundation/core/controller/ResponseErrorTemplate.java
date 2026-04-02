@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import reyga.starter.foundation.common.enumeration.ServiceStatusResponseEnum;
 import reyga.starter.foundation.common.model.dto.response.FieldErrorDetail;
+import reyga.starter.foundation.common.model.dto.response.FileErrorDetail;
 import reyga.starter.foundation.common.model.dto.response.ResponseError;
 
 import java.util.List;
@@ -30,6 +31,13 @@ public class ResponseErrorTemplate extends ResponseBuilder {
             HttpStatus httpStatus, String code, String message, String business, String additionalInfo, List<FieldErrorDetail> fieldErrorList
     ) {
         ResponseError error = buildResponseError(ServiceStatusResponseEnum.FAILED.getLabel(), code, message, business, additionalInfo, fieldErrorList);
+        return new ResponseEntity<>(error, httpStatus);
+    }
+
+    public static ResponseEntity<ResponseError> createErrorResponse(
+            HttpStatus httpStatus, String code, String message, String business, String additionalInfo, List<FieldErrorDetail> fieldErrorList, List<FileErrorDetail> fileErrorList
+    ) {
+        ResponseError error = buildResponseError(ServiceStatusResponseEnum.FAILED.getLabel(), code, message, business, additionalInfo, fieldErrorList, fileErrorList);
         return new ResponseEntity<>(error, httpStatus);
     }
 

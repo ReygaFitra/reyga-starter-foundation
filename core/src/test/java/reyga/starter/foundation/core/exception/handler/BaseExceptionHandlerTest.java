@@ -3,14 +3,9 @@ package reyga.starter.foundation.core.exception.handler;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import reyga.starter.foundation.common.enumeration.HeaderEnum;
-import reyga.starter.foundation.common.model.dto.response.FieldErrorDetail;
-import reyga.starter.foundation.core.exception.AppFaultContent;
-import reyga.starter.foundation.core.exception.AppFaultException;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -44,21 +39,6 @@ class BaseExceptionHandlerTest {
         assertEquals("db", handler.lastHandler);
     }
 
-    @Test
-    void handleAppFaultException_setsAttributeAndDelegates() {
-        TestHandler handler = new TestHandler();
-        HttpServletRequest request = mockRequest();
-        AppFaultException ex = new AppFaultException(
-                AppFaultContent.buildAppFaultContent("msg", "01", "err", "fault", null)
-        );
-
-        ResponseEntity<String> response = handler.handleAppFaultException(ex, request);
-
-        assertEquals("APP", response.getBody());
-        assertSame(ex, request.getAttribute(HeaderEnum.EXCEPTION.getValue()));
-        assertEquals("app", handler.lastHandler);
-    }
-
     private HttpServletRequest mockRequest() {
         HttpServletRequest request = mock(HttpServletRequest.class);
         Map<String, Object> attributes = new HashMap<>();
@@ -83,18 +63,6 @@ class BaseExceptionHandlerTest {
         protected ResponseEntity<String> processDatabaseErrorHandler(Exception exception, HttpServletRequest servletRequest) {
             lastHandler = "db";
             return ResponseEntity.ok("DB");
-        }
-
-        @Override
-        protected ResponseEntity<String> processAppFaultErrorHandler(AppFaultException appFaultException, HttpServletRequest servletRequest) {
-            lastHandler = "app";
-            return ResponseEntity.ok("APP");
-        }
-
-        @Override
-        protected ResponseEntity<String> processMethodArgumentNotValidException(MethodArgumentNotValidException methodArgumentNotValidException, HttpServletRequest servletRequest, List<FieldErrorDetail> fieldErrorDetails) {
-            lastHandler = "field";
-            return ResponseEntity.badRequest().body("FIELD");
         }
     }
 }

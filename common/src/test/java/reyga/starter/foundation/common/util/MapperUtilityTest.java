@@ -7,17 +7,17 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class MapperUtilTest {
+class MapperUtilityTest {
 
     @Test
     void convertDtoToJsonString_handlesNull() {
-        assertEquals("null", MapperUtil.convertDtoToJsonString(null));
+        assertEquals("null", MapperUtility.convertDtoToJsonString(null));
     }
 
     @Test
     void convertDtoToJsonString_includesFields() {
         SampleDto dto = new SampleDto("a", 1);
-        String result = MapperUtil.convertDtoToJsonString(dto);
+        String result = MapperUtility.convertDtoToJsonString(dto);
         assertTrue(result.contains("name='a'"));
         assertTrue(result.contains("count='1'"));
     }
@@ -25,7 +25,7 @@ class MapperUtilTest {
     @Test
     void convertDtoToJsonString_includesSuperclassWhenRequested() {
         ChildDto dto = new ChildDto("parent", "child");
-        String result = MapperUtil.convertDtoToJsonString(dto, true);
+        String result = MapperUtility.convertDtoToJsonString(dto, true);
         assertTrue(result.contains("\"parent\""));
         assertTrue(result.contains("\"child\""));
     }
@@ -33,7 +33,7 @@ class MapperUtilTest {
     @Test
     void convertDtoToJsonString_handlesCollectionsAndMaps() {
         ComplexDto dto = new ComplexDto(List.of("a", "b"), Map.of("k", "v"));
-        String result = MapperUtil.convertDtoToJsonString(dto, false);
+        String result = MapperUtility.convertDtoToJsonString(dto, false);
         assertTrue(result.contains("\"list\""));
         assertTrue(result.contains("\"map\""));
     }
@@ -42,7 +42,7 @@ class MapperUtilTest {
     void convertDtoToJsonString_handlesCircularReference() {
         Node node = new Node();
         node.next = node;
-        String result = MapperUtil.convertDtoToJsonString(node, false);
+        String result = MapperUtility.convertDtoToJsonString(node, false);
         assertTrue(result.contains("<circular-reference>"));
     }
 

@@ -89,20 +89,4 @@ public class DefaultExceptionHandler extends BaseExceptionHandler<ResponseError>
         return ResponseErrorTemplate.createErrorResponse(INTERNAL_SERVER_ERROR, "99", "DATABASE ERROR");
     }
 
-    @Override
-    protected ResponseEntity<ResponseError> processAppFaultErrorHandler(AppFaultException appFaultException, HttpServletRequest servletRequest) {
-        log.exception("AppFaultException".toUpperCase(), appFaultException.getFaultInfo(),appFaultException);
-        return ResponseErrorTemplate.createErrorResponse(
-                appFaultException.getStatusCode(), appFaultException.getErrorCode(), appFaultException.getErrorMessage()
-        );
-    }
-
-    @Override
-    protected ResponseEntity<ResponseError> processMethodArgumentNotValidException(MethodArgumentNotValidException methodArgumentNotValidException, HttpServletRequest servletRequest, List<FieldErrorDetail> fieldErrorDetails) {
-        log.exception("MethodArgumentNotValidException".toUpperCase(), fieldErrorDetails, methodArgumentNotValidException);
-        return ResponseErrorTemplate.createErrorResponse(
-                HttpStatus.BAD_REQUEST, ServiceCodeEnum.VALIDATION_ERROR.getCode(), ServiceCodeEnum.VALIDATION_ERROR.getMessage(),
-                null, null, fieldErrorDetails
-        );
-    }
 }

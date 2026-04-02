@@ -16,5 +16,6 @@ public class ResponseErrorDetail {
     private String business;
     private String additionalInfo;
     private Timestamp timestamp;
-    private List<FieldErrorDetail> fieldErrorDetails;
+    private List<FieldErrorDetail> requestFieldDetails;
+    private List<FileErrorDetail> fileDetails;
 }

@@ -19,11 +19,16 @@ import reyga.starter.foundation.core.aspect.AspectProcessor;
 import reyga.starter.foundation.core.component.DefaultTransactionalExecutor;
 import reyga.starter.foundation.core.component.TransactionalExecutor;
 import reyga.starter.foundation.core.config.properties.ConfigProperties;
+import reyga.starter.foundation.core.exception.handler.DefaultAppValidationExceptionHandler;
 import reyga.starter.foundation.core.exception.handler.DefaultExceptionHandler;
 import reyga.starter.foundation.core.service.DefaultResilienceService;
 import reyga.starter.foundation.core.service.ResilienceService;
 import reyga.starter.foundation.core.validation.ValidationProcessor;
 import reyga.starter.foundation.core.validation.ValidationUtility;
+import reyga.starter.foundation.common_io.operations.DefaultFileInspector;
+import reyga.starter.foundation.common_io.operations.DefaultFileSanitizer;
+import reyga.starter.foundation.common_io.operations.FileInspector;
+import reyga.starter.foundation.common_io.operations.FileSanitizer;
 
 import java.time.Duration;
 
@@ -37,6 +42,11 @@ public class CoreConfig {
     @ConditionalOnProperty(name = "reyga.config.default-bean.exception-handler", havingValue = "true")
     public DefaultExceptionHandler defaultExceptionHandler() {
         return new DefaultExceptionHandler();
+    }
+
+    @Bean
+    public DefaultAppValidationExceptionHandler defaultAppValidationExceptionHandler() {
+        return new DefaultAppValidationExceptionHandler();
     }
 
     @Bean

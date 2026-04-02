@@ -9,6 +9,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import reyga.starter.foundation.common.config.CommonConfig;
 import reyga.starter.foundation.common_database.processor.DefaultQueryProcessor;
 import reyga.starter.foundation.common_database.processor.QueryProcessor;
+import reyga.starter.foundation.common_io.config.CommonIOConfig;
 import reyga.starter.foundation.core.config.CoreConfig;
 import reyga.starter.foundation.logging.config.AsyncLoggingConfig;
 import reyga.starter.foundation.logging.config.LoggingConfig;
@@ -21,7 +22,8 @@ import reyga.starter.foundation.logging.service.LoggingService;
         CommonConfig.class,
         CoreConfig.class,
         LoggingConfig.class,
-        AsyncLoggingConfig.class
+        AsyncLoggingConfig.class,
+        CommonIOConfig.class
 })
 public class FoundationDefaultAutoConfiguration {
 

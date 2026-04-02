@@ -24,6 +24,7 @@ pluginManagement {
 rootProject.name = "reyga-starter-foundation"
 include("common")
 include("common-database")
+include("common-io")
 include("logging")
 include("core")
 include("foundation-starter-internal")

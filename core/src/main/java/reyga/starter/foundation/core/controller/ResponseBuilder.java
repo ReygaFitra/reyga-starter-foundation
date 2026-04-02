@@ -2,11 +2,8 @@ package reyga.starter.foundation.core.controller;
 
 import lombok.NoArgsConstructor;
 import reyga.starter.foundation.common.logging.BaseLogging;
-import reyga.starter.foundation.common.model.dto.response.FieldErrorDetail;
-import reyga.starter.foundation.common.util.DateUtil;
-import reyga.starter.foundation.common.model.dto.response.ResponseData;
-import reyga.starter.foundation.common.model.dto.response.ResponseError;
-import reyga.starter.foundation.common.model.dto.response.ResponseErrorDetail;
+import reyga.starter.foundation.common.model.dto.response.*;
+import reyga.starter.foundation.common.util.DateUtility;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -36,7 +33,7 @@ public class ResponseBuilder extends BaseLogging {
                 .details(ResponseErrorDetail.builder()
                         .business(business)
                         .additionalInfo(additionalInfo)
-                        .timestamp(DateUtil.getTimestamp(LocalDateTime.now()))
+                        .timestamp(DateUtility.getTimestamp(LocalDateTime.now()))
                         .build())
                 .build();
     }
@@ -46,8 +43,20 @@ public class ResponseBuilder extends BaseLogging {
                 .details(ResponseErrorDetail.builder()
                         .business(business)
                         .additionalInfo(additionalInfo)
-                        .timestamp(DateUtil.getTimestamp(LocalDateTime.now()))
-                        .fieldErrorDetails(fieldErrorDetails)
+                        .timestamp(DateUtility.getTimestamp(LocalDateTime.now()))
+                        .requestFieldDetails(fieldErrorDetails)
+                        .build())
+                .build();
+    }
+
+    protected static ResponseError buildResponseError(String status, String code, String message, String business, String additionalInfo, List<FieldErrorDetail> requestFieldsErrorDetail, List<FileErrorDetail> fileErrorDetails) {
+        return buildResponseError(status, code, message).toBuilder()
+                .details(ResponseErrorDetail.builder()
+                        .business(business)
+                        .additionalInfo(additionalInfo)
+                        .timestamp(DateUtility.getTimestamp(LocalDateTime.now()))
+                        .requestFieldDetails(requestFieldsErrorDetail)
+                        .fileDetails(fileErrorDetails)
                         .build())
                 .build();
     }
