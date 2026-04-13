@@ -7,6 +7,8 @@ import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.regex.Pattern;
 
 public interface FileSanitizer {
 
@@ -80,13 +82,27 @@ public interface FileSanitizer {
 
     boolean checkSqlInjection(String content);
 
+    boolean checkSqlInjection(String content, Pattern... additionalPatterns);
+
+    boolean checkSqlInjection(String content, List<Pattern> patterns);
+
     boolean checkSqlInjection(byte[] data);
 
     boolean checkSqlInjection(byte[] data, Charset charset);
 
+    boolean checkSqlInjection(byte[] data, Charset charset, Pattern... additionalPatterns);
+
+    boolean checkSqlInjection(byte[] data, Charset charset, List<Pattern> patterns);
+
+    boolean checkSqlInjection(InputStream inputStream, Charset charset, List<Pattern> patterns);
+
+    boolean checkSqlInjection(InputStream inputStream, Charset charset, Pattern... additionalPatterns);
+
     boolean checkSqlInjection(InputStream inputStream);
 
     boolean checkSqlInjection(InputStream inputStream, Charset charset);
+
+    boolean checkSqlInjection(Path path, Charset charset, Pattern... additionalPatterns);
 
     boolean checkSqlInjection(Path path);
 
@@ -99,4 +115,15 @@ public interface FileSanitizer {
     boolean checkSqlInjection(URL url);
 
     boolean checkSqlInjection(URL url, Charset charset);
+
+    boolean checkSqlInjection(Path path, Charset charset, List<Pattern> patterns);
+
+    boolean checkSqlInjection(File file, Charset charset, Pattern... additionalPatterns);
+
+    boolean checkSqlInjection(File file, Charset charset, List<Pattern> patterns);
+
+    boolean checkSqlInjection(URL url, Charset charset, Pattern... additionalPatterns);
+
+    boolean checkSqlInjection(URL url, Charset charset, List<Pattern> patterns);
+
 }

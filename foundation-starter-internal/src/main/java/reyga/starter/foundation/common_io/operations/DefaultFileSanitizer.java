@@ -309,6 +309,7 @@ public class DefaultFileSanitizer extends BaseLogging implements FileSanitizer {
         return SQL_INJECTION_PATTERNS.stream().anyMatch(pattern -> pattern.matcher(content).find());
     }
 
+    @Override
     public boolean checkSqlInjection(String content, Pattern... additionalPatterns) {
         if (content == null) {
             throw new IOFaultException("Content must not be null", metadataFor(IOOperation.CHECK_SQL, DEFAULT_CHARSET, IOStorageType.MEMORY));
@@ -318,6 +319,7 @@ public class DefaultFileSanitizer extends BaseLogging implements FileSanitizer {
                 .anyMatch(pattern -> pattern.matcher(content).find());
     }
 
+    @Override
     public boolean checkSqlInjection(String content, List<Pattern> patterns) {
         if (content == null) {
             throw new IOFaultException("Content must not be null", metadataFor(IOOperation.CHECK_SQL, DEFAULT_CHARSET, IOStorageType.MEMORY));
@@ -341,6 +343,7 @@ public class DefaultFileSanitizer extends BaseLogging implements FileSanitizer {
         return checkSqlInjection(new String(data, resolvedCharset));
     }
 
+    @Override
     public boolean checkSqlInjection(byte[] data, Charset charset, Pattern... additionalPatterns) {
         if (data == null) {
             throw new IOFaultException("Data must not be null", metadataFor(IOOperation.CHECK_SQL, DEFAULT_CHARSET, IOStorageType.MEMORY));
@@ -349,6 +352,7 @@ public class DefaultFileSanitizer extends BaseLogging implements FileSanitizer {
         return checkSqlInjection(new String(data, resolvedCharset), additionalPatterns);
     }
 
+    @Override
     public boolean checkSqlInjection(byte[] data, Charset charset, List<Pattern> patterns) {
         if (data == null) {
             throw new IOFaultException("Data must not be null", metadataFor(IOOperation.CHECK_SQL, DEFAULT_CHARSET, IOStorageType.MEMORY));
@@ -375,6 +379,7 @@ public class DefaultFileSanitizer extends BaseLogging implements FileSanitizer {
         }
     }
 
+    @Override
     public boolean checkSqlInjection(InputStream inputStream, Charset charset, Pattern... additionalPatterns) {
         if (inputStream == null) {
             throw new IOFaultException("InputStream must not be null", metadataFor(IOOperation.CHECK_SQL, DEFAULT_CHARSET, IOStorageType.MEMORY));
@@ -387,6 +392,7 @@ public class DefaultFileSanitizer extends BaseLogging implements FileSanitizer {
         }
     }
 
+    @Override
     public boolean checkSqlInjection(InputStream inputStream, Charset charset, List<Pattern> patterns) {
         if (inputStream == null) {
             throw new IOFaultException("InputStream must not be null", metadataFor(IOOperation.CHECK_SQL, DEFAULT_CHARSET, IOStorageType.MEMORY));
@@ -422,6 +428,7 @@ public class DefaultFileSanitizer extends BaseLogging implements FileSanitizer {
         }
     }
 
+    @Override
     public boolean checkSqlInjection(Path path, Charset charset, Pattern... additionalPatterns) {
         if (path == null) {
             throw new IOFaultException("Path must not be null", metadataFor(IOOperation.CHECK_SQL, DEFAULT_CHARSET, IOStorageType.LOCAL));
@@ -439,6 +446,7 @@ public class DefaultFileSanitizer extends BaseLogging implements FileSanitizer {
         }
     }
 
+    @Override
     public boolean checkSqlInjection(Path path, Charset charset, List<Pattern> patterns) {
         if (path == null) {
             throw new IOFaultException("Path must not be null", metadataFor(IOOperation.CHECK_SQL, DEFAULT_CHARSET, IOStorageType.LOCAL));
@@ -472,6 +480,7 @@ public class DefaultFileSanitizer extends BaseLogging implements FileSanitizer {
         return checkSqlInjection(file.toPath(), charset);
     }
 
+    @Override
     public boolean checkSqlInjection(File file, Charset charset, Pattern... additionalPatterns) {
         if (file == null) {
             throw new IOFaultException("File must not be null", metadataFor(IOOperation.CHECK_SQL, DEFAULT_CHARSET, IOStorageType.LOCAL));
@@ -479,6 +488,7 @@ public class DefaultFileSanitizer extends BaseLogging implements FileSanitizer {
         return checkSqlInjection(file.toPath(), charset, additionalPatterns);
     }
 
+    @Override
     public boolean checkSqlInjection(File file, Charset charset, List<Pattern> patterns) {
         if (file == null) {
             throw new IOFaultException("File must not be null", metadataFor(IOOperation.CHECK_SQL, DEFAULT_CHARSET, IOStorageType.LOCAL));
@@ -506,6 +516,7 @@ public class DefaultFileSanitizer extends BaseLogging implements FileSanitizer {
         }
     }
 
+    @Override
     public boolean checkSqlInjection(URL url, Charset charset, Pattern... additionalPatterns) {
         if (url == null) {
             throw new IOFaultException("URL must not be null", metadataFor(IOOperation.CHECK_SQL, DEFAULT_CHARSET, storageTypeForUrl(url)));
@@ -520,6 +531,7 @@ public class DefaultFileSanitizer extends BaseLogging implements FileSanitizer {
         }
     }
 
+    @Override
     public boolean checkSqlInjection(URL url, Charset charset, List<Pattern> patterns) {
         if (url == null) {
             throw new IOFaultException("URL must not be null", metadataFor(IOOperation.CHECK_SQL, DEFAULT_CHARSET, storageTypeForUrl(url)));
