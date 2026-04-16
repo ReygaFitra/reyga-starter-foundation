@@ -1,21 +1,38 @@
 package reyga.starter.foundation.core.service;
 
+import org.springframework.http.HttpStatus;
+import reyga.starter.foundation.common.enumeration.ServiceCodeEnum;
 import reyga.starter.foundation.common.logging.BaseLogging;
 import reyga.starter.foundation.common.model.dto.request.BaseRequest;
+import reyga.starter.foundation.core.exception.AppFaultContent;
+import reyga.starter.foundation.core.exception.AppFaultException;
 
 public abstract class BaseService<T extends BaseRequest, R> extends BaseLogging implements FoundationService<T, R> {
 
     @Override
-    public R execute(T req) {
-        logInformation(req);
-        return processFlow(req);
+    public R execute(T request) {
+        if (request.getServletRequest() == null || request.getServletResponse() == null) {
+            throw new AppFaultException(AppFaultContent.builder()
+                    .errorCode(ServiceCodeEnum.SERVLET_CONTEXT_NOT_FOUND.getCode())
+                    .errorMessage(ServiceCodeEnum.SERVLET_CONTEXT_NOT_FOUND.getMessage())
+                    .statusCode(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .build());
+        }
+        
+        logInformation(request);
+        
+        validateRequest(request);
+        
+        return processFlow(request);
     }
 
-    protected abstract R processFlow(T req);
+    protected abstract R processFlow(T request);
 
-    protected void logInformation(T req) {
+    protected abstract void validateRequest(T request);
+
+    protected void logInformation(T request) {
         log.info("Executing Service...");
-        log.info("Request : ", String.valueOf(req));
+        log.info("Request : ", String.valueOf(request));
     }
 
 }

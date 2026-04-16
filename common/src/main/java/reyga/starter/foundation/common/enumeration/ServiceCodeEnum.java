@@ -12,7 +12,8 @@ public enum ServiceCodeEnum {
     GLOBAL_ERROR("500599", "Internal Server Error"),
     DATABASE_ERROR("500598", "Database Error"),
     DATABASE_QUERY_FAULT("500597", "Query Database Error"),
-    DATABASE_CONSTRAINT_FAULT("500596", "Database Constraint Error");
+    DATABASE_CONSTRAINT_FAULT("500596", "Database Constraint Error"),
+    SERVLET_CONTEXT_NOT_FOUND("500501", "Servlet Context Not Found");
 
     private final String code;
     private final String message;

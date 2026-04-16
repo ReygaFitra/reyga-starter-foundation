@@ -5,19 +5,13 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.jpa.JpaSystemException;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
-import reyga.starter.foundation.common.enumeration.ServiceCodeEnum;
-import reyga.starter.foundation.common.enumeration.ServiceStatusResponseEnum;
-import reyga.starter.foundation.common.model.dto.response.FieldErrorDetail;
 import reyga.starter.foundation.common.model.dto.response.ResponseError;
-import reyga.starter.foundation.core.controller.ResponseErrorTemplate;
-import reyga.starter.foundation.core.exception.AppFaultException;
+import reyga.starter.foundation.core.controller.ResponseErrorBuilder;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
@@ -59,7 +53,7 @@ public class DefaultExceptionHandler extends BaseExceptionHandler<ResponseError>
             }
         }
         log.exception(exceptionType.toUpperCase(), null, exception);
-        return ResponseErrorTemplate.createErrorResponse(httpStatus, code, message);
+        return ResponseErrorBuilder.createErrorResponse(httpStatus, code, message);
     }
 
     @Override
@@ -86,7 +80,7 @@ public class DefaultExceptionHandler extends BaseExceptionHandler<ResponseError>
             }
         }
         log.exception(exceptionType.toUpperCase(), null, exception);
-        return ResponseErrorTemplate.createErrorResponse(INTERNAL_SERVER_ERROR, "99", "DATABASE ERROR");
+        return ResponseErrorBuilder.createErrorResponse(INTERNAL_SERVER_ERROR, "99", "DATABASE ERROR");
     }
 
 }

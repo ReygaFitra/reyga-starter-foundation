@@ -16,7 +16,7 @@ import reyga.starter.foundation.common.util.DateUtility;
 import reyga.starter.foundation.common.util.FileUtility;
 import reyga.starter.foundation.common_io.exception.IOFaultException;
 import reyga.starter.foundation.common_io.exception.IOFaultMetadata;
-import reyga.starter.foundation.core.controller.ResponseErrorTemplate;
+import reyga.starter.foundation.core.controller.ResponseErrorBuilder;
 import reyga.starter.foundation.core.exception.AppFaultException;
 
 import java.time.LocalDateTime;
@@ -31,7 +31,7 @@ public class DefaultAppValidationExceptionHandler extends BaseLogging {
         request.setAttribute(HeaderEnum.EXCEPTION.getValue(), ex);
 
         log.exception("AppFaultException".toUpperCase(), ex.getFaultInfo(), ex);
-        return ResponseErrorTemplate.createErrorResponse(ex.getStatusCode(), ex.getErrorCode(), ex.getErrorMessage());
+        return ResponseErrorBuilder.createErrorResponse(ex.getStatusCode(), ex.getErrorCode(), ex.getErrorMessage());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -47,7 +47,7 @@ public class DefaultAppValidationExceptionHandler extends BaseLogging {
                 .toList();
         log.exception("MethodArgumentNotValidException".toUpperCase(), fieldErrorDetails, ex);
 
-        return ResponseErrorTemplate.createErrorResponse(
+        return ResponseErrorBuilder.createErrorResponse(
                 HttpStatus.BAD_REQUEST, ServiceCodeEnum.VALIDATION_ERROR.getCode(), ServiceCodeEnum.VALIDATION_ERROR.getMessage(),
                 null, null, fieldErrorDetails
         );
@@ -70,7 +70,7 @@ public class DefaultAppValidationExceptionHandler extends BaseLogging {
 
         log.exception("IOFaultException".toUpperCase(), fileErrorDetailList, fex);
 
-        return ResponseErrorTemplate.createErrorResponse(
+        return ResponseErrorBuilder.createErrorResponse(
                 HttpStatus.BAD_REQUEST, ServiceCodeEnum.FILE_ERROR.getCode(), message,
                 null, null, null, fileErrorDetailList.isEmpty() ? null : fileErrorDetailList
         );

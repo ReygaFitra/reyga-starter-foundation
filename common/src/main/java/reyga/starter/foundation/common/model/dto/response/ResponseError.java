@@ -12,7 +12,7 @@ import lombok.experimental.SuperBuilder;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ResponseError extends BaseResponse {
 
-    private transient ResponseErrorDetail details;
+    private ResponseErrorDetail details;
 
     public ResponseError() {
     }

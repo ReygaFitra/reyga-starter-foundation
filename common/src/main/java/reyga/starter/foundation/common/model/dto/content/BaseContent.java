@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.UUID;
@@ -16,5 +17,8 @@ import java.util.UUID;
 @SuperBuilder(toBuilder = true)
 @NoArgsConstructor @AllArgsConstructor
 public abstract class BaseContent implements Serializable {
-    protected transient Map<String, UUID> nodeId;
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private Map<String, UUID> nodeId;
 }

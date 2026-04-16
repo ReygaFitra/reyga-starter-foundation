@@ -8,11 +8,11 @@ import reyga.starter.foundation.common.model.dto.response.ResponseError;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class ResponseErrorTemplateTest {
+class ResponseErrorBuilderTest {
 
     @Test
     void createErrorResponse_setsStatusAndBody() {
-        ResponseEntity<ResponseError> response = ResponseErrorTemplate.createErrorResponse(
+        ResponseEntity<ResponseError> response = ResponseErrorBuilder.createErrorResponse(
                 HttpStatus.BAD_REQUEST, "01", "invalid"
         );
 

@@ -7,7 +7,7 @@ import lombok.experimental.SuperBuilder;
 @Setter @Getter
 @SuperBuilder(toBuilder = true)
 public class ResponseData<T> extends BaseResponse {
-    private transient T data;
+    private T data;
 
     public ResponseData() {
     }

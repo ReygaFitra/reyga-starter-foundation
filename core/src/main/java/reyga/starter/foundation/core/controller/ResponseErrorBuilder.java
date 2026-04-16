@@ -11,7 +11,7 @@ import reyga.starter.foundation.common.model.dto.response.ResponseError;
 import java.util.List;
 
 @NoArgsConstructor
-public class ResponseErrorTemplate extends ResponseBuilder {
+public class ResponseErrorBuilder extends ResponseBuilder {
 
     public static ResponseEntity<ResponseError> createErrorResponse(
             HttpStatus httpStatus, String code, String message

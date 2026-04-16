@@ -1,16 +1,13 @@
 package reyga.starter.foundation.core.controller;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import reyga.starter.foundation.common.enumeration.ServiceStatusResponseEnum;
-import reyga.starter.foundation.common.model.dto.request.BaseRequest;
 import reyga.starter.foundation.common.model.dto.response.ResponseData;
 
 @RequiredArgsConstructor
-public abstract class BaseController extends ResponseErrorTemplate {
+public abstract class BaseController extends BaseHttpServletBuilder {
 
     protected <T> ResponseEntity<T> createResponse(T data, HttpStatus status) {
         return new ResponseEntity<>(data, status);
@@ -21,22 +18,6 @@ public abstract class BaseController extends ResponseErrorTemplate {
     ) {
         ResponseData<T> responseData = buildResponseData(data, ServiceStatusResponseEnum.SUCCESS.getLabel(), code, message);
         return new ResponseEntity<>(responseData, status);
-    }
-
-    protected <T extends BaseRequest> T setServletRequestResponse(
-            T request, HttpServletRequest servletRequest, HttpServletResponse servletResponse
-    ) {
-        request.setServletRequest(servletRequest);
-        request.setServletResponse(servletResponse);
-        return request;
-    }
-
-    protected <T extends BaseRequest> HttpServletRequest getServletRequest(T request) {
-        return request.getServletRequest();
-    }
-
-    protected <T extends BaseRequest> HttpServletResponse getServletResponse(T request) {
-        return request.getServletResponse();
     }
 
 }

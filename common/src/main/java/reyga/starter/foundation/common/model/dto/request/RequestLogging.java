@@ -5,16 +5,15 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.io.Serializable;
 import java.util.Map;
 
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
-public class RequestLogging implements Serializable {
-    private transient Map<String, Object> requestParams;
-    private transient Map<String, Object> requestMultiPart;
-    private transient Map<String, Object> requestPathVariable;
-    private transient Object requestBody;
+public class RequestLogging {
+    private Map<String, Object> requestParams;
+    private Map<String, Object> requestMultiPart;
+    private Map<String, Object> requestPathVariable;
+    private Object requestBody;
 
     @Override
     public String toString() {
