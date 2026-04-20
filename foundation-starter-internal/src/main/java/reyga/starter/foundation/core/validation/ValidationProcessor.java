@@ -2,6 +2,8 @@ package reyga.starter.foundation.core.validation;
 
 import jakarta.validation.ConstraintViolation;
 import org.springframework.http.HttpStatus;
+import reyga.starter.foundation.common.logging.CommonLogger;
+import reyga.starter.foundation.common.logging.InjectLogger;
 import reyga.starter.foundation.core.exception.AppFaultContent;
 import reyga.starter.foundation.core.exception.AppFaultException;
 
@@ -15,6 +17,9 @@ import java.util.stream.Collectors;
 import static reyga.starter.foundation.core.exception.AppFaultContent.buildAppFaultContent;
 
 public class ValidationProcessor extends BaseValidationProcessor {
+
+    @InjectLogger
+    protected CommonLogger logger;
 
     @Override
     public <T> void violationsSetHandle(Set<ConstraintViolation<T>> violations) throws AppFaultException {
@@ -60,9 +65,9 @@ public class ValidationProcessor extends BaseValidationProcessor {
 
     private void throwErrorWithLog(Object valueMsg) throws AppFaultException {
         if (valueMsg instanceof Collection<?> collection) {
-            log.warn("Validation Error Count", collection.size());
+            logger.warn("Validation Error Count", collection.size());
         }
-        log.warn("Validation Error Detail", valueMsg);
+        logger.warn("Validation Error Detail", valueMsg);
         AppFaultContent faultContent = buildAppFaultContent(
                 "Validation Exception", "01", "Invalid Request", valueMsg, HttpStatus.BAD_REQUEST
         );

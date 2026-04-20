@@ -6,7 +6,8 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import reyga.starter.foundation.common.logging.BaseLogging;
+import reyga.starter.foundation.common.logging.CommonLogger;
+import reyga.starter.foundation.common.logging.InjectLogger;
 import reyga.starter.foundation.common_database.util.QueryBuilder;
 
 import java.sql.PreparedStatement;
@@ -16,7 +17,10 @@ import java.util.List;
 import java.util.Optional;
 
 @RequiredArgsConstructor
-public class DefaultQueryProcessor extends BaseLogging implements QueryProcessor {
+public class DefaultQueryProcessor implements QueryProcessor {
+
+    @InjectLogger
+    protected CommonLogger logger;
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -86,7 +90,9 @@ public class DefaultQueryProcessor extends BaseLogging implements QueryProcessor
         List<Integer> results = new ArrayList<>();
         for (QueryBuilder builder : builders) {
             String sql = builder.getSql();
-            log.info("Query ==> : " + sql);
+            if (logger != null) {
+                logger.info("Query ==> : " + sql);
+            }
             results.add(jdbcTemplate.update(sql, builder.getParameters().toArray()));
         }
         return results.stream().mapToInt(Integer::intValue).toArray();
@@ -145,6 +151,8 @@ public class DefaultQueryProcessor extends BaseLogging implements QueryProcessor
     }
 
     private void printConstructedQuery(String sql) {
-        log.info("Executing query: " + sql);
+        if (logger != null) {
+            logger.info("Executing query: " + sql);
+        }
     }
 }

@@ -4,12 +4,16 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
-import reyga.starter.foundation.common.logging.BaseLogging;
+import reyga.starter.foundation.common.logging.CommonLogger;
+import reyga.starter.foundation.common.logging.InjectLogger;
 
 import java.util.List;
 import java.util.Set;
 
-public abstract class BaseValidationProcessor extends BaseLogging {
+public abstract class BaseValidationProcessor {
+
+    @InjectLogger
+    protected CommonLogger logger;
 
     private final Validator validator;
 
@@ -17,7 +21,9 @@ public abstract class BaseValidationProcessor extends BaseLogging {
         try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
             this.validator = factory.getValidator();
         } catch (Exception e) {
-            log.error("Error Occurred in ValidatorFactory: ", e.getMessage());
+            if (logger != null) {
+                logger.error("Error Occurred in ValidatorFactory: ", e.getMessage());
+            }
             throw new IllegalArgumentException(e);
         }
     }

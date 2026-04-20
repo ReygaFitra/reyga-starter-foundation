@@ -1,7 +1,8 @@
 package reyga.starter.foundation.core.controller;
 
 import lombok.NoArgsConstructor;
-import reyga.starter.foundation.common.logging.BaseLogging;
+import reyga.starter.foundation.common.logging.CommonLogger;
+import reyga.starter.foundation.common.logging.InjectLogger;
 import reyga.starter.foundation.common.model.dto.response.*;
 import reyga.starter.foundation.common.util.DateUtility;
 
@@ -9,7 +10,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @NoArgsConstructor
-public class ResponseBuilder extends BaseLogging {
+public class ResponseBuilder {
+
+    @InjectLogger
+    protected CommonLogger logger;
 
     protected static <T> ResponseData<T> buildResponseData(T data, String status, String code, String message) {
         return ResponseData.<T>builder()

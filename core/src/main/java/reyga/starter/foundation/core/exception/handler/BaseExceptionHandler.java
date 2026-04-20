@@ -6,9 +6,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import reyga.starter.foundation.common.enumeration.HeaderEnum;
-import reyga.starter.foundation.common.logging.BaseLogging;
 
-public abstract class BaseExceptionHandler<T> extends BaseLogging {
+public abstract class BaseExceptionHandler<T> {
 
     @ExceptionHandler({Exception.class})
     protected ResponseEntity<T> handleGlobalErrorException(Exception ex, HttpServletRequest request) {

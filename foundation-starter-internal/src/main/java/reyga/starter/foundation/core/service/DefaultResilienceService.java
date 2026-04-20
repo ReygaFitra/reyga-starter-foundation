@@ -11,11 +11,15 @@ import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
 import io.github.resilience4j.retry.RetryRegistry;
 import org.springframework.cache.Cache;
-import reyga.starter.foundation.common.logging.BaseLogging;
+import reyga.starter.foundation.common.logging.CommonLogger;
+import reyga.starter.foundation.common.logging.InjectLogger;
 
 import java.util.function.Supplier;
 
-public class DefaultResilienceService extends BaseLogging implements ResilienceService {
+public class DefaultResilienceService implements ResilienceService {
+
+    @InjectLogger
+    protected CommonLogger logger;
 
     @Override
     public <S> S useRateLimiter(
@@ -52,7 +56,7 @@ public class DefaultResilienceService extends BaseLogging implements ResilienceS
         CircuitBreaker circuitBreaker = registry.circuitBreaker(cbName, config);
         try {
             return CircuitBreaker.decorateSupplier(circuitBreaker, suppliedProcess).get();
-        } catch (Exception e) {
+        } catch (Exception _) {
             return fallbackSuppliedProcess.get();
         }
     }
@@ -85,7 +89,7 @@ public class DefaultResilienceService extends BaseLogging implements ResilienceS
         RateLimiter rl = resolveRateLimiterWithCache(config, registry, cache, rateLimitkey);
         try {
             RateLimiter.decorateRunnable(rl, runProcess).run();
-        } catch (RequestNotPermitted e) {
+        } catch (RequestNotPermitted _) {
             fallbackProcess.run();
         }
     }
@@ -97,7 +101,7 @@ public class DefaultResilienceService extends BaseLogging implements ResilienceS
         CircuitBreaker circuitBreaker = registry.circuitBreaker(cbName, config);
         try {
             CircuitBreaker.decorateRunnable(circuitBreaker, runProcess).run();
-        } catch (Exception e) {
+        } catch (Exception _) {
             fallbackProcess.run();
         }
     }
@@ -116,7 +120,7 @@ public class DefaultResilienceService extends BaseLogging implements ResilienceS
             if (cachedRateLimiter != null) {
                 return cachedRateLimiter;
             }
-        } catch (RuntimeException ignored) {
+        } catch (RuntimeException _) {
             // Fallback to registry if cache implementation cannot deserialize/store RateLimiter.
         }
 
@@ -124,7 +128,7 @@ public class DefaultResilienceService extends BaseLogging implements ResilienceS
 
         try {
             cache.put(rateLimitkey, rateLimiter);
-        } catch (RuntimeException ignored) {
+        } catch (RuntimeException _) {
             // Fallback to registry-only behavior if cache put is not supported.
         }
 
@@ -132,7 +136,9 @@ public class DefaultResilienceService extends BaseLogging implements ResilienceS
     }
 
     private void printRequestNotPermitted(RequestNotPermitted requestNotPermitted) {
-        log.warn("Request Not Permitted :", requestNotPermitted.getMessage());
+        if (logger != null) {
+            logger.warn("Request Not Permitted :", requestNotPermitted.getMessage());
+        }
     }
 
 }

@@ -2,7 +2,8 @@ package reyga.starter.foundation.common_io.operations;
 
 import org.apache.tika.Tika;
 import org.apache.tika.metadata.Metadata;
-import reyga.starter.foundation.common.logging.BaseLogging;
+import reyga.starter.foundation.common.logging.CommonLogger;
+import reyga.starter.foundation.common.logging.InjectLogger;
 import reyga.starter.foundation.common_io.enumeration.IOOperation;
 import reyga.starter.foundation.common_io.enumeration.IOPermissions;
 import reyga.starter.foundation.common_io.enumeration.IOStorageType;
@@ -16,7 +17,10 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.file.Path;
 
-public class DefaultFileInspector extends BaseLogging implements FileInspector {
+public class DefaultFileInspector implements FileInspector {
+
+    @InjectLogger
+    protected CommonLogger logger;
 
     private static final Tika TIKA = new Tika();
 
@@ -388,6 +392,8 @@ public class DefaultFileInspector extends BaseLogging implements FileInspector {
     }
 
     private void printLog(Exception e) {
-        log.warn("Error Message :", e.getMessage());
+        if (logger != null) {
+            logger.warn("Error Message :", e.getMessage());
+        }
     }
 }

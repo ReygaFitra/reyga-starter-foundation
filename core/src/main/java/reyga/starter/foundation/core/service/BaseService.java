@@ -2,12 +2,16 @@ package reyga.starter.foundation.core.service;
 
 import org.springframework.http.HttpStatus;
 import reyga.starter.foundation.common.enumeration.ServiceCodeEnum;
-import reyga.starter.foundation.common.logging.BaseLogging;
+import reyga.starter.foundation.common.logging.CommonLogger;
+import reyga.starter.foundation.common.logging.InjectLogger;
 import reyga.starter.foundation.common.model.dto.request.BaseRequest;
 import reyga.starter.foundation.core.exception.AppFaultContent;
 import reyga.starter.foundation.core.exception.AppFaultException;
 
-public abstract class BaseService<T extends BaseRequest, R> extends BaseLogging implements FoundationService<T, R> {
+public abstract class BaseService<T extends BaseRequest, R> implements FoundationService<T, R> {
+
+    @InjectLogger
+    protected CommonLogger logger;
 
     @Override
     public R execute(T request) {
@@ -31,8 +35,10 @@ public abstract class BaseService<T extends BaseRequest, R> extends BaseLogging 
     protected abstract void validateRequest(T request);
 
     protected void logInformation(T request) {
-        log.info("Executing Service...");
-        log.info("Request : ", String.valueOf(request));
+        if (logger != null) {
+            logger.info("Executing Service...");
+            logger.info("Request : ", String.valueOf(request));
+        }
     }
 
 }

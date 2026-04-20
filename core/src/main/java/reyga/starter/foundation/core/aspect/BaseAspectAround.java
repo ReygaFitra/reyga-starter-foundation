@@ -1,10 +1,9 @@
 package reyga.starter.foundation.core.aspect;
 
 import org.aspectj.lang.ProceedingJoinPoint;
-import reyga.starter.foundation.common.logging.BaseLogging;
 import reyga.starter.foundation.common.model.dto.content.BaseContent;
 
-public abstract class BaseAspectAround<C extends BaseContent> extends BaseLogging implements AspectProcessor {
+public abstract class BaseAspectAround<C extends BaseContent> implements AspectProcessor {
 
     @Override
     public Object process(ProceedingJoinPoint joinPoint) throws Throwable {
@@ -42,6 +41,5 @@ public abstract class BaseAspectAround<C extends BaseContent> extends BaseLoggin
     }
 
     protected void handleException(Exception e, C content) {}
-
 
 }

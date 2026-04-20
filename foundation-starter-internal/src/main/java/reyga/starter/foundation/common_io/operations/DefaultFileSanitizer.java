@@ -2,7 +2,8 @@ package reyga.starter.foundation.common_io.operations;
 
 import org.owasp.html.PolicyFactory;
 import org.owasp.html.Sanitizers;
-import reyga.starter.foundation.common.logging.BaseLogging;
+import reyga.starter.foundation.common.logging.CommonLogger;
+import reyga.starter.foundation.common.logging.InjectLogger;
 import reyga.starter.foundation.common_io.enumeration.IOOperation;
 import reyga.starter.foundation.common_io.enumeration.IOPermissions;
 import reyga.starter.foundation.common_io.enumeration.IOStorageType;
@@ -22,7 +23,10 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class DefaultFileSanitizer extends BaseLogging implements FileSanitizer {
+public class DefaultFileSanitizer implements FileSanitizer {
+
+    @InjectLogger
+    protected CommonLogger logger;
 
     private static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
     private static final PolicyFactory DEFAULT_POLICY = Sanitizers.FORMATTING
@@ -578,6 +582,8 @@ public class DefaultFileSanitizer extends BaseLogging implements FileSanitizer {
     }
 
     private void printLog(Exception e) {
-        log.warn("Error Message : {}", e.getMessage());
+        if (logger != null) {
+            logger.warn("Error Message : {}", e.getMessage());
+        }
     }
 }

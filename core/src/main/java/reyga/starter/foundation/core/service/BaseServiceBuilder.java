@@ -1,5 +1,7 @@
 package reyga.starter.foundation.core.service;
 
+import reyga.starter.foundation.common.logging.CommonLogger;
+import reyga.starter.foundation.common.logging.InjectLogger;
 import reyga.starter.foundation.common.model.dto.content.BaseContent;
 import reyga.starter.foundation.common.model.dto.request.BaseRequest;
 import reyga.starter.foundation.core.annotation.ExperimentalApi;
@@ -19,6 +21,9 @@ public abstract class BaseServiceBuilder<
         R,
         C extends BaseContent
         > extends BaseTransactionalExecutor implements FoundationBuilderService<Q, R, C> {
+
+    @InjectLogger
+    protected CommonLogger logger;
 
     private final List<Supplier<?>> processes = new ArrayList<>();
     private Q request;
@@ -40,8 +45,10 @@ public abstract class BaseServiceBuilder<
     protected abstract void registerProcesses(ProcessContext<Q, C> ctx);
 
     protected void logInformation(Q req) {
-        log.info("Executing Service...");
-        log.info("Request : ", String.valueOf(req));
+        if (logger != null) {
+            logger.info("Executing Service...");
+            logger.info("Request : ", String.valueOf(req));
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -221,7 +228,9 @@ public abstract class BaseServiceBuilder<
                 () -> transactionalExecutor.runInTransaction(
                         () -> executeProcesses(processSnapshot, endProcessSnapshot),
                         ex -> {
-                            log.error("Transaction fallback process message: {}", ex.getMessage(), ex);
+                            if (logger != null) {
+                                logger.error("Transaction fallback process message: {}", ex.getMessage(), ex);
+                            }
                             if (transactionalFallback != null) {
                                 return transactionalFallback.apply(ex);
                             }
@@ -246,7 +255,9 @@ public abstract class BaseServiceBuilder<
         return transactionalExecutor.runInTransaction(
                 () -> executeProcesses(processSnapshot, endProcessSnapshot),
                 ex -> {
-                    log.error("Transaction fallback process message: {}", ex.getMessage(), ex);
+                    if (logger != null) {
+                        logger.error("Transaction fallback process message: {}", ex.getMessage(), ex);
+                    }
                     if (transactionalFallback != null) {
                         return transactionalFallback.apply(ex);
                     }

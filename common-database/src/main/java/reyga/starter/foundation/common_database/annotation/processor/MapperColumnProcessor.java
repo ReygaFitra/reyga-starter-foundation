@@ -3,7 +3,8 @@ package reyga.starter.foundation.common_database.annotation.processor;
 import lombok.RequiredArgsConstructor;
 import oracle.sql.TIMESTAMP;
 import org.springframework.jdbc.core.RowMapper;
-import reyga.starter.foundation.common.logging.BaseLogging;
+import reyga.starter.foundation.common.logging.CommonLogger;
+import reyga.starter.foundation.common.logging.InjectLogger;
 import reyga.starter.foundation.common_database.annotation.MapperColumn;
 
 import java.lang.reflect.InvocationTargetException;
@@ -13,7 +14,10 @@ import java.sql.Date;
 import java.time.ZoneId;
 
 @RequiredArgsConstructor
-public class MapperColumnProcessor<E> extends BaseLogging {
+public class MapperColumnProcessor<E> {
+
+    @InjectLogger
+    protected CommonLogger logger;
 
     private final Class<E> clazz;
 
@@ -54,7 +58,9 @@ public class MapperColumnProcessor<E> extends BaseLogging {
                 }
 
             } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-                log.error(e.getMessage(), e);
+                if (logger != null) {
+                    logger.error(e.getMessage(), e);
+                }
                 throw new RuntimeException(e);
             }
 

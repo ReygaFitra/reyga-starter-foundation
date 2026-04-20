@@ -8,7 +8,8 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import reyga.starter.foundation.common.enumeration.HeaderEnum;
 import reyga.starter.foundation.common.enumeration.ServiceCodeEnum;
-import reyga.starter.foundation.common.logging.BaseLogging;
+import reyga.starter.foundation.common.logging.CommonLogger;
+import reyga.starter.foundation.common.logging.InjectLogger;
 import reyga.starter.foundation.common.model.dto.response.FieldErrorDetail;
 import reyga.starter.foundation.common.model.dto.response.FileErrorDetail;
 import reyga.starter.foundation.common.model.dto.response.ResponseError;
@@ -24,13 +25,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 @ControllerAdvice
-public class DefaultAppValidationExceptionHandler extends BaseLogging {
+public class DefaultAppValidationExceptionHandler {
+
+    @InjectLogger
+    protected CommonLogger logger;
 
     @ExceptionHandler(AppFaultException.class)
     public ResponseEntity<ResponseError> handleAppFaultException(AppFaultException ex, HttpServletRequest request) {
         request.setAttribute(HeaderEnum.EXCEPTION.getValue(), ex);
 
-        log.exception("AppFaultException".toUpperCase(), ex.getFaultInfo(), ex);
+        if (logger != null) {
+            logger.exception("AppFaultException".toUpperCase(), ex.getFaultInfo(), ex);
+        }
         return ResponseErrorBuilder.createErrorResponse(ex.getStatusCode(), ex.getErrorCode(), ex.getErrorMessage());
     }
 
@@ -45,7 +51,10 @@ public class DefaultAppValidationExceptionHandler extends BaseLogging {
                         .timestamp(DateUtility.getTimestamp(LocalDateTime.now()))
                         .build())
                 .toList();
-        log.exception("MethodArgumentNotValidException".toUpperCase(), fieldErrorDetails, ex);
+                
+        if (logger != null) {
+            logger.exception("MethodArgumentNotValidException".toUpperCase(), fieldErrorDetails, ex);
+        }
 
         return ResponseErrorBuilder.createErrorResponse(
                 HttpStatus.BAD_REQUEST, ServiceCodeEnum.VALIDATION_ERROR.getCode(), ServiceCodeEnum.VALIDATION_ERROR.getMessage(),
@@ -68,7 +77,9 @@ public class DefaultAppValidationExceptionHandler extends BaseLogging {
                     .toList());
         }
 
-        log.exception("IOFaultException".toUpperCase(), fileErrorDetailList, fex);
+        if (logger != null) {
+            logger.exception("IOFaultException".toUpperCase(), fileErrorDetailList, fex);
+        }
 
         return ResponseErrorBuilder.createErrorResponse(
                 HttpStatus.BAD_REQUEST, ServiceCodeEnum.FILE_ERROR.getCode(), message,

@@ -6,6 +6,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
+import reyga.starter.foundation.common.logging.CommonLogger;
+import reyga.starter.foundation.common.logging.InjectLogger;
 import reyga.starter.foundation.common.model.dto.response.ResponseError;
 import reyga.starter.foundation.core.controller.ResponseErrorBuilder;
 import tools.jackson.core.JacksonException;
@@ -18,6 +20,9 @@ import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 
 @ControllerAdvice
 public class DefaultExceptionHandler extends BaseExceptionHandler<ResponseError> {
+
+    @InjectLogger
+    protected CommonLogger logger;
 
    private static final String JACKSON_WARN = "write_log_error";
 
@@ -36,9 +41,9 @@ public class DefaultExceptionHandler extends BaseExceptionHandler<ResponseError>
             message = "GENERAL ERROR";
             errors.put("illegalArgumentException", exception.getStackTrace()[0].toString());
             try {
-                log.warn("ILLEGAL ARGUMENT EXCEPTION ERROR :", mapper.writeValueAsString(errors));
+                logger.warn("ILLEGAL ARGUMENT EXCEPTION ERROR :", mapper.writeValueAsString(errors));
             } catch (JacksonException e1) {
-                log.error(JACKSON_WARN, e1.getMessage());
+                logger.error(JACKSON_WARN, e1.getMessage());
             }
         } else {
             code = "99";
@@ -47,12 +52,12 @@ public class DefaultExceptionHandler extends BaseExceptionHandler<ResponseError>
             message = "INTERNAL SERVER ERROR";
             errors.put("Global Error", exception.getStackTrace()[0].toString());
             try {
-                log.warn("GLOBAL ERROR :", mapper.writeValueAsString(errors));
+                logger.warn("GLOBAL ERROR :", mapper.writeValueAsString(errors));
             } catch (JacksonException e1) {
-                log.error(JACKSON_WARN, e1.getMessage());
+                logger.error(JACKSON_WARN, e1.getMessage());
             }
         }
-        log.exception(exceptionType.toUpperCase(), null, exception);
+        logger.exception(exceptionType.toUpperCase(), null, exception);
         return ResponseErrorBuilder.createErrorResponse(httpStatus, code, message);
     }
 
@@ -65,21 +70,21 @@ public class DefaultExceptionHandler extends BaseExceptionHandler<ResponseError>
             exceptionType = "JpaSystemException";
             errors.put("JPA-SYSTEM-ERROR", exception.getStackTrace()[0].toString());
             try {
-                log.warn("JPA ERROR :", mapper.writeValueAsString(errors));
+                logger.warn("JPA ERROR :", mapper.writeValueAsString(errors));
             } catch (JacksonException e1) {
-                log.error(JACKSON_WARN, e1.getMessage());
+                logger.error(JACKSON_WARN, e1.getMessage());
             }
         }
         if (exception instanceof DataAccessException) {
             exceptionType = "DataAccessException";
             errors.put("JDBC-ERROR", exception.getStackTrace()[0].toString());
             try {
-                log.warn("JDBC ERROR :", mapper.writeValueAsString(errors));
+                logger.warn("JDBC ERROR :", mapper.writeValueAsString(errors));
             } catch (JacksonException e1) {
-                log.error(JACKSON_WARN, e1.getMessage());
+                logger.error(JACKSON_WARN, e1.getMessage());
             }
         }
-        log.exception(exceptionType.toUpperCase(), null, exception);
+        logger.exception(exceptionType.toUpperCase(), null, exception);
         return ResponseErrorBuilder.createErrorResponse(INTERNAL_SERVER_ERROR, "99", "DATABASE ERROR");
     }
 
