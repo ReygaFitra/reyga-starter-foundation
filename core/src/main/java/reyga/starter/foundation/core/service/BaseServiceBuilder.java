@@ -80,7 +80,7 @@ public abstract class BaseServiceBuilder<
     }
 
     public R build() {
-        ensureInitialized();
+        this.ensureInitialized();
 
         if (endProcess == null) {
             throw new IllegalStateException("endProcess must be defined before build()");
@@ -89,47 +89,14 @@ public abstract class BaseServiceBuilder<
         List<Supplier<?>> processSnapshot = List.copyOf(processes);
         Supplier<R> endProcessSnapshot = endProcess;
 
-        if (asyncMode && transactionalMode) {
-            if (transactionalExecutor == null) {
-                throw new IllegalStateException("TransactionalExecutor bean is not available. Ensure default starter module is enabled.");
-            }
-            CompletableFuture<R> future = CompletableFuture.supplyAsync(
-                    () -> transactionalExecutor.runInTransaction(
-                            () -> executeProcesses(processSnapshot, endProcessSnapshot),
-                            ex -> {
-                                log.error("Transaction fallback process message: {}", ex.getMessage(), ex);
-                                if (transactionalFallback != null) {
-                                    return transactionalFallback.apply(ex);
-                                }
-                                throw new RuntimeException(ex);
-                            }
-                    )
-            );
-            return future.join();
-        }
+        if (asyncMode && transactionalMode)
+            return this.transactionalAsyncBuilder(processSnapshot, endProcessSnapshot);
 
-        if (asyncMode) {
-            CompletableFuture<R> future = CompletableFuture.supplyAsync(
-                    () -> executeProcesses(processSnapshot, endProcessSnapshot)
-            );
-            return future.join();
-        }
+        if (asyncMode)
+            return this.asyncBuilder(processSnapshot, endProcessSnapshot);
 
-        if (transactionalMode) {
-            if (transactionalExecutor == null) {
-                throw new IllegalStateException("TransactionalExecutor bean is not available. Ensure default starter module is enabled.");
-            }
-            return transactionalExecutor.runInTransaction(
-                    () -> executeProcesses(processSnapshot, endProcessSnapshot),
-                    ex -> {
-                        log.error("Transaction fallback process message: {}", ex.getMessage(), ex);
-                        if (transactionalFallback != null) {
-                            return transactionalFallback.apply(ex);
-                        }
-                        throw new RuntimeException(ex);
-                    }
-            );
-        }
+        if (transactionalMode)
+            return this.transactionalBuilder(processSnapshot, endProcessSnapshot);
 
         return executeProcesses(processSnapshot, endProcessSnapshot);
     }
@@ -244,5 +211,47 @@ public abstract class BaseServiceBuilder<
         public void endProcess(Supplier<?> process) {
             BaseServiceBuilder.this.endProcess((Supplier<R>) process);
         }
+    }
+
+    private R transactionalAsyncBuilder(List<Supplier<?>> processSnapshot, Supplier<R> endProcessSnapshot) {
+        if (transactionalExecutor == null) {
+            throw new IllegalStateException("TransactionalExecutor bean is not available. Ensure default starter module is enabled.");
+        }
+        CompletableFuture<R> future = CompletableFuture.supplyAsync(
+                () -> transactionalExecutor.runInTransaction(
+                        () -> executeProcesses(processSnapshot, endProcessSnapshot),
+                        ex -> {
+                            log.error("Transaction fallback process message: {}", ex.getMessage(), ex);
+                            if (transactionalFallback != null) {
+                                return transactionalFallback.apply(ex);
+                            }
+                            throw new RuntimeException(ex);
+                        }
+                )
+        );
+        return future.join();
+    }
+
+    private R asyncBuilder(List<Supplier<?>> processSnapshot, Supplier<R> endProcessSnapshot) {
+        CompletableFuture<R> future = CompletableFuture.supplyAsync(
+                () -> executeProcesses(processSnapshot, endProcessSnapshot)
+        );
+        return future.join();
+    }
+
+    private R transactionalBuilder(List<Supplier<?>> processSnapshot, Supplier<R> endProcessSnapshot) {
+        if (transactionalExecutor == null) {
+            throw new IllegalStateException("TransactionalExecutor bean is not available. Ensure default starter module is enabled.");
+        }
+        return transactionalExecutor.runInTransaction(
+                () -> executeProcesses(processSnapshot, endProcessSnapshot),
+                ex -> {
+                    log.error("Transaction fallback process message: {}", ex.getMessage(), ex);
+                    if (transactionalFallback != null) {
+                        return transactionalFallback.apply(ex);
+                    }
+                    throw new RuntimeException(ex);
+                }
+        );
     }
 }

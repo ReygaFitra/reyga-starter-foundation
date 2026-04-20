@@ -1,5 +1,6 @@
 package reyga.starter.foundation.common_database.util;
 
+import lombok.Getter;
 import reyga.starter.foundation.common_database.enumeration.QueryJoinType;
 import reyga.starter.foundation.common_database.enumeration.QueryType;
 
@@ -19,7 +20,17 @@ public class QueryBuilder {
     private final List<String> insertValues = new ArrayList<>();
     private final List<String> setClauses = new ArrayList<>();
 
+    @Getter
     private final List<Object> parameters = new LinkedList<>();
+
+    @Getter
+    private String sql;
+
+    private static final String WHERE = " WHERE ";
+
+    public static QueryBuilder builder() {
+        return new QueryBuilder();
+    }
 
     public QueryBuilder select(String... cols) {
         this.type = QueryType.SELECT;
@@ -117,10 +128,6 @@ public class QueryBuilder {
         return this;
     }
 
-    public List<Object> getParameters() {
-        return this.parameters;
-    }
-
     public WhereBuilder where() {
         return new WhereBuilder(this);
     }
@@ -130,43 +137,22 @@ public class QueryBuilder {
     }
 
     public String build() {
-        StringBuilder sql = new StringBuilder();
+        StringBuilder sqlBuilder = new StringBuilder();
 
-        switch (type) {
-            case SELECT:
-                sql.append("SELECT ").append(columns.isEmpty() ? "*" : String.join(", ", columns))
-                        .append(" FROM ").append(table);
-                if (!joins.isEmpty()) sql.append(" ").append(String.join(" ", joins));
-                if (!whereConditions.isEmpty()) sql.append(" WHERE ").append(String.join(" ", whereConditions));
-                if (!groupBy.isEmpty()) sql.append(" GROUP BY ").append(String.join(", ", groupBy));
-                if (!orderBy.isEmpty()) sql.append(" ORDER BY ").append(String.join(", ", orderBy));
-                if (limit != null) sql.append(" LIMIT ").append(limit);
-                if (offset != null) sql.append(" OFFSET ").append(offset);
-                break;
-
-            case INSERT:
-                if (!columns.isEmpty() && !insertValues.isEmpty() && columns.size() != insertValues.size())
-                    throw new IllegalStateException("Columns count and values count do not match.");
-                sql.append("INSERT INTO ").append(table);
-                if (!columns.isEmpty()) sql.append(" (").append(String.join(", ", columns)).append(")");
-                sql.append(" VALUES (").append(String.join(", ", insertValues)).append(")");
-                break;
-
-            case UPDATE:
-                sql.append("UPDATE ").append(table).append(" SET ").append(String.join(", ", setClauses));
-                if (!whereConditions.isEmpty()) sql.append(" WHERE ").append(String.join(" ", whereConditions));
-                break;
-
-            case DELETE:
-                sql.append("DELETE FROM ").append(table);
-                if (!whereConditions.isEmpty()) sql.append(" WHERE ").append(String.join(" ", whereConditions));
-                break;
+        if (type == null) {
+            throw new IllegalStateException("Query type (SELECT, INSERT, UPDATE, DELETE) must be specified.");
         }
 
-        return sql.toString().trim();
-    }
+        switch (type) {
+            case SELECT -> this.selectTypeBuilder(sqlBuilder);
+            case INSERT -> this.insertTypeBuilder(sqlBuilder);
+            case UPDATE -> this.updateTypeBuilder(sqlBuilder);
+            case DELETE -> this.deleteTypeBuilder(sqlBuilder);
+        }
 
-    private String formatValue(Object v) { return "?"; }
+        this.sql = sqlBuilder.toString().trim();
+        return this.sql;
+    }
 
     public static class WhereBuilder {
         private final QueryBuilder parent;
@@ -316,5 +302,34 @@ public class QueryBuilder {
 
     public JoinBuilder joinBuilder(QueryJoinType type, String table, String alias) {
         return new JoinBuilder(this, type, table, alias);
+    }
+
+    private void selectTypeBuilder(StringBuilder sql) {
+        sql.append("SELECT ").append(columns.isEmpty() ? "*" : String.join(", ", columns))
+                .append(" FROM ").append(table);
+        if (!joins.isEmpty()) sql.append(" ").append(String.join(" ", joins));
+        if (!whereConditions.isEmpty()) sql.append(WHERE).append(String.join(" ", whereConditions));
+        if (!groupBy.isEmpty()) sql.append(" GROUP BY ").append(String.join(", ", groupBy));
+        if (!orderBy.isEmpty()) sql.append(" ORDER BY ").append(String.join(", ", orderBy));
+        if (limit != null) sql.append(" LIMIT ").append(limit);
+        if (offset != null) sql.append(" OFFSET ").append(offset);
+    }
+
+    private void insertTypeBuilder(StringBuilder sql) {
+        if (!columns.isEmpty() && !insertValues.isEmpty() && columns.size() != insertValues.size())
+            throw new IllegalStateException("Columns count and values count do not match.");
+        sql.append("INSERT INTO ").append(table);
+        if (!columns.isEmpty()) sql.append(" (").append(String.join(", ", columns)).append(")");
+        sql.append(" VALUES (").append(String.join(", ", insertValues)).append(")");
+    }
+
+    private void updateTypeBuilder(StringBuilder sql) {
+        sql.append("UPDATE ").append(table).append(" SET ").append(String.join(", ", setClauses));
+        if (!whereConditions.isEmpty()) sql.append(WHERE).append(String.join(" ", whereConditions));
+    }
+
+    private void deleteTypeBuilder(StringBuilder sql) {
+        sql.append("DELETE FROM ").append(table);
+        if (!whereConditions.isEmpty()) sql.append(WHERE).append(String.join(" ", whereConditions));
     }
 }

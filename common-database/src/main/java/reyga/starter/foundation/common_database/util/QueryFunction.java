@@ -1,6 +1,15 @@
 package reyga.starter.foundation.common_database.util;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class QueryFunction {
+
+    private static final String CURRENT_DATE = "CURRENT_DATE";
+    private static final String CURRENT_TIMESTAMP = "CURRENT_TIMESTAMP";
+    private static final String ASC = "ASC";
+    private static final String DESC = "DESC";
 
     public static String toDate(String value, String format) {
         return "TO_DATE('" + escape(value) + "', '" + escape(format) + "')";
@@ -42,19 +51,19 @@ public class QueryFunction {
     }
 
     public static String currentDate() {
-        return "CURRENT_DATE";
+        return CURRENT_DATE;
     }
 
     public static String currentTimestamp() {
-        return "CURRENT_TIMESTAMP";
+        return CURRENT_TIMESTAMP;
     }
 
-    public static String ASCENDING() {
-        return "ASC";
+    public static String ascending() {
+        return ASC;
     }
 
-    public static String DESCENDING() {
-        return "DESC";
+    public static String descending() {
+        return DESC;
     }
 
     private static String escape(String value) {

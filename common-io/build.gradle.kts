@@ -23,11 +23,9 @@ dependencies {
     implementation(project(":common"))
     implementation("org.apache.tika:tika-core:$apacheTikaVersion")
     implementation("com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:$owaspSanitizerVersion")
-    implementation("net.sf.jasperreports:jasperreports:$jasperReportsVersion")
-    implementation("net.sf.jasperreports:jasperreports-pdf:$jasperReportsVersion")
-    implementation("net.sf.jasperreports:jasperreports-json:$jasperReportsVersion")
-    implementation("net.sf.jasperreports:jasperreports-excel-poi:$jasperReportsVersion")
-
+    
+    // Jasper minimal interfaces for the API
+    compileOnly("net.sf.jasperreports:jasperreports:$jasperReportsVersion")
 }
 
 java {

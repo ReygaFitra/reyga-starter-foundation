@@ -22,20 +22,20 @@ public class DefaultQueryProcessor extends BaseLogging implements QueryProcessor
 
     @Override
     public <T> List<T> fetch(QueryBuilder builder, RowMapper<T> rowMapper) {
-        String sql = builder.build();
-        log.info("Constructed query: " + sql);
+        String sql = builder.getSql();
+        this.printConstructedQuery(sql);
         List<Object> params = builder.getParameters();
         return jdbcTemplate.query(sql, rowMapper, params.toArray());
     }
 
     @Override
     public <T> Optional<List<T>> optionalFetch(QueryBuilder builder, RowMapper<T> rowMapper) {
-        String sql = builder.build();
-        log.info("Constructed query : " + sql);
+        String sql = builder.getSql();
+        this.printConstructedQuery(sql);
         List<Object> params = builder.getParameters();
         try {
             return Optional.of(jdbcTemplate.query(sql, rowMapper, params.toArray()));
-        } catch (EmptyResultDataAccessException e) {
+        } catch (EmptyResultDataAccessException _) {
             return Optional.empty();
         }
     }
@@ -54,30 +54,30 @@ public class DefaultQueryProcessor extends BaseLogging implements QueryProcessor
 
     @Override
     public <T> T fetchOneBy(QueryBuilder builder, RowMapper<T> rowMapper) {
-        String sql = builder.build();
+        String sql = builder.getSql();
         List<Object> params = builder.getParameters();
         return this.queryForObject(sql, rowMapper, params);
     }
 
     @Override
     public <T> Optional<T> optionalFetchOneBy(QueryBuilder builder, RowMapper<T> rowMapper) {
-        String sql = builder.build();
+        String sql = builder.getSql();
         List<Object> params = builder.getParameters();
         return this.optionalQueryForObject(sql, rowMapper, params);
     }
 
     @Override
     public int execute(QueryBuilder builder) {
-        String sql = builder.build();
-        log.info("Constructed query: " + sql);
+        String sql = builder.getSql();
+        this.printConstructedQuery(sql);
         List<Object> params = builder.getParameters();
         return jdbcTemplate.update(sql, params.toArray());
     }
 
     @Override
     public int[] batchExecute(QueryBuilder builder, List<Object[]> batchParams) {
-        String sql = builder.build();
-        log.info("Constructed query: " + sql);
+        String sql = builder.getSql();
+        this.printConstructedQuery(sql);
         return jdbcTemplate.batchUpdate(sql, batchParams);
     }
 
@@ -85,7 +85,7 @@ public class DefaultQueryProcessor extends BaseLogging implements QueryProcessor
     public int[] batchExecute(List<QueryBuilder> builders) {
         List<Integer> results = new ArrayList<>();
         for (QueryBuilder builder : builders) {
-            String sql = builder.build();
+            String sql = builder.getSql();
             log.info("Query ==> : " + sql);
             results.add(jdbcTemplate.update(sql, builder.getParameters().toArray()));
         }
@@ -117,10 +117,10 @@ public class DefaultQueryProcessor extends BaseLogging implements QueryProcessor
 
     @Override
     public <T> Optional<T> fetchOneRaw(String sql, RowMapper<T> rowMapper, Object... params) {
-        log.info("Raw queryForObject: " + sql);
+        this.printConstructedQuery(sql);
         try {
             return Optional.ofNullable(jdbcTemplate.queryForObject(sql, rowMapper, params));
-        } catch (EmptyResultDataAccessException e) {
+        } catch (EmptyResultDataAccessException _) {
             return Optional.empty();
         }
     }
@@ -131,16 +131,20 @@ public class DefaultQueryProcessor extends BaseLogging implements QueryProcessor
     }
 
     private <T> T queryForObject(String sql, RowMapper<T> rowMapper, List<Object> params) {
-        log.info("Constructed queryForObject: " + sql);
+        this.printConstructedQuery(sql);
         return jdbcTemplate.queryForObject(sql, rowMapper, params.toArray());
     }
 
     private <T> Optional<T> optionalQueryForObject(String sql, RowMapper<T> rowMapper, List<Object> params) {
-        log.info("Constructed queryForObject: " + sql);
+        this.printConstructedQuery(sql);
         try {
             return Optional.ofNullable(jdbcTemplate.queryForObject(sql, rowMapper, params.toArray()));
-        } catch (EmptyResultDataAccessException e) {
+        } catch (EmptyResultDataAccessException _) {
             return Optional.empty();
         }
+    }
+
+    private void printConstructedQuery(String sql) {
+        log.info("Executing query: " + sql);
     }
 }
