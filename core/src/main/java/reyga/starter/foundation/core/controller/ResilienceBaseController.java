@@ -11,7 +11,7 @@ import org.springframework.http.ResponseEntity;
 import reyga.starter.foundation.common.enumeration.ServiceCodeEnum;
 import reyga.starter.foundation.common.enumeration.ServiceStatusResponseEnum;
 import reyga.starter.foundation.common.model.dto.response.ResponseData;
-import reyga.starter.foundation.core.service.ResilienceService;
+import reyga.starter.foundation.core.service.foundation.ResilienceService;
 
 @RequiredArgsConstructor
 public abstract class ResilienceBaseController extends BaseController {

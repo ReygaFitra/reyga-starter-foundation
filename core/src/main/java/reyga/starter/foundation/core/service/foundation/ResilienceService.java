@@ -1,4 +1,4 @@
-package reyga.starter.foundation.core.service;
+package reyga.starter.foundation.core.service.foundation;
 
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;

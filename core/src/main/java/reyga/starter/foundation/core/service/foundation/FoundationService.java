@@ -1,4 +1,4 @@
-package reyga.starter.foundation.core.service;
+package reyga.starter.foundation.core.service.foundation;
 
 import reyga.starter.foundation.common.model.dto.request.BaseRequest;
 

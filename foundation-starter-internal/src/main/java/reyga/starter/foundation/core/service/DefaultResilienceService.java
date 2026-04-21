@@ -13,6 +13,7 @@ import io.github.resilience4j.retry.RetryRegistry;
 import org.springframework.cache.Cache;
 import reyga.starter.foundation.common.logging.CommonLogger;
 import reyga.starter.foundation.common.logging.InjectLogger;
+import reyga.starter.foundation.core.service.foundation.ResilienceService;
 
 import java.util.function.Supplier;
 

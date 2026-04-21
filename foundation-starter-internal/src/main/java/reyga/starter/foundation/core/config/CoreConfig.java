@@ -22,7 +22,7 @@ import reyga.starter.foundation.core.config.properties.ConfigProperties;
 import reyga.starter.foundation.core.exception.handler.DefaultAppValidationExceptionHandler;
 import reyga.starter.foundation.core.exception.handler.DefaultExceptionHandler;
 import reyga.starter.foundation.core.service.DefaultResilienceService;
-import reyga.starter.foundation.core.service.ResilienceService;
+import reyga.starter.foundation.core.service.foundation.ResilienceService;
 import reyga.starter.foundation.core.validation.ValidationProcessor;
 import reyga.starter.foundation.core.validation.ValidationUtility;
 
