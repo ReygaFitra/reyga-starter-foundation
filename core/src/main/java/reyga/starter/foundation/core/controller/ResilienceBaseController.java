@@ -13,6 +13,10 @@ import reyga.starter.foundation.common.enumeration.ServiceStatusResponseEnum;
 import reyga.starter.foundation.common.model.dto.response.ResponseData;
 import reyga.starter.foundation.core.service.foundation.ResilienceService;
 
+/**
+ * Base controller providing resilience patterns such as Rate Limiting and Circuit Breaking.
+ * Extends {@link BaseController} to inherit standard response building capabilities.
+ */
 @RequiredArgsConstructor
 public abstract class ResilienceBaseController extends BaseController {
 
@@ -20,6 +24,14 @@ public abstract class ResilienceBaseController extends BaseController {
     private final RateLimiterRegistry rateLimiterRegistry;
     private final CircuitBreakerRegistry circuitBreakerRegistry;
 
+    /**
+     * Creates a response wrapped with a Rate Limiter.
+     *
+     * @param data the data to return
+     * @param rlConfig the Rate Limiter configuration
+     * @param rlKey the unique key for the Rate Limiter instance
+     * @return ResponseEntity containing the data or a TOO_MANY_REQUESTS status
+     */
     protected <T> ResponseEntity<T> createResponseWithRateLimiter(
             T data, RateLimiterConfig rlConfig, String rlKey
     ) {
@@ -28,6 +40,15 @@ public abstract class ResilienceBaseController extends BaseController {
         );
     }
 
+    /**
+     * Creates a response wrapped with a Rate Limiter and utilizes caching.
+     *
+     * @param data the data to return
+     * @param rlConfig the Rate Limiter configuration
+     * @param rlKey the unique key for the Rate Limiter instance
+     * @param cache the cache instance to use
+     * @return ResponseEntity containing the data or a TOO_MANY_REQUESTS status
+     */
     protected <T> ResponseEntity<T> createResponseWithRateLimiter(
             T data, RateLimiterConfig rlConfig, String rlKey, Cache cache
     ) {
@@ -36,6 +57,16 @@ public abstract class ResilienceBaseController extends BaseController {
         );
     }
 
+    /**
+     * Creates a standardized ResponseData wrapped with a Rate Limiter.
+     *
+     * @param data the data to return
+     * @param code the service-specific success code
+     * @param message the success message
+     * @param rlConfig the Rate Limiter configuration
+     * @param rlKey the unique key for the Rate Limiter instance
+     * @return ResponseEntity containing ResponseData or a standardized error response
+     */
     protected <T> ResponseEntity<ResponseData<T>> createResponseWithRateLimiter(
             T data, String code, String message, RateLimiterConfig rlConfig, String rlKey
     ) {
@@ -50,6 +81,17 @@ public abstract class ResilienceBaseController extends BaseController {
         );
     }
 
+    /**
+     * Creates a standardized ResponseData wrapped with a Rate Limiter and utilizes caching.
+     *
+     * @param data the data to return
+     * @param code the service-specific success code
+     * @param message the success message
+     * @param rlConfig the Rate Limiter configuration
+     * @param rlKey the unique key for the Rate Limiter instance
+     * @param cache the cache instance to use
+     * @return ResponseEntity containing ResponseData or a standardized error response
+     */
     protected <T> ResponseEntity<ResponseData<T>> createResponseWithRateLimiter(
             T data, String code, String message, RateLimiterConfig rlConfig, String rlKey, Cache cache
     ) {
@@ -65,6 +107,14 @@ public abstract class ResilienceBaseController extends BaseController {
         );
     }
 
+    /**
+     * Creates a response wrapped with a Circuit Breaker.
+     *
+     * @param data the data to return
+     * @param cbConfig the Circuit Breaker configuration
+     * @param cbName the name of the Circuit Breaker instance
+     * @return ResponseEntity containing the data or an INTERNAL_SERVER_ERROR status
+     */
     protected <T> ResponseEntity<T> createResponseWithCircuitBreaker(
             T data, CircuitBreakerConfig cbConfig, String cbName
     ) {
@@ -73,6 +123,16 @@ public abstract class ResilienceBaseController extends BaseController {
         );
     }
 
+    /**
+     * Creates a standardized ResponseData wrapped with a Circuit Breaker.
+     *
+     * @param data the data to return
+     * @param code the service-specific success code
+     * @param message the success message
+     * @param cbConfig the Circuit Breaker configuration
+     * @param cbName the name of the Circuit Breaker instance
+     * @return ResponseEntity containing ResponseData or a standardized error response
+     */
     protected <T> ResponseEntity<ResponseData<T>> createResponseWithCircuitBreaker(
             T data, String code, String message, CircuitBreakerConfig cbConfig, String cbName
     ) {

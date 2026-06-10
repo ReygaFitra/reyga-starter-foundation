@@ -21,6 +21,15 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+/**
+ * Abstract base class for building and executing service pipelines with support for
+ * validation, transaction management, and asynchronous execution.
+ *
+ * @param <T> The concrete type of the builder for fluent API chaining.
+ * @param <Q> The type of the request object.
+ * @param <R> The type of the response object.
+ * @param <C> The type of the content/context object.
+ */
 public abstract class PipelineServiceBuilder<
         T extends PipelineServiceBuilder<T, Q, R, C>,
         Q extends BaseRequest,
@@ -44,6 +53,12 @@ public abstract class PipelineServiceBuilder<
     private Function<Throwable, R> transactionalFallback;
     private boolean initialized = false;
 
+    /**
+     * Represents the initial state passed to the first step of the pipeline.
+     *
+     * @param request The service request.
+     * @param content The service content/context.
+     */
     protected record InitialState<Q extends BaseRequest, C extends BaseContent>(Q request, C content) {}
 
     @Override
@@ -59,10 +74,28 @@ public abstract class PipelineServiceBuilder<
         return orchestrate(req, content);
     }
 
+    /**
+     * Orchestrates the service logic. Implementation should define the pipeline flow.
+     *
+     * @param req     The request object.
+     * @param content The content object.
+     * @return The service response.
+     */
     protected abstract R orchestrate(Q req, C content);
 
+    /**
+     * Determines if the service requires HttpServletRequest and HttpServletResponse
+     * to be present in the request object.
+     *
+     * @return true if servlet parameters are required.
+     */
     protected abstract boolean useHttpServletParameter();
 
+    /**
+     * Logs basic information about the service execution.
+     *
+     * @param req The request object.
+     */
     protected void logInformation(Q req) {
         if (logger != null) {
             logger.info("Executing Service...");
@@ -70,6 +103,13 @@ public abstract class PipelineServiceBuilder<
         }
     }
 
+    /**
+     * Initializes the builder with the required request and content.
+     *
+     * @param request The request object.
+     * @param content The content object.
+     * @return The builder instance.
+     */
     @SuppressWarnings("unchecked")
     public T service(Q request, C content) {
         this.request = Objects.requireNonNull(request, "request must not be null");
@@ -81,11 +121,23 @@ public abstract class PipelineServiceBuilder<
         return (T) this;
     }
 
+    /**
+     * Starts the pipeline with an initial step.
+     *
+     * @param firstStep A function defining the first operation.
+     * @param <O>       The return type of the first step.
+     * @return A ChainedPipeline instance to continue building.
+     */
     public <O> ChainedPipeline<O> startPipe(Function<InitialState<Q, C>, O> firstStep) {
         ensureInitialized();
         return new ChainedPipeline<>(firstStep);
     }
 
+    /**
+     * Enables asynchronous execution for the pipeline.
+     *
+     * @return The builder instance.
+     */
     @SuppressWarnings("unchecked")
     @ExperimentalApi("Async execution mode is experimental and may change.")
     public T withAsync() {
@@ -93,6 +145,11 @@ public abstract class PipelineServiceBuilder<
         return (T) this;
     }
 
+    /**
+     * Enables transactional execution for the pipeline.
+     *
+     * @return The builder instance.
+     */
     @SuppressWarnings("unchecked")
     @ExperimentalApi("Transactional execution mode is experimental and may change.")
     public T withTransactional() {
@@ -100,6 +157,12 @@ public abstract class PipelineServiceBuilder<
         return (T) this;
     }
 
+    /**
+     * Sets a fallback function to handle exceptions during transactional execution.
+     *
+     * @param fallback Function that takes a Throwable and returns a response.
+     * @return The builder instance.
+     */
     @SuppressWarnings("unchecked")
     @ExperimentalApi("Transactional fallback is experimental and may change.")
     public T onTransactionalFallback(Function<Throwable, R> fallback) {
@@ -117,6 +180,11 @@ public abstract class PipelineServiceBuilder<
         }
     }
 
+    /**
+     * Inner class representing a stage in the service pipeline.
+     *
+     * @param <CURRENT_RESULT> The result type of the current stage.
+     */
     public class ChainedPipeline<CURRENT_RESULT> {
         private final Function<InitialState<Q, C>, CURRENT_RESULT> composedFunction;
 
@@ -124,6 +192,11 @@ public abstract class PipelineServiceBuilder<
             this.composedFunction = func;
         }
 
+        /**
+         * Adds a validation step for the request object using default groups.
+         *
+         * @return The pipeline instance.
+         */
         public ChainedPipeline<CURRENT_RESULT> doValidationRequest() {
             return andThen(result -> {
                 ValidationUtility.chain().validateRequest(request);
@@ -131,6 +204,13 @@ public abstract class PipelineServiceBuilder<
             });
         }
 
+        /**
+         * Adds a validation step for the request object using specific validation groups.
+         *
+         * @param groupList List of validation group classes.
+         * @param <G>       The group type.
+         * @return The pipeline instance.
+         */
         public <G> ChainedPipeline<CURRENT_RESULT> doValidationRequest(List<Class<G>> groupList) {
             return andThen(result -> {
                 ValidationUtility.chain().validateRequest(request, groupList);
@@ -138,11 +218,25 @@ public abstract class PipelineServiceBuilder<
             });
         }
 
+        /**
+         * Chains a new synchronous step to the pipeline.
+         *
+         * @param nextStep    Function defining the next operation.
+         * @param <NEXT_RESULT> The result type of the next step.
+         * @return A new ChainedPipeline instance.
+         */
         public <NEXT_RESULT> ChainedPipeline<NEXT_RESULT> andThen(Function<CURRENT_RESULT, NEXT_RESULT> nextStep) {
             Function<InitialState<Q, C>, NEXT_RESULT> newComposed = composedFunction.andThen(nextStep);
             return new ChainedPipeline<>(newComposed);
         }
 
+        /**
+         * Chains an asynchronous task to be executed after the current step.
+         * The task does not modify the pipeline result.
+         *
+         * @param asyncTask Consumer representing the async operation.
+         * @return The pipeline instance.
+         */
         public ChainedPipeline<CURRENT_RESULT> andThenAsync(Consumer<CURRENT_RESULT> asyncTask) {
             return andThen(result -> {
                 if (asyncExecutor == null) {
@@ -153,6 +247,11 @@ public abstract class PipelineServiceBuilder<
             });
         }
 
+        /**
+         * Finalizes the pipeline and executes it based on the configured modes (Async/Transactional).
+         *
+         * @return The final service response.
+         */
         @SuppressWarnings("unchecked")
         public R build() {
             Supplier<R> finalSupplier = () -> (R) composedFunction.apply(new InitialState<>(request, content));

@@ -20,6 +20,14 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+/**
+ * Abstract base class for building and orchestrating service logic using a fluent builder pattern.
+ *
+ * @param <T> The type of the builder implementation (self-referencing)
+ * @param <Q> The type of the request object
+ * @param <R> The type of the response/result object
+ * @param <C> The type of the content/context object
+ */
 public abstract class BaseServiceBuilder<
         T extends BaseServiceBuilder<T, Q, R, C>,
         Q extends BaseRequest,
@@ -39,6 +47,13 @@ public abstract class BaseServiceBuilder<
     private Function<Throwable, R> transactionalFallback;
     private boolean initialized = false;
 
+    /**
+     * Entry point for service execution. Validates servlet context if required and triggers orchestration.
+     *
+     * @param req     The request object
+     * @param content The content/context object
+     * @return The result of the service orchestration
+     */
     @Override
     public R execute(Q req, C content) {
         if (useHttpServletParameter() && (req.getServletRequest() == null || req.getServletResponse() == null)) {
@@ -52,10 +67,23 @@ public abstract class BaseServiceBuilder<
         return orchestrate(req, content);
     }
 
+    /**
+     * Abstract method to define the main orchestration logic of the service.
+     */
     protected abstract R orchestrate(Q req, C content);
 
+    /**
+     * Determines if the service requires HttpServletRequest/Response to be present in the request object.
+     *
+     * @return true if servlet parameters are required
+     */
     protected abstract boolean useHttpServletParameter();
 
+    /**
+     * Logs basic information about the service execution.
+     *
+     * @param req The request object to log
+     */
     protected void logInformation(Q req) {
         if (logger != null) {
             logger.info("Executing Service...");
@@ -63,6 +91,13 @@ public abstract class BaseServiceBuilder<
         }
     }
 
+    /**
+     * Initializes the builder with the required request and content.
+     *
+     * @param request The request object
+     * @param content The content object
+     * @return The builder instance
+     */
     @SuppressWarnings("unchecked")
     public T service(Q request, C content) {
         this.request = Objects.requireNonNull(request, "request must not be null");
@@ -76,6 +111,12 @@ public abstract class BaseServiceBuilder<
         return (T) this;
     }
 
+    /**
+     * Adds a side-effect process (Runnable) to the execution chain.
+     *
+     * @param process The process to run
+     * @return The builder instance
+     */
     @SuppressWarnings("unchecked")
     public T addProcess(Runnable process) {
         processes.add(() -> {
@@ -85,12 +126,24 @@ public abstract class BaseServiceBuilder<
         return (T) this;
     }
 
+    /**
+     * Adds a process (Supplier) to the execution chain.
+     *
+     * @param process The supplier to run
+     * @return The builder instance
+     */
     @SuppressWarnings("unchecked")
     public <X> T addProcess(Supplier<X> process) {
         processes.add(process);
         return (T) this;
     }
 
+    /**
+     * Defines the final process that produces the result of the service.
+     *
+     * @param process The runnable to execute before returning null
+     * @return The builder instance
+     */
     @SuppressWarnings("unchecked")
     public T endProcess(Runnable process) {
         this.endProcess = () -> {
@@ -100,24 +153,44 @@ public abstract class BaseServiceBuilder<
         return (T) this;
     }
 
+    /**
+     * Defines the final process that produces the result of the service.
+     *
+     * @param process The supplier that returns the final result
+     * @return The builder instance
+     */
     @SuppressWarnings("unchecked")
     public T endProcess(Supplier<R> process) {
         this.endProcess = process;
         return (T) this;
     }
 
+    /**
+     * Adds a request validation step to the process chain.
+     *
+     * @return The builder instance
+     */
     @SuppressWarnings("unchecked")
     public T validateRequest() {
         addProcess(() -> ValidationUtility.chain().validateRequest(this.request));
         return (T) this;
     }
 
+    /**
+     * Adds a request validation step with specific validation groups.
+     *
+     * @param groupList The list of validation groups
+     * @return The builder instance
+     */
     @SuppressWarnings("unchecked")
     public <G> T validateRequest(List<Class<G>> groupList) {
         addProcess(() -> ValidationUtility.chain().validateRequest(this.request, groupList));
         return (T) this;
     }
 
+    /**
+     * Enables asynchronous execution mode for the builder.
+     */
     @SuppressWarnings("unchecked")
     @ExperimentalApi("Async execution mode is experimental and may change.")
     public T withAsync() {
@@ -125,6 +198,9 @@ public abstract class BaseServiceBuilder<
         return (T) this;
     }
 
+    /**
+     * Enables transactional execution mode for the builder.
+     */
     @SuppressWarnings("unchecked")
     @ExperimentalApi("Transactional execution mode is experimental and may change.")
     public T withTransactional() {
@@ -132,6 +208,11 @@ public abstract class BaseServiceBuilder<
         return (T) this;
     }
 
+    /**
+     * Defines a fallback function to handle exceptions during transactional execution.
+     *
+     * @param fallback The function to handle the error and return a result
+     */
     @SuppressWarnings("unchecked")
     @ExperimentalApi("Transactional fallback is experimental and may change.")
     public T onTransactionalFallback(Function<Throwable, R> fallback) {
@@ -139,6 +220,11 @@ public abstract class BaseServiceBuilder<
         return (T) this;
     }
 
+    /**
+     * Executes the built process chain based on the configured modes (async, transactional).
+     *
+     * @return The result of the execution
+     */
     public R build() {
         this.ensureInitialized();
         if (endProcess == null) {
@@ -178,49 +264,26 @@ public abstract class BaseServiceBuilder<
         }
     }
 
-    private R transactionalAsyncBuilder(List<Supplier<?>> processSnapshot, Supplier<R> endProcessSnapshot) {
+    private R runTransactional(Supplier<R> action) {
         if (transactionalExecutor == null) {
             throw new IllegalStateException("TransactionalExecutor bean is not available. Ensure default starter module is enabled.");
         }
-        CompletableFuture<R> future = CompletableFuture.supplyAsync(
-                () -> transactionalExecutor.runInTransaction(
-                        () -> executeProcesses(processSnapshot, endProcessSnapshot),
-                        ex -> {
-                            if (logger != null) {
-                                logger.error("Transaction fallback process message: {}", ex.getMessage(), ex);
-                            }
-                            if (transactionalFallback != null) {
-                                return transactionalFallback.apply(ex);
-                            }
-                            throw new RuntimeException(ex);
-                        }
-                )
-        );
-        return future.join();
+        return transactionalExecutor.runInTransaction(action, ex -> {
+            if (logger != null) logger.error("Transaction fallback process message: {}", ex.getMessage(), ex);
+            if (transactionalFallback != null) return transactionalFallback.apply(ex);
+            throw new RuntimeException(ex);
+        });
+    }
+
+    private R transactionalAsyncBuilder(List<Supplier<?>> processSnapshot, Supplier<R> endProcessSnapshot) {
+        return CompletableFuture.supplyAsync(() -> runTransactional(() -> executeProcesses(processSnapshot, endProcessSnapshot))).join();
     }
 
     private R asyncBuilder(List<Supplier<?>> processSnapshot, Supplier<R> endProcessSnapshot) {
-        CompletableFuture<R> future = CompletableFuture.supplyAsync(
-                () -> executeProcesses(processSnapshot, endProcessSnapshot)
-        );
-        return future.join();
+        return CompletableFuture.supplyAsync(() -> executeProcesses(processSnapshot, endProcessSnapshot)).join();
     }
 
     private R transactionalBuilder(List<Supplier<?>> processSnapshot, Supplier<R> endProcessSnapshot) {
-        if (transactionalExecutor == null) {
-            throw new IllegalStateException("TransactionalExecutor bean is not available. Ensure default starter module is enabled.");
-        }
-        return transactionalExecutor.runInTransaction(
-                () -> executeProcesses(processSnapshot, endProcessSnapshot),
-                ex -> {
-                    if (logger != null) {
-                        logger.error("Transaction fallback process message: {}", ex.getMessage(), ex);
-                    }
-                    if (transactionalFallback != null) {
-                        return transactionalFallback.apply(ex);
-                    }
-                    throw new RuntimeException(ex);
-                }
-        );
+        return runTransactional(() -> executeProcesses(processSnapshot, endProcessSnapshot));
     }
 }
