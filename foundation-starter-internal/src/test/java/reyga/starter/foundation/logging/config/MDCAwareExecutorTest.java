@@ -12,18 +12,21 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class MDCAwareExecutorTest {
 
     @Test
-    void execute_propagatesMdcAndClearsAfter() {
+    void should_PropagateAndClearMdc_When_CommandIsExecuted() {
+        // given
         Executor delegate = command -> command.run();
         MDCAwareExecutor executor = new MDCAwareExecutor(delegate);
 
         MDC.put("key", "value");
         AtomicBoolean ran = new AtomicBoolean(false);
 
+        // when
         executor.execute(() -> {
             assertEquals("value", MDC.get("key"));
             ran.set(true);
         });
 
+        // then
         assertTrue(ran.get());
         assertEquals(null, MDC.get("key"));
     }

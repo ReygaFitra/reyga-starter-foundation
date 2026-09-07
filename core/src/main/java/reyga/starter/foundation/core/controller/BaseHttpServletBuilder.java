@@ -20,7 +20,7 @@ public abstract class BaseHttpServletBuilder extends ResponseErrorBuilder {
      * @param servletResponse the {@link HttpServletResponse} to set
      * @param <T>             the type of the request DTO
      */
-    protected <T extends BaseRequest> void setHttpServlet(
+    protected <T extends BaseRequest> void setHttpServletParameter(
             T request, HttpServletRequest servletRequest, HttpServletResponse servletResponse
     ) {
         request.setServletRequest(servletRequest);

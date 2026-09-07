@@ -22,7 +22,8 @@ public abstract class BaseService<T extends BaseRequest, R> implements Foundatio
     protected CommonLogger logger;
 
     /**
-     * Executes the service logic following a predefined workflow: validation, logging, and orchestration.
+     * Executes the service logic following a predefined workflow: servlet validation,
+     * logging, request validation, and business process construction.
      *
      * @param request the service request
      * @return the service response
@@ -42,16 +43,16 @@ public abstract class BaseService<T extends BaseRequest, R> implements Foundatio
         
         validateRequest(request);
         
-        return orchestrate(request);
+        return buildProcess(request);
     }
 
     /**
-     * Contains the core business logic of the service.
+     * Builds and executes the service business process, then returns its response.
      *
      * @param request the service request
      * @return the service response
      */
-    protected abstract R orchestrate(T request);
+    protected abstract R buildProcess(T request);
 
     /**
      * Validates the incoming request.

@@ -55,6 +55,7 @@ subprojects {
         testImplementation("org.mockito:mockito-core:$mockitoVersion")
         testImplementation("org.mockito:mockito-junit-jupiter:$mockitoVersion")
         testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitJupiterVersion")
+        testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
         // This dependency is exported to consumers, that is to say found on their compile classpath.
         api("org.apache.commons:commons-math3:$commonsMathVersion")

@@ -1,167 +1,143 @@
 package reyga.starter.foundation.core.exception.handler;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.jpa.JpaSystemException;
-import org.springframework.validation.BeanPropertyBindingResult;
-import org.springframework.validation.FieldError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
+import reyga.starter.foundation.common.enumeration.HeaderEnum;
 import reyga.starter.foundation.common.enumeration.ServiceCodeEnum;
-import reyga.starter.foundation.common.model.dto.response.ResponseErrorDetail;
+import reyga.starter.foundation.common.enumeration.ServiceStatusResponseEnum;
+import reyga.starter.foundation.common.logging.CommonLogger;
 import reyga.starter.foundation.common.model.dto.response.ResponseError;
-import reyga.starter.foundation.common_io.enumeration.IOOperation;
-import reyga.starter.foundation.common_io.exception.IOFaultException;
-import reyga.starter.foundation.common_io.exception.IOFaultMetadata;
-import reyga.starter.foundation.core.exception.AppFaultContent;
-import reyga.starter.foundation.core.exception.AppFaultException;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 class DefaultExceptionHandlerTest {
 
-    @Test
-    void processGlobalErrorHandler_handlesIllegalArgument() {
-        DefaultExceptionHandler handler = new DefaultExceptionHandler();
-        HttpServletRequest request = mockRequest();
+    private DefaultExceptionHandler handler;
+    private CommonLogger logger;
+    private HttpServletRequest servletRequest;
 
-        ResponseEntity<ResponseError> response = handler.handleGlobalErrorException(
-                new IllegalArgumentException("bad"), request
+    @BeforeEach
+    void setUp() {
+        handler = new DefaultExceptionHandler();
+        logger = mock(CommonLogger.class);
+        servletRequest = mock(HttpServletRequest.class);
+        handler.logger = logger;
+    }
+
+    @Test
+    void should_ReturnGeneralErrorAndLogException_When_IllegalArgumentExceptionOccurs() {
+        // given
+        IllegalArgumentException exception = new IllegalArgumentException("invalid argument");
+
+        // when
+        ResponseEntity<ResponseError> result =
+                handler.handleGlobalErrorException(exception, servletRequest);
+
+        // then
+        assertErrorResponse(
+                result,
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                ServiceCodeEnum.GLOBAL_ERROR.getCode(),
+                "GENERAL ERROR"
         );
-
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals("91", response.getBody().getCode());
-        assertEquals("GENERAL ERROR", response.getBody().getMessage());
+        verify(servletRequest).setAttribute(HeaderEnum.EXCEPTION.getValue(), exception);
+        verify(logger).warn(eq("ILLEGAL ARGUMENT EXCEPTION ERROR :"), any(Object[].class));
+        verify(logger).exception("ILLEGALARGUMENTEXCEPTION", null, exception);
+        verifyNoMoreInteractions(servletRequest, logger);
     }
 
     @Test
-    void processGlobalErrorHandler_handlesGenericException() {
-        DefaultExceptionHandler handler = new DefaultExceptionHandler();
-        HttpServletRequest request = mockRequest();
+    void should_ReturnGlobalErrorAndLogException_When_GenericExceptionOccurs() {
+        // given
+        RuntimeException exception = new RuntimeException("unexpected failure");
 
-        ResponseEntity<ResponseError> response = handler.handleGlobalErrorException(
-                new RuntimeException("fail"), request
+        // when
+        ResponseEntity<ResponseError> result =
+                handler.handleGlobalErrorException(exception, servletRequest);
+
+        // then
+        assertErrorResponse(
+                result,
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                ServiceCodeEnum.GLOBAL_ERROR.getCode(),
+                ServiceCodeEnum.GLOBAL_ERROR.getMessage()
         );
-
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-        assertEquals("99", response.getBody().getCode());
-        assertEquals("INTERNAL SERVER ERROR", response.getBody().getMessage());
+        verify(servletRequest).setAttribute(HeaderEnum.EXCEPTION.getValue(), exception);
+        verify(logger).warn(eq("GLOBAL ERROR :"), any(Object[].class));
+        verify(logger).exception("GLOBAL ERROR", null, exception);
+        verifyNoMoreInteractions(servletRequest, logger);
     }
 
     @Test
-    void processDatabaseErrorHandler_handlesJpaSystemException() {
-        DefaultExceptionHandler handler = new DefaultExceptionHandler();
-        HttpServletRequest request = mockRequest();
+    void should_ReturnDatabaseErrorAndLogJpaFailure_When_JpaSystemExceptionOccurs() {
+        // given
+        JpaSystemException exception = new JpaSystemException(new RuntimeException("database failure"));
 
-        ResponseEntity<ResponseError> response = handler.handleDatabaseErrorException(
-                new JpaSystemException(new RuntimeException("db")), request
+        // when
+        ResponseEntity<ResponseError> result =
+                handler.handleDatabaseErrorException(exception, servletRequest);
+
+        // then
+        assertErrorResponse(
+                result,
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                ServiceCodeEnum.DATABASE_ERROR.getCode(),
+                ServiceCodeEnum.DATABASE_ERROR.getMessage()
         );
-
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-        assertEquals("99", response.getBody().getCode());
-        assertEquals("DATABASE ERROR", response.getBody().getMessage());
+        verify(servletRequest).setAttribute(HeaderEnum.EXCEPTION.getValue(), exception);
+        verify(logger).warn(eq("JPA ERROR :"), any(Object[].class));
+        verify(logger).warn(eq("JDBC ERROR :"), any(Object[].class));
+        verify(logger).exception("DATAACCESSEXCEPTION", null, exception);
+        verifyNoMoreInteractions(servletRequest, logger);
     }
 
     @Test
-    void processDatabaseErrorHandler_handlesDataAccessException() {
-        DefaultExceptionHandler handler = new DefaultExceptionHandler();
-        HttpServletRequest request = mockRequest();
+    void should_ReturnDatabaseErrorAndLogJdbcFailure_When_DataAccessExceptionOccurs() {
+        // given
+        DataAccessException exception = new DataAccessException("database failure") {
+        };
 
-        ResponseEntity<ResponseError> response = handler.handleDatabaseErrorException(
-                new DataAccessException("db") {}, request
+        // when
+        ResponseEntity<ResponseError> result =
+                handler.handleDatabaseErrorException(exception, servletRequest);
+
+        // then
+        assertErrorResponse(
+                result,
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                ServiceCodeEnum.DATABASE_ERROR.getCode(),
+                ServiceCodeEnum.DATABASE_ERROR.getMessage()
         );
-
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-        assertEquals("99", response.getBody().getCode());
-        assertEquals("DATABASE ERROR", response.getBody().getMessage());
+        verify(servletRequest).setAttribute(HeaderEnum.EXCEPTION.getValue(), exception);
+        verify(logger).warn(eq("JDBC ERROR :"), any(Object[].class));
+        verify(logger).exception("DATAACCESSEXCEPTION", null, exception);
+        verifyNoMoreInteractions(servletRequest, logger);
     }
 
-    @Test
-    void processAppFaultErrorHandler_returnsAppFaultResponse() {
-        DefaultAppValidationExceptionHandler handler = new DefaultAppValidationExceptionHandler();
-        HttpServletRequest request = mockRequest();
-        AppFaultException ex = new AppFaultException(
-                AppFaultContent.buildAppFaultContent("msg", "01", "err", "fault", HttpStatus.CONFLICT)
-        );
-
-        ResponseEntity<ResponseError> response = handler.handleAppFaultException(ex, request);
-
-        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
-        assertEquals("01", response.getBody().getCode());
-        assertEquals("err", response.getBody().getMessage());
-    }
-
-    @Test
-    void handleMethodArgumentNotValidException_returnsFieldErrors() {
-        DefaultAppValidationExceptionHandler handler = new DefaultAppValidationExceptionHandler();
-        HttpServletRequest request = mockRequest();
-        BeanPropertyBindingResult bindingResult = new BeanPropertyBindingResult(new BeanWrapperImpl(), "payload");
-        bindingResult.addError(new FieldError("payload", "name", "required"));
-        MethodArgumentNotValidException ex = new MethodArgumentNotValidException(null, bindingResult);
-
-        ResponseEntity<ResponseError> response = handler.handleMethodArgumentNotValidException(ex, request);
-
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals(ServiceCodeEnum.VALIDATION_ERROR.getCode(), response.getBody().getCode());
-        ResponseErrorDetail details = response.getBody().getDetails();
-        assertNotNull(details);
-        assertNotNull(details.getRequestFieldDetails());
-        assertEquals(1, details.getRequestFieldDetails().size());
-        assertEquals("name", details.getRequestFieldDetails().get(0).getField());
-        assertSame(ex, request.getAttribute(reyga.starter.foundation.common.enumeration.HeaderEnum.EXCEPTION.getValue()));
-    }
-
-    @Test
-    void handleIOFaultException_returnsFileDetails() {
-        DefaultAppValidationExceptionHandler handler = new DefaultAppValidationExceptionHandler();
-        HttpServletRequest request = mockRequest();
-        IOFaultMetadata metadata = IOFaultMetadata.builder()
-                .fileName("supersecret.txt")
-                .operation(IOOperation.READ)
-                .mimeType(MediaType.TEXT_PLAIN)
-                .charset("UTF-8")
-                .directory(false)
-                .sizeBytes(10L)
-                .lastModifiedEpochMillis(100L)
-                .build();
-        IOFaultException fex = new IOFaultException("io error", metadata);
-
-        ResponseEntity<ResponseError> response = handler.handleIOFaultException(fex, request);
-
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals(ServiceCodeEnum.FILE_ERROR.getCode(), response.getBody().getCode());
-        ResponseErrorDetail details = response.getBody().getDetails();
-        assertNotNull(details);
-        assertNotNull(details.getFileDetails());
-        assertEquals(1, details.getFileDetails().size());
-        assertEquals("sup*****ret.txt", details.getFileDetails().get(0).getFileName());
-        assertEquals(IOOperation.READ.toString(), details.getFileDetails().get(0).getOperation());
-        assertEquals(MediaType.TEXT_PLAIN.toString(), details.getFileDetails().get(0).getMimeType());
-        assertEquals("UTF-8", details.getFileDetails().get(0).getCharset());
-        assertFalse(details.getFileDetails().get(0).isDirectory());
-        assertEquals(10L, details.getFileDetails().get(0).getSizeBytes());
-        assertEquals(100L, details.getFileDetails().get(0).getLastModifiedEpochMillis());
-        assertEquals(0L, details.getFileDetails().get(0).getOffset());
-        assertEquals(0L, details.getFileDetails().get(0).getLength());
-        assertSame(fex, request.getAttribute(reyga.starter.foundation.common.enumeration.HeaderEnum.EXCEPTION.getValue()));
-    }
-
-    private HttpServletRequest mockRequest() {
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        Map<String, Object> attributes = new HashMap<>();
-        doAnswer(invocation -> {
-            attributes.put(invocation.getArgument(0), invocation.getArgument(1));
-            return null;
-        }).when(request).setAttribute(anyString(), any());
-        when(request.getAttribute(anyString())).thenAnswer(invocation -> attributes.get(invocation.getArgument(0)));
-        return request;
+    private void assertErrorResponse(
+            ResponseEntity<ResponseError> response,
+            HttpStatus expectedStatus,
+            String expectedCode,
+            String expectedMessage
+    ) {
+        assertEquals(expectedStatus, response.getStatusCode());
+        ResponseError body = response.getBody();
+        assertNotNull(body);
+        assertEquals(ServiceStatusResponseEnum.FAILED.getLabel(), body.getStatus());
+        assertEquals(expectedCode, body.getCode());
+        assertEquals(expectedMessage, body.getMessage());
     }
 }

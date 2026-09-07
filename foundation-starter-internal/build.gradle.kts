@@ -1,5 +1,27 @@
 plugins {
     `java-library`
+    `maven-publish`
+}
+
+// Keep the source module internal; distribute its runtime under public coordinates.
+base {
+    archivesName.set("foundation-starter")
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("foundationStarter") {
+            from(components["java"])
+            groupId = project.group.toString()
+            artifactId = "foundation-starter"
+            version = project.version.toString()
+
+            pom {
+                name.set("Foundation Starter")
+                description.set("Runtime distribution of Foundation default implementations and auto-configuration")
+            }
+        }
+    }
 }
 
 val springBootVersion: String by project

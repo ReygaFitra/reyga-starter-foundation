@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
+import reyga.starter.foundation.common.enumeration.ServiceCodeEnum;
 import reyga.starter.foundation.common.logging.CommonLogger;
 import reyga.starter.foundation.common.logging.InjectLogger;
 import reyga.starter.foundation.common.model.dto.response.ResponseError;
@@ -25,40 +26,49 @@ public class DefaultExceptionHandler extends BaseExceptionHandler<ResponseError>
     protected CommonLogger logger;
 
    private static final String JACKSON_WARN = "write_log_error";
+   private static final String ILLEGAL_ARGUMENT_EXCEPTION = "IllegalArgumentException";
+   private static final String GENERAL_ERROR = "GENERAL ERROR";
+   private static final String GLOBAL_ERROR = "GLOBAL ERROR";
 
     @Override
     protected ResponseEntity<ResponseError> processGlobalErrorHandler(Exception exception, HttpServletRequest servletRequest) {
-        String code;
-        String exceptionType;
-        HttpStatus httpStatus;
-        String message;
+        FaultContent faultContent;
         ObjectMapper mapper = new ObjectMapper();
         final Map<String, Object> errors = new HashMap<>();
+
         if (exception instanceof IllegalArgumentException) {
-            code = "91";
-            exceptionType = "IllegalArgumentException";
-            httpStatus = HttpStatus.BAD_REQUEST;
-            message = "GENERAL ERROR";
+            faultContent = new FaultContent(
+                    ServiceCodeEnum.GLOBAL_ERROR.getCode(),
+                    ILLEGAL_ARGUMENT_EXCEPTION,
+                    GENERAL_ERROR,
+                    INTERNAL_SERVER_ERROR
+            );
             errors.put("illegalArgumentException", exception.getStackTrace()[0].toString());
+
             try {
                 logger.warn("ILLEGAL ARGUMENT EXCEPTION ERROR :", mapper.writeValueAsString(errors));
             } catch (JacksonException e1) {
                 logger.error(JACKSON_WARN, e1.getMessage());
             }
+
         } else {
-            code = "99";
-            exceptionType = "Global Error";
-            httpStatus = INTERNAL_SERVER_ERROR;
-            message = "INTERNAL SERVER ERROR";
+            faultContent = new FaultContent(
+                    ServiceCodeEnum.GLOBAL_ERROR.getCode(),
+                    GLOBAL_ERROR,
+                    ServiceCodeEnum.GLOBAL_ERROR.getMessage(),
+                    INTERNAL_SERVER_ERROR
+            );
             errors.put("Global Error", exception.getStackTrace()[0].toString());
             try {
                 logger.warn("GLOBAL ERROR :", mapper.writeValueAsString(errors));
             } catch (JacksonException e1) {
                 logger.error(JACKSON_WARN, e1.getMessage());
             }
+
         }
-        logger.exception(exceptionType.toUpperCase(), null, exception);
-        return ResponseErrorBuilder.createErrorResponse(httpStatus, code, message);
+
+        logger.exception(faultContent.exceptionType().toUpperCase(), null, exception);
+        return ResponseErrorBuilder.createErrorResponse(faultContent.httpStatus(), faultContent.code(), faultContent.message());
     }
 
     @Override
@@ -85,7 +95,9 @@ public class DefaultExceptionHandler extends BaseExceptionHandler<ResponseError>
             }
         }
         logger.exception(exceptionType.toUpperCase(), null, exception);
-        return ResponseErrorBuilder.createErrorResponse(INTERNAL_SERVER_ERROR, "99", "DATABASE ERROR");
+        return ResponseErrorBuilder.createErrorResponse(INTERNAL_SERVER_ERROR, ServiceCodeEnum.DATABASE_ERROR.getCode(), ServiceCodeEnum.DATABASE_ERROR.getMessage());
     }
+
+    protected record FaultContent(String code, String exceptionType, String message, HttpStatus httpStatus) {}
 
 }

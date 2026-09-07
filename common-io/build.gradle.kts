@@ -26,6 +26,7 @@ dependencies {
     
     // Jasper minimal interfaces for the API
     compileOnly("net.sf.jasperreports:jasperreports:$jasperReportsVersion")
+    testImplementation("net.sf.jasperreports:jasperreports:$jasperReportsVersion")
 }
 
 java {

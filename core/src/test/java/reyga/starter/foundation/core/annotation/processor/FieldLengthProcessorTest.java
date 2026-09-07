@@ -13,11 +13,15 @@ class FieldLengthProcessorTest {
 
     private FieldLengthProcessor processor;
     private ConstraintValidatorContext context;
+    private ConstraintValidatorContext.ConstraintViolationBuilder violationBuilder;
 
     @BeforeEach
     void setUp() {
         processor = new FieldLengthProcessor();
-        context = mockContext();
+        context = mock(ConstraintValidatorContext.class);
+        violationBuilder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(violationBuilder);
+        when(violationBuilder.addConstraintViolation()).thenReturn(context);
         FieldLength annotation = mock(FieldLength.class);
         when(annotation.message()).thenReturn("");
         when(annotation.fieldName()).thenReturn("field");
@@ -27,35 +31,105 @@ class FieldLengthProcessorTest {
     }
 
     @Test
-    void isValid_returnsTrue_forNull() {
-        assertTrue(processor.isValid(null, context));
+    void should_ReturnTrue_When_ValueIsNull() {
+        // Given
+        Object value = null;
+
+        // When
+        boolean result = processor.isValid(value, context);
+
+        // Then
+        assertTrue(result);
+        verifyNoInteractions(context);
     }
 
     @Test
-    void isValid_returnsFalse_forUnsupportedType() {
-        assertFalse(processor.isValid(new Object(), context));
+    void should_ReturnFalse_When_ValueTypeIsUnsupported() {
+        // Given
+        Object value = new Object();
+
+        // When
+        boolean result = processor.isValid(value, context);
+
+        // Then
+        assertFalse(result);
+        verify(context).disableDefaultConstraintViolation();
         verify(context).buildConstraintViolationWithTemplate("field field must be number or string");
+        verify(violationBuilder).addConstraintViolation();
+        verifyNoMoreInteractions(context, violationBuilder);
     }
 
     @Test
-    void isValid_validatesNumberLength() {
-        assertFalse(processor.isValid(1, context));
-        assertTrue(processor.isValid(1234, context));
-        assertFalse(processor.isValid(12345, context));
+    void should_ReturnTrue_When_NumberLengthIsWithinRange() {
+        // Given
+        int value = 1234;
+
+        // When
+        boolean result = processor.isValid(value, context);
+
+        // Then
+        assertTrue(result);
+        verifyNoInteractions(context);
     }
 
     @Test
-    void isValid_validatesStringLength() {
-        assertFalse(processor.isValid("a", context));
-        assertTrue(processor.isValid("abcd", context));
-        assertFalse(processor.isValid("abcde", context));
+    void should_ReturnFalse_When_NumberLengthIsBelowMinimum() {
+        // Given
+        int value = 1;
+
+        // When
+        boolean result = processor.isValid(value, context);
+
+        // Then
+        assertFalse(result);
+        verify(context).disableDefaultConstraintViolation();
+        verify(context).buildConstraintViolationWithTemplate("field field minimum digit length 2");
+        verify(violationBuilder).addConstraintViolation();
+        verifyNoMoreInteractions(context, violationBuilder);
     }
 
-    private ConstraintValidatorContext mockContext() {
-        ConstraintValidatorContext context = mock(ConstraintValidatorContext.class);
-        ConstraintValidatorContext.ConstraintViolationBuilder builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
-        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
-        when(builder.addConstraintViolation()).thenReturn(context);
-        return context;
+    @Test
+    void should_ReturnFalse_When_NumberLengthIsAboveMaximum() {
+        // Given
+        int value = 12345;
+
+        // When
+        boolean result = processor.isValid(value, context);
+
+        // Then
+        assertFalse(result);
+        verify(context).disableDefaultConstraintViolation();
+        verify(context).buildConstraintViolationWithTemplate("field field maximum digit length 4");
+        verify(violationBuilder).addConstraintViolation();
+        verifyNoMoreInteractions(context, violationBuilder);
+    }
+
+    @Test
+    void should_ReturnTrue_When_StringLengthIsWithinRange() {
+        // Given
+        String value = "abcd";
+
+        // When
+        boolean result = processor.isValid(value, context);
+
+        // Then
+        assertTrue(result);
+        verifyNoInteractions(context);
+    }
+
+    @Test
+    void should_ReturnFalse_When_StringLengthIsOutsideRange() {
+        // Given
+        String value = "abcde";
+
+        // When
+        boolean result = processor.isValid(value, context);
+
+        // Then
+        assertFalse(result);
+        verify(context).disableDefaultConstraintViolation();
+        verify(context).buildConstraintViolationWithTemplate("FIELD field maximum length 4 characters");
+        verify(violationBuilder).addConstraintViolation();
+        verifyNoMoreInteractions(context, violationBuilder);
     }
 }

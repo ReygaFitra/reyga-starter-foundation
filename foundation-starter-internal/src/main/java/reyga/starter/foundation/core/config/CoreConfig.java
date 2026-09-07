@@ -21,6 +21,7 @@ import reyga.starter.foundation.core.component.TransactionalExecutor;
 import reyga.starter.foundation.core.config.properties.ConfigProperties;
 import reyga.starter.foundation.core.exception.handler.DefaultAppValidationExceptionHandler;
 import reyga.starter.foundation.core.exception.handler.DefaultExceptionHandler;
+import reyga.starter.foundation.core.exception.handler.DefaultValidationExceptionHandler;
 import reyga.starter.foundation.core.service.DefaultResilienceService;
 import reyga.starter.foundation.core.service.foundation.ResilienceService;
 import reyga.starter.foundation.core.validation.ValidationProcessor;
@@ -51,6 +52,12 @@ public class CoreConfig {
         ValidationProcessor processor = new ValidationProcessor();
         ValidationUtility.registerDefault(processor);
         return processor;
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "reyga.config.default-bean.validation-handler", havingValue = "true")
+    public DefaultValidationExceptionHandler defaultValidationExceptionHandler() {
+        return new DefaultValidationExceptionHandler();
     }
 
     @Bean

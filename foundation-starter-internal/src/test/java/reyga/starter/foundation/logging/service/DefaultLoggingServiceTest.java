@@ -21,15 +21,18 @@ import static org.mockito.Mockito.*;
 class DefaultLoggingServiceTest {
 
     @Test
-    void requestBodyAdviceAdapter_setsAttributesAndMdc() throws Exception {
+    void should_SetRequestAttributesAndMdc_When_RequestBodyIsProcessed() throws Exception {
+        // given
         DefaultLoggingService service = new DefaultLoggingService();
         HttpServletRequest request = mockRequest(Map.of("x-test", "1"));
         MethodParameter parameter = new MethodParameter(Dummy.class.getDeclaredMethod("handle", String.class), 0);
 
+        // when
         service.requestBodyAdviceAdapter(
                 request, "body", null, parameter, String.class, DummyConverter.class
         );
 
+        // then
         assertNotNull(request.getAttribute(HeaderEnum.REQUEST_ID.getValue()));
         assertEquals("GET", request.getAttribute(HeaderEnum.METHOD.getValue()));
         assertEquals("/test", request.getAttribute(HeaderEnum.REQUEST_ENDPOINT.getValue()));
@@ -38,17 +41,27 @@ class DefaultLoggingServiceTest {
     }
 
     @Test
-    void responseBodyAdviceAdapter_ignoresNonRequestDispatcher() throws Exception {
+    void should_IgnoreResponseWithoutSideEffects_When_DispatcherIsNotRequest() throws Exception {
+        // given
         DefaultLoggingService service = new DefaultLoggingService();
         HttpServletRequest request = mockRequest(Map.of());
         when(request.getDispatcherType()).thenReturn(DispatcherType.FORWARD);
         MethodParameter parameter = new MethodParameter(Dummy.class.getDeclaredMethod("handle", String.class), 0);
+        HttpServletResponse response = mock(HttpServletResponse.class);
 
-        service.responseBodyAdviceAdapter(request, mock(HttpServletResponse.class), parameter, "body", MediaType.APPLICATION_JSON, DummyConverter.class);
+        // when
+        service.responseBodyAdviceAdapter(
+                request, response, parameter, "body", MediaType.APPLICATION_JSON, DummyConverter.class
+        );
+
+        // then
+        verify(request).getDispatcherType();
+        verifyNoInteractions(response);
     }
 
     @Test
-    void responseBodyAdviceAdapter_setsSummaryAndClearsMdc() throws Exception {
+    void should_LogSummaryAndClearMdc_When_ResponseBodyIsProcessed() throws Exception {
+        // given
         DefaultLoggingService service = new DefaultLoggingService();
         HttpServletRequest request = mockRequest(Map.of());
         when(request.getDispatcherType()).thenReturn(DispatcherType.REQUEST);
@@ -60,8 +73,10 @@ class DefaultLoggingServiceTest {
         request.setAttribute(HeaderEnum.REQUEST.getValue(), "req");
         request.setAttribute(HeaderEnum.RESPONSE.getValue(), "resp");
 
+        // when
         service.responseBodyAdviceAdapter(request, response, parameter, "body", MediaType.APPLICATION_JSON, DummyConverter.class);
 
+        // then
         assertNull(MDC.get(HeaderEnum.SUMMARY_LOG.getValue()));
     }
 
@@ -74,6 +89,7 @@ class DefaultLoggingServiceTest {
             @Override public boolean hasMoreElements() { return it.hasNext(); }
             @Override public String nextElement() { return it.next(); }
         });
+        when(request.getParameterNames()).thenReturn(java.util.Collections.emptyEnumeration());
         when(request.getHeader(anyString())).thenAnswer(invocation -> headers.get(invocation.getArgument(0)));
         when(request.getMethod()).thenReturn("GET");
         when(request.getRequestURI()).thenReturn("/test");

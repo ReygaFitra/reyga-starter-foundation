@@ -3,6 +3,9 @@ package reyga.starter.foundation.common_database.processor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -14,6 +17,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @RequiredArgsConstructor
@@ -26,7 +30,7 @@ public class DefaultQueryProcessor implements QueryProcessor {
 
     @Override
     public <T> List<T> fetch(QueryBuilder builder, RowMapper<T> rowMapper) {
-        String sql = builder.getSql();
+        String sql = builder.build();
         this.printConstructedQuery(sql);
         List<Object> params = builder.getParameters();
         return jdbcTemplate.query(sql, rowMapper, params.toArray());
@@ -34,7 +38,7 @@ public class DefaultQueryProcessor implements QueryProcessor {
 
     @Override
     public <T> Optional<List<T>> optionalFetch(QueryBuilder builder, RowMapper<T> rowMapper) {
-        String sql = builder.getSql();
+        String sql = builder.build();
         this.printConstructedQuery(sql);
         List<Object> params = builder.getParameters();
         try {
@@ -47,7 +51,7 @@ public class DefaultQueryProcessor implements QueryProcessor {
     @Override
     public <T> T fetchOne(QueryBuilder builder, RowMapper<T> rowMapper) {
         List<T> results = fetch(builder, rowMapper);
-        return results.get(0);
+        return results.getFirst();
     }
 
     @Override
@@ -58,21 +62,48 @@ public class DefaultQueryProcessor implements QueryProcessor {
 
     @Override
     public <T> T fetchOneBy(QueryBuilder builder, RowMapper<T> rowMapper) {
-        String sql = builder.getSql();
+        String sql = builder.build();
         List<Object> params = builder.getParameters();
         return this.queryForObject(sql, rowMapper, params);
     }
 
     @Override
     public <T> Optional<T> optionalFetchOneBy(QueryBuilder builder, RowMapper<T> rowMapper) {
-        String sql = builder.getSql();
+        String sql = builder.build();
         List<Object> params = builder.getParameters();
         return this.optionalQueryForObject(sql, rowMapper, params);
     }
 
     @Override
+    public <T> Page<T> fetchPage(QueryBuilder builder, RowMapper<T> rowMapper, Pageable pageable) {
+        Objects.requireNonNull(builder, "builder must not be null");
+        Objects.requireNonNull(rowMapper, "rowMapper must not be null");
+        Objects.requireNonNull(pageable, "pageable must not be null");
+
+        if (pageable.isUnpaged()) {
+            builder.paginate(pageable);
+            String contentSql = builder.build();
+            this.printConstructedQuery(contentSql);
+            List<T> content = jdbcTemplate.query(contentSql, rowMapper, builder.getParameters().toArray());
+            return new PageImpl<>(content);
+        }
+
+        String countSql = builder.buildCount();
+        List<Object> countParameters = builder.getCountParameters();
+        builder.paginate(pageable);
+        String contentSql = builder.build();
+
+        this.printConstructedQuery(contentSql);
+        List<T> content = jdbcTemplate.query(contentSql, rowMapper, builder.getParameters().toArray());
+
+        this.printConstructedQuery(countSql);
+        Long total = jdbcTemplate.queryForObject(countSql, Long.class, countParameters.toArray());
+        return new PageImpl<>(content, pageable, total != null ? total : 0L);
+    }
+
+    @Override
     public int execute(QueryBuilder builder) {
-        String sql = builder.getSql();
+        String sql = builder.build();
         this.printConstructedQuery(sql);
         List<Object> params = builder.getParameters();
         return jdbcTemplate.update(sql, params.toArray());
@@ -80,7 +111,7 @@ public class DefaultQueryProcessor implements QueryProcessor {
 
     @Override
     public int[] batchExecute(QueryBuilder builder, List<Object[]> batchParams) {
-        String sql = builder.getSql();
+        String sql = builder.build();
         this.printConstructedQuery(sql);
         return jdbcTemplate.batchUpdate(sql, batchParams);
     }
@@ -89,7 +120,7 @@ public class DefaultQueryProcessor implements QueryProcessor {
     public int[] batchExecute(List<QueryBuilder> builders) {
         List<Integer> results = new ArrayList<>();
         for (QueryBuilder builder : builders) {
-            String sql = builder.getSql();
+            String sql = builder.build();
             if (logger != null) {
                 logger.info("Query ==> : " + sql);
             }

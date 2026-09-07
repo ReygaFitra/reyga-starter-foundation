@@ -5,8 +5,11 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import reyga.starter.foundation.common.enumeration.ServiceCodeEnum;
+import reyga.starter.foundation.common.logging.CommonLogger;
 import reyga.starter.foundation.common.model.dto.request.BaseRequest;
 import reyga.starter.foundation.core.exception.AppFaultException;
 
@@ -16,86 +19,153 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class BaseServiceTest {
 
-    @Mock
-    private HttpServletRequest servletRequest;
-    @Mock
-    private HttpServletResponse servletResponse;
+    @Mock private HttpServletRequest servletRequest;
+    @Mock private HttpServletResponse servletResponse;
+    @Mock private CommonLogger logger;
 
     private TestableService service;
 
     @BeforeEach
     void setUp() {
-        service = new TestableService();
+        service = spy(new TestableService());
+        service.setLogger(logger);
     }
 
     @Test
-    void execute_whenHttpParamsNotRequired_runsSuccessfully() {
-        service.setUseHttpParams(false);
+    void should_ReturnOrchestratedResult_When_ServletParametersAreNotRequired() {
+        // Given
         DummyRequest request = new DummyRequest();
+        service.setUseHttpParams(false);
 
+        // When
         String result = service.execute(request);
 
+        // Then
         assertEquals("orchestrated", result);
-        assertTrue(service.wasOrchestrateCalled);
-        assertTrue(service.wasValidateCalled);
+        InOrder executionOrder = inOrder(service);
+        executionOrder.verify(service).useHttpServletParameter();
+        executionOrder.verify(service).logInformation(request);
+        executionOrder.verify(service).validateRequest(request);
+        executionOrder.verify(service).buildProcess(request);
+        verify(logger).info("Executing Service...");
+        verify(logger).info("Request : ", String.valueOf(request));
+        verifyNoMoreInteractions(logger);
     }
 
     @Test
-    void execute_whenHttpParamsRequiredAndProvided_runsSuccessfully() {
-        service.setUseHttpParams(true);
+    void should_ReturnOrchestratedResult_When_RequiredServletParametersAreProvided() {
+        // Given
         DummyRequest request = new DummyRequest();
         request.setServletRequest(servletRequest);
         request.setServletResponse(servletResponse);
+        service.setUseHttpParams(true);
 
+        // When
         String result = service.execute(request);
 
+        // Then
         assertEquals("orchestrated", result);
+        verify(service).validateRequest(request);
+        verify(service).buildProcess(request);
+        assertSame(servletRequest, request.getServletRequest());
+        assertSame(servletResponse, request.getServletResponse());
     }
 
     @Test
-    void execute_whenHttpParamsRequiredButMissing_throwsAppFaultException() {
+    void should_ThrowAppFaultException_When_ServletRequestIsMissing() {
+        // Given
+        DummyRequest request = new DummyRequest();
+        request.setServletResponse(servletResponse);
         service.setUseHttpParams(true);
-        DummyRequest request = new DummyRequest(); // Missing servlet request/response
 
-        assertThrows(AppFaultException.class, () -> service.execute(request));
-        assertFalse(service.wasOrchestrateCalled);
+        // When
+        AppFaultException exception = assertThrows(AppFaultException.class, () -> service.execute(request));
+
+        // Then
+        assertEquals(ServiceCodeEnum.SERVLET_CONTEXT_NOT_FOUND.getCode(), exception.getErrorCode());
+        assertEquals(ServiceCodeEnum.SERVLET_CONTEXT_NOT_FOUND.getMessage(), exception.getErrorMessage());
+        assertNull(exception.getFaultInfo());
+        verify(service, never()).logInformation(any());
+        verify(service, never()).validateRequest(any());
+        verify(service, never()).buildProcess(any());
+        verifyNoInteractions(logger);
     }
 
     @Test
-    void execute_callsLogInformation() {
-        // This test is simple, ensuring the method is called.
-        // The logger itself is mocked via @InjectLogger, so we don't test its output here.
-        TestableService spyService = spy(new TestableService());
-        spyService.setUseHttpParams(false);
-        
-        spyService.execute(new DummyRequest());
-        
-        verify(spyService, times(1)).logInformation(any(DummyRequest.class));
+    void should_ThrowAppFaultException_When_ServletResponseIsMissing() {
+        // Given
+        DummyRequest request = new DummyRequest();
+        request.setServletRequest(servletRequest);
+        service.setUseHttpParams(true);
+
+        // When
+        AppFaultException exception = assertThrows(AppFaultException.class, () -> service.execute(request));
+
+        // Then
+        assertEquals(ServiceCodeEnum.SERVLET_CONTEXT_NOT_FOUND.getCode(), exception.getErrorCode());
+        verify(service, never()).logInformation(any());
+        verify(service, never()).validateRequest(any());
+        verify(service, never()).buildProcess(any());
+        verifyNoInteractions(logger);
     }
 
+    @Test
+    void should_PropagateValidationException_When_RequestIsInvalid() {
+        // Given
+        DummyRequest request = new DummyRequest();
+        IllegalArgumentException validationFailure = new IllegalArgumentException("invalid request");
+        service.setUseHttpParams(false);
+        doThrow(validationFailure).when(service).validateRequest(request);
 
-    // --- Helper classes for testing ---
+        // When
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.execute(request));
 
-    private static class DummyRequest extends BaseRequest {}
+        // Then
+        assertSame(validationFailure, exception);
+        verify(service).logInformation(request);
+        verify(service).validateRequest(request);
+        verify(service, never()).buildProcess(any());
+    }
+
+    @Test
+    void should_ExecuteWithoutLogging_When_LoggerIsUnavailable() {
+        // Given
+        DummyRequest request = new DummyRequest();
+        service.setLogger(null);
+        service.setUseHttpParams(false);
+
+        // When
+        String result = service.execute(request);
+
+        // Then
+        assertEquals("orchestrated", result);
+        verify(service).logInformation(request);
+        verify(service).validateRequest(request);
+        verify(service).buildProcess(request);
+        verifyNoInteractions(logger);
+    }
+
+    private static class DummyRequest extends BaseRequest {
+    }
 
     private static class TestableService extends BaseService<DummyRequest, String> {
-        private boolean useHttpParams = false;
-        boolean wasOrchestrateCalled = false;
-        boolean wasValidateCalled = false;
+        private boolean useHttpParams;
 
-        void setUseHttpParams(boolean use) {
-            this.useHttpParams = use;
+        void setUseHttpParams(boolean useHttpParams) {
+            this.useHttpParams = useHttpParams;
+        }
+
+        void setLogger(CommonLogger logger) {
+            this.logger = logger;
         }
 
         @Override
-        protected String orchestrate(DummyRequest request) {
-            wasOrchestrateCalled = true;
+        protected String buildProcess(DummyRequest request) {
             return "orchestrated";
         }
 
         @Override
         protected void validateRequest(DummyRequest request) {
-            wasValidateCalled = true;
         }
 
         @Override

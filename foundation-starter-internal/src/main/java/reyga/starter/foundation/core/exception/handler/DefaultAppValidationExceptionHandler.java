@@ -40,28 +40,6 @@ public class DefaultAppValidationExceptionHandler {
         return ResponseErrorBuilder.createErrorResponse(ex.getStatusCode(), ex.getErrorCode(), ex.getErrorMessage());
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ResponseError> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex, HttpServletRequest request) {
-        request.setAttribute(HeaderEnum.EXCEPTION.getValue(), ex);
-
-        List<FieldErrorDetail> fieldErrorDetails = ex.getBindingResult().getFieldErrors().stream()
-                .map(error -> FieldErrorDetail.builder()
-                        .field(error.getField())
-                        .message(error.getDefaultMessage())
-                        .timestamp(DateUtility.getTimestamp(LocalDateTime.now()))
-                        .build())
-                .toList();
-                
-        if (logger != null) {
-            logger.exception("MethodArgumentNotValidException".toUpperCase(), fieldErrorDetails, ex);
-        }
-
-        return ResponseErrorBuilder.createErrorResponse(
-                HttpStatus.BAD_REQUEST, ServiceCodeEnum.VALIDATION_ERROR.getCode(), ServiceCodeEnum.VALIDATION_ERROR.getMessage(),
-                null, null, fieldErrorDetails
-        );
-    }
-
     @ExceptionHandler(IOFaultException.class)
     public ResponseEntity<ResponseError> handleIOFaultException(IOFaultException fex, HttpServletRequest request) {
         request.setAttribute(HeaderEnum.EXCEPTION.getValue(), fex);

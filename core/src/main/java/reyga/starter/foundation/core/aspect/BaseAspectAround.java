@@ -36,9 +36,7 @@ public abstract class BaseAspectAround<C extends BaseContent> implements AspectP
 
     protected abstract void postHandle(C content);
 
-    protected boolean shouldHandleException() {
-        return false;
-    }
+    protected abstract boolean shouldHandleException();
 
     protected void handleException(Exception e, C content) {}
 

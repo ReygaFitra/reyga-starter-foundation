@@ -8,30 +8,93 @@ import static org.junit.jupiter.api.Assertions.*;
 class AppFaultExceptionTest {
 
     @Test
-    void buildAppFaultContent_createsExpectedContent() {
-        AppFaultContent content = AppFaultContent.buildAppFaultContent(
-                "msg", "01", "err", "fault", HttpStatus.BAD_REQUEST
+    void should_ReturnCompleteContent_When_AllFaultValuesAreProvided() {
+        // Given
+        Object faultInfo = "fault";
+
+        // When
+        AppFaultContent result = AppFaultContent.buildAppFaultContent(
+                "message", "01", "error", faultInfo, HttpStatus.BAD_REQUEST
         );
 
-        assertEquals("msg", content.getMessage());
-        assertEquals("01", content.getErrorCode());
-        assertEquals("err", content.getErrorMessage());
-        assertEquals("fault", content.getFaultInfo());
-        assertEquals(HttpStatus.BAD_REQUEST, content.getStatusCode());
+        // Then
+        assertEquals("message", result.getMessage());
+        assertEquals("01", result.getErrorCode());
+        assertEquals("error", result.getErrorMessage());
+        assertSame(faultInfo, result.getFaultInfo());
+        assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
     }
 
     @Test
-    void appFaultException_constructedFromContent() {
-        AppFaultContent content = AppFaultContent.buildAppFaultContent(
-                "msg", "02", "err2", "fault2", HttpStatus.CONFLICT
+    void should_ReturnExceptionValues_When_DirectValuesAreProvided() {
+        // Given
+        Object faultInfo = new Object();
+
+        // When
+        AppFaultException result = new AppFaultException(
+                "02", "not found", faultInfo, HttpStatus.NOT_FOUND
         );
 
-        AppFaultException ex = new AppFaultException(content);
+        // Then
+        assertException(result, "02", "not found", faultInfo, HttpStatus.NOT_FOUND, null);
+    }
 
-        assertEquals("fault2", ex.getFaultInfo());
-        assertEquals("02", ex.getErrorCode());
-        assertEquals("err2", ex.getErrorMessage());
-        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
-        assertEquals("msg", ex.getMessage());
+    @Test
+    void should_ReturnExceptionValuesAndCause_When_DirectValuesAndCauseAreProvided() {
+        // Given
+        RuntimeException cause = new RuntimeException("root cause");
+        Object faultInfo = new Object();
+
+        // When
+        AppFaultException result = new AppFaultException(
+                "03", "conflict", faultInfo, cause, HttpStatus.CONFLICT
+        );
+
+        // Then
+        assertException(result, "03", "conflict", faultInfo, HttpStatus.CONFLICT, cause);
+    }
+
+    @Test
+    void should_ReturnExceptionValues_When_ContentIsProvided() {
+        // Given
+        Object faultInfo = new Object();
+        AppFaultContent content = AppFaultContent.buildAppFaultContent(
+                "content message", "04", "unprocessable", faultInfo, HttpStatus.UNPROCESSABLE_ENTITY
+        );
+
+        // When
+        AppFaultException result = new AppFaultException(content);
+
+        // Then
+        assertException(result, "04", "unprocessable", faultInfo, HttpStatus.UNPROCESSABLE_ENTITY, null);
+    }
+
+    @Test
+    void should_ReturnExceptionValuesAndCause_When_ContentAndCauseAreProvided() {
+        // Given
+        IllegalStateException cause = new IllegalStateException("root cause");
+        Object faultInfo = new Object();
+        AppFaultContent content = AppFaultContent.buildAppFaultContent(
+                "content message", "05", "failed", faultInfo, HttpStatus.INTERNAL_SERVER_ERROR
+        );
+
+        // When
+        AppFaultException result = new AppFaultException(content, cause);
+
+        // Then
+        assertException(result, "05", "failed", faultInfo, HttpStatus.INTERNAL_SERVER_ERROR, cause);
+        assertTrue(result.toString().contains("errorCode='05'"));
+        assertTrue(result.toString().contains("errorMessage='failed'"));
+        assertTrue(result.toString().contains("statusCode=500 INTERNAL_SERVER_ERROR"));
+    }
+
+    private static void assertException(AppFaultException exception, String code, String message,
+                                        Object faultInfo, HttpStatus status, Throwable cause) {
+        assertEquals(message, exception.getMessage());
+        assertEquals(message, exception.getErrorMessage());
+        assertEquals(code, exception.getErrorCode());
+        assertSame(faultInfo, exception.getFaultInfo());
+        assertEquals(status, exception.getStatusCode());
+        assertSame(cause, exception.getCause());
     }
 }

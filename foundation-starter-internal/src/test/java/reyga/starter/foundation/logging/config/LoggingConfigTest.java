@@ -9,9 +9,14 @@ import static org.junit.jupiter.api.Assertions.*;
 class LoggingConfigTest {
 
     @Test
-    void loggingService_returnsDefaultLoggingService() {
+    void should_ReturnDefaultLoggingService_When_LoggingServiceBeanIsCreated() {
+        // given
         LoggingConfig config = new LoggingConfig();
+
+        // when
         LoggingService service = config.loggingService();
+
+        // then
         assertNotNull(service);
         assertTrue(service instanceof DefaultLoggingService);
     }

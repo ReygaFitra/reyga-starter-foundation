@@ -4,11 +4,9 @@ import lombok.Getter;
 
 @Getter
 public enum ServiceCodeEnum {
-    SAMPLE1("00", "Service Process Successfully"),
-    SAMPLE2("01", "Service Process Failure"),
     RATE_LIMIT_EXCEEDED("400429", "Service Process Limit Exceeded"),
     VALIDATION_ERROR("400441", "Invalid Request"),
-    FILE_ERROR("400442", "File Error"),
+    FILE_ERROR("400442", "File Error Occurred"),
     GLOBAL_ERROR("500599", "Internal Server Error"),
     DATABASE_ERROR("500598", "Database Error"),
     DATABASE_QUERY_FAULT("500597", "Query Database Error"),
