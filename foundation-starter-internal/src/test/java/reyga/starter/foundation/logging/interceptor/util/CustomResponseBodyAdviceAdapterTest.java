@@ -10,7 +10,7 @@ import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.http.server.ServletServerHttpResponse;
-import reyga.starter.foundation.common.enumeration.HeaderEnum;
+import reyga.starter.foundation.common.enumeration.StarterHeaderEnum;
 import reyga.starter.foundation.logging.service.LoggingService;
 
 import java.lang.reflect.Method;
@@ -66,7 +66,7 @@ class CustomResponseBodyAdviceAdapterTest {
 
         // then
         assertSame(body, result);
-        verify(servletRequest).setAttribute(HeaderEnum.RESPONSE.getValue(), "\"response-body\"");
+        verify(servletRequest).setAttribute(StarterHeaderEnum.RESPONSE.getValue(), "\"response-body\"");
         verify(loggingService).responseBodyAdviceAdapter(
                 servletRequest,
                 servletResponse,

@@ -2,6 +2,7 @@ val projectGroup: String by project
 val springBootVersion: String by project
 val mapstructVersion: String by project
 val lombokMapstructBindingVersion: String by project
+val jacksonDatabindVersion: String by project
 
 plugins {
     `java-library`
@@ -22,6 +23,7 @@ publishing {
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion")
     implementation("org.mapstruct:mapstruct:$mapstructVersion")
+    testImplementation("com.fasterxml.jackson.core:jackson-databind:$jacksonDatabindVersion")
     annotationProcessor("org.mapstruct:mapstruct-processor:$mapstructVersion")
     annotationProcessor("org.projectlombok:lombok-mapstruct-binding:$lombokMapstructBindingVersion")
 }

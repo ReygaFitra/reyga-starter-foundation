@@ -8,6 +8,7 @@ import reyga.starter.foundation.common.logging.CommonLogger;
 import reyga.starter.foundation.common.logging.InjectLogger;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -20,6 +21,15 @@ public abstract class BaseValidationProcessor {
     protected CommonLogger logger;
 
     private final Validator validator;
+
+    /**
+     * Uses an externally managed validator without creating or closing its factory.
+     * @param validator non-null Jakarta validator
+     * @throws NullPointerException if validator is null
+     */
+    protected BaseValidationProcessor(Validator validator) {
+        this.validator = Objects.requireNonNull(validator, "validator must not be null");
+    }
 
     /**
      * Initializes the Validator using the default ValidatorFactory.
@@ -58,9 +68,8 @@ public abstract class BaseValidationProcessor {
      * @param useMapPattern    if true, uses {@link #violationsMapHandle}, otherwise uses {@link #violationsSetHandle}
      * @param validationGroups the list of validation groups to apply
      * @param <T>              the type of the request object
-     * @param <G>              the type of the validation groups
      */
-    public <T, G> void validateRequest(T request, boolean useMapPattern, List<Class<G>> validationGroups) {
+    public <T> void validateRequest(T request, boolean useMapPattern, List<? extends Class<?>> validationGroups) {
         Class<?>[] valGroupArr = validationGroups.toArray(new Class<?>[0]);
         Set<ConstraintViolation<T>> violations = validator.validate(request, valGroupArr);
         if (useMapPattern) {

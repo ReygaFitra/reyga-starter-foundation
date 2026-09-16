@@ -24,7 +24,7 @@ dependencies {
     implementation(project(":common"))
     implementation(project(":common-io"))
     implementation("org.springframework.boot:spring-boot-starter-validation:$springBootVersion")
-    implementation("jakarta.validation:jakarta.validation-api:$jakartaValidationApiVersion")
+    api("jakarta.validation:jakarta.validation-api:$jakartaValidationApiVersion")
     implementation("io.github.resilience4j:resilience4j-all:$resilience4jVersion")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion")
     implementation("com.github.ben-manes.caffeine:caffeine:$caffeineVersion")

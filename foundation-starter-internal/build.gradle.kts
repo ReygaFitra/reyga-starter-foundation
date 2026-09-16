@@ -32,6 +32,7 @@ val owaspSanitizerVersion: String by project
 val jasperReportsVersion: String by project
 
 dependencies {
+    testImplementation("org.springframework.boot:spring-boot-starter-test:$springBootVersion")
     api(project(":common"))
     api(project(":common-database"))
     api(project(":common-io"))

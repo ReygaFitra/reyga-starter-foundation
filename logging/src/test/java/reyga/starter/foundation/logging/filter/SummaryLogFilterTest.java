@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
-import reyga.starter.foundation.common.enumeration.HeaderEnum;
+import reyga.starter.foundation.common.enumeration.StarterHeaderEnum;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,7 +21,7 @@ class SummaryLogFilterTest {
         BaseSummaryLogFilter filter = new SummaryLogFilter();
         ILoggingEvent event = mock(ILoggingEvent.class);
         when(event.getMDCPropertyMap()).thenReturn(
-                Map.of(HeaderEnum.SUMMARY_LOG.getValue(), "AFTER COMPLETION"));
+                Map.of(StarterHeaderEnum.SUMMARY_LOG.getValue(), "AFTER COMPLETION"));
 
         // when
         FilterReply result = filter.decide(event);
@@ -41,7 +41,7 @@ class SummaryLogFilterTest {
         ILoggingEvent event = mock(ILoggingEvent.class);
         Map<String, String> mdc = new HashMap<>();
         if (marker != null) {
-            mdc.put(HeaderEnum.SUMMARY_LOG.getValue(), marker);
+            mdc.put(StarterHeaderEnum.SUMMARY_LOG.getValue(), marker);
         }
         when(event.getMDCPropertyMap()).thenReturn(mdc);
 

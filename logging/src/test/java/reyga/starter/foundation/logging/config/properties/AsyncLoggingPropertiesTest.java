@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class AsyncLoggingPropertiesTest {
 
-    private static final String PREFIX = "reyga.custom.logging.async";
+    private static final String PREFIX = "reyga.config.logging.file.async-logs";
 
     @Test
     void should_ReturnDocumentedDefaults_When_ConfigurationIsEmpty() {

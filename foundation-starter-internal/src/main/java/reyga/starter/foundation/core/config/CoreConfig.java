@@ -24,8 +24,6 @@ import reyga.starter.foundation.core.exception.handler.DefaultExceptionHandler;
 import reyga.starter.foundation.core.exception.handler.DefaultValidationExceptionHandler;
 import reyga.starter.foundation.core.service.DefaultResilienceService;
 import reyga.starter.foundation.core.service.foundation.ResilienceService;
-import reyga.starter.foundation.core.validation.ValidationProcessor;
-import reyga.starter.foundation.core.validation.ValidationUtility;
 
 import java.time.Duration;
 
@@ -44,14 +42,6 @@ public class CoreConfig {
     @Bean
     public DefaultAppValidationExceptionHandler defaultAppValidationExceptionHandler() {
         return new DefaultAppValidationExceptionHandler();
-    }
-
-    @Bean
-    @ConditionalOnProperty(name = "reyga.config.default-bean.validation-handler", havingValue = "true")
-    public ValidationProcessor validationProcessor() {
-        ValidationProcessor processor = new ValidationProcessor();
-        ValidationUtility.registerDefault(processor);
-        return processor;
     }
 
     @Bean

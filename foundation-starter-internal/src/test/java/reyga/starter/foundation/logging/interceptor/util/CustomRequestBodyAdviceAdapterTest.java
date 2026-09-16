@@ -9,7 +9,7 @@ import org.springframework.http.HttpInputMessage;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-import reyga.starter.foundation.common.enumeration.HeaderEnum;
+import reyga.starter.foundation.common.enumeration.StarterHeaderEnum;
 import reyga.starter.foundation.logging.service.LoggingService;
 
 import java.lang.reflect.Method;
@@ -72,7 +72,7 @@ class CustomRequestBodyAdviceAdapterTest {
         verify(loggingService).requestBodyAdviceAdapter(
                 servletRequest, body, inputMessage, parameter, String.class, converterType
         );
-        verify(servletRequest).setAttribute(HeaderEnum.REQUEST.getValue(), body);
+        verify(servletRequest).setAttribute(StarterHeaderEnum.REQUEST.getValue(), body);
         verifyNoInteractions(inputMessage);
     }
 

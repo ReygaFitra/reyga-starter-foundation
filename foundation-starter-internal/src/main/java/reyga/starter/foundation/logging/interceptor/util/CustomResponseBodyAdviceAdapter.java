@@ -13,7 +13,7 @@ import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
-import reyga.starter.foundation.common.enumeration.HeaderEnum;
+import reyga.starter.foundation.common.enumeration.StarterHeaderEnum;
 import reyga.starter.foundation.logging.service.LoggingService;
 import tools.jackson.databind.ObjectMapper;
 
@@ -36,7 +36,7 @@ public class CustomResponseBodyAdviceAdapter implements ResponseBodyAdvice<Objec
                                             @NonNull Class<? extends HttpMessageConverter<?>> selectedConverterType, @NonNull ServerHttpRequest request, @NonNull ServerHttpResponse response) {
         ServletServerHttpRequest servletRequest = (ServletServerHttpRequest) request;
         HttpServletRequest httpServletRequest = servletRequest.getServletRequest();
-        httpServletRequest.setAttribute(HeaderEnum.RESPONSE.getValue(), new ObjectMapper().writeValueAsString(body));
+        httpServletRequest.setAttribute(StarterHeaderEnum.RESPONSE.getValue(), new ObjectMapper().writeValueAsString(body));
 
         HttpServletResponse httpServletResponse = response instanceof ServletServerHttpResponse servletResponse
                 ? servletResponse.getServletResponse()

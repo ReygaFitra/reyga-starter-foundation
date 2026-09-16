@@ -7,8 +7,10 @@ import jakarta.validation.metadata.ConstraintDescriptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
+import reyga.starter.foundation.common.enumeration.ServiceCodeEnum;
 import reyga.starter.foundation.common.logging.CommonLogger;
-import reyga.starter.foundation.core.exception.AppFaultException;
+import reyga.starter.foundation.common.model.dto.response.FieldErrorDetail;
+import reyga.starter.foundation.core.exception.ValidationFaultException;
 
 import java.util.List;
 import java.util.Map;
@@ -16,6 +18,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -36,44 +39,50 @@ class ValidationProcessorTest {
     }
 
     @Test
-    void should_ThrowAppFaultWithUniqueMessagesAndLogDetails_When_SetViolationsArePresent() {
+    void should_ThrowValidationFaultWithUniqueMessagesAndLogDetails_When_SetViolationsArePresent() {
         // given
         ConstraintViolation<Object> firstViolation = mockViolation("name", "must not be null", null);
         ConstraintViolation<Object> secondViolation = mockViolation("alias", "must not be null", "");
 
         // when
-        AppFaultException result = assertThrows(
-                AppFaultException.class,
+        ValidationFaultException result = assertThrows(
+                ValidationFaultException.class,
                 () -> processor.violationsSetHandle(Set.of(firstViolation, secondViolation))
         );
 
         // then
-        assertEquals("01", result.getErrorCode());
-        assertEquals("Invalid Request", result.getErrorMessage());
-        assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
-        assertEquals(Set.of("must not be null"), result.getFaultInfo());
+        assertEquals(ServiceCodeEnum.VALIDATION_ERROR.getCode(), result.getFaultContent().getErrorCode());
+        assertEquals("Invalid Request", result.getFaultContent().getErrorMessage());
+        assertEquals(HttpStatus.BAD_REQUEST, result.getFaultContent().getStatusCode());
+        assertEquals(Set.of("must not be null"), result.getFaultContent().getFaultInfo());
+        assertEquals("Validation Exception", result.getBusiness());
+        assertEquals("One or more request fields are invalid.", result.getAdditionalInfo());
+        assertNotNull(result.getFieldErrorList());
+        assertEquals(2, result.getFieldErrorList().size());
+        assertFieldError(result.getFieldErrorList().get(0), "alias", "must not be null");
+        assertFieldError(result.getFieldErrorList().get(1), "name", "must not be null");
         verify(logger).warn("Validation Error Count", 1);
         verify(logger).warn("Validation Error Detail", Set.of("must not be null"));
         verifyNoMoreInteractions(logger);
     }
 
     @Test
-    void should_ThrowAppFaultWithFieldDetailsAndLogDetails_When_MapViolationsArePresent() {
+    void should_ThrowValidationFaultWithFieldDetailsAndLogDetails_When_MapViolationsArePresent() {
         // given
         String rejectedValue = "x".repeat(201);
         ConstraintViolation<Object> violation = mockViolation("name", "must not be null", rejectedValue);
 
         // when
-        AppFaultException result = assertThrows(
-                AppFaultException.class,
+        ValidationFaultException result = assertThrows(
+                ValidationFaultException.class,
                 () -> processor.violationsMapHandle(Set.of(violation))
         );
 
         // then
-        assertEquals("01", result.getErrorCode());
-        assertEquals("Invalid Request", result.getErrorMessage());
-        assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
-        List<?> details = (List<?>) result.getFaultInfo();
+        assertEquals(ServiceCodeEnum.VALIDATION_ERROR.getCode(), result.getFaultContent().getErrorCode());
+        assertEquals("Invalid Request", result.getFaultContent().getErrorMessage());
+        assertEquals(HttpStatus.BAD_REQUEST, result.getFaultContent().getStatusCode());
+        List<?> details = (List<?>) result.getFaultContent().getFaultInfo();
         assertEquals(1, details.size());
         assertEquals(Map.of(
                 "field", "name",
@@ -82,6 +91,11 @@ class ValidationProcessorTest {
                 "constraint", "NotNull",
                 "rootBean", "Object"
         ), details.getFirst());
+        assertEquals("Validation Exception", result.getBusiness());
+        assertEquals("One or more request fields are invalid.", result.getAdditionalInfo());
+        assertNotNull(result.getFieldErrorList());
+        assertEquals(1, result.getFieldErrorList().size());
+        assertFieldError(result.getFieldErrorList().getFirst(), "name", "must not be null");
         verify(logger).warn("Validation Error Count", 1);
         verify(logger).warn("Validation Error Detail", details);
         verifyNoMoreInteractions(logger);
@@ -126,5 +140,11 @@ class ValidationProcessorTest {
         when(violation.getConstraintDescriptor()).thenReturn(descriptor);
         when(violation.getRootBeanClass()).thenReturn(Object.class);
         return violation;
+    }
+
+    private void assertFieldError(FieldErrorDetail result, String field, String message) {
+        assertEquals(field, result.getField());
+        assertEquals(message, result.getMessage());
+        assertNotNull(result.getTimestamp());
     }
 }

@@ -1,6 +1,8 @@
 package reyga.starter.foundation.common.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.MappedSuperclass;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -192,6 +194,28 @@ class CommonDtoTest {
         assertNull(statusOnly.getData());
         assertEquals("data", dataOnly.getData());
         assertNull(dataOnly.getStatus());
+    }
+
+    @Test
+    void should_SerializeResponseDataInContractOrder_When_PropertySortingIsEnabled() throws Exception {
+        // Given
+        ObjectMapper objectMapper = new ObjectMapper()
+                .configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true)
+                .setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        ResponseData<String> response = new ResponseData<>("FAILED", "400441", "Invalid Request", "payload");
+
+        // When
+        String result = objectMapper.writeValueAsString(response);
+
+        // Then
+        assertEquals(
+                "{\"status\":\"FAILED\",\"code\":\"400441\",\"message\":\"Invalid Request\",\"data\":\"payload\"}",
+                result
+        );
+        assertEquals("FAILED", response.getStatus());
+        assertEquals("400441", response.getCode());
+        assertEquals("Invalid Request", response.getMessage());
+        assertEquals("payload", response.getData());
     }
 
     @Test

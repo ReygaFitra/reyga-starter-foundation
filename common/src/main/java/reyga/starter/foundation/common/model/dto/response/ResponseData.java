@@ -1,11 +1,13 @@
 package reyga.starter.foundation.common.model.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 @Setter @Getter
 @SuperBuilder(toBuilder = true)
+@JsonPropertyOrder({"status", "code", "message", "data"})
 public class ResponseData<T> extends BaseResponse {
     private T data;
 

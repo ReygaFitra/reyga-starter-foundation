@@ -10,7 +10,7 @@ import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpInputMessage;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
-import reyga.starter.foundation.common.enumeration.HeaderEnum;
+import reyga.starter.foundation.common.enumeration.StarterHeaderEnum;
 import reyga.starter.foundation.common.logging.CommonLogger;
 import reyga.starter.foundation.common.logging.HttpHeaderBuilder;
 import reyga.starter.foundation.common.logging.InjectLogger;
@@ -31,13 +31,13 @@ public class DefaultLoggingService implements LoggingService {
         Map<String, String> headersMap = HttpHeaderBuilder.buildHeadersMap(request);
         request.setAttribute("x-starter-duration-time", System.currentTimeMillis());
 
-        headersMap.computeIfAbsent(HeaderEnum.REQUEST_ID.getValue(), k -> UUID.randomUUID().toString());
-        headersMap.put(HeaderEnum.METHOD.getValue(), request.getMethod());
-        headersMap.put(HeaderEnum.REQUEST_ENDPOINT.getValue(), request.getRequestURI());
-        headersMap.put(HeaderEnum.FORWARDED_FOR.getValue(), request.getRemoteAddr());
-        headersMap.put(HeaderEnum.ACCESS_TOKEN.getValue(), request.getHeader(HeaderEnum.ACCESS_TOKEN.getValue()));
-        headersMap.put(HeaderEnum.USERNAME.getValue(), request.getHeader(HeaderEnum.USERNAME.getValue()));
-        headersMap.put(HeaderEnum.USER_AGENT.getValue(), request.getHeader(HeaderEnum.USER_AGENT.getValue()));
+        headersMap.computeIfAbsent(StarterHeaderEnum.REQUEST_ID.getValue(), k -> UUID.randomUUID().toString());
+        headersMap.put(StarterHeaderEnum.METHOD.getValue(), request.getMethod());
+        headersMap.put(StarterHeaderEnum.REQUEST_ENDPOINT.getValue(), request.getRequestURI());
+        headersMap.put(StarterHeaderEnum.FORWARDED_FOR.getValue(), request.getRemoteAddr());
+        headersMap.put(StarterHeaderEnum.ACCESS_TOKEN.getValue(), request.getHeader(StarterHeaderEnum.ACCESS_TOKEN.getValue()));
+        headersMap.put(StarterHeaderEnum.USERNAME.getValue(), request.getHeader(StarterHeaderEnum.USERNAME.getValue()));
+        headersMap.put(StarterHeaderEnum.USER_AGENT.getValue(), request.getHeader(StarterHeaderEnum.USER_AGENT.getValue()));
 
         headersMap.forEach((key, value) -> {
             if (value != null) {
@@ -69,12 +69,12 @@ public class DefaultLoggingService implements LoggingService {
         Long startTime = (Long) request.getAttribute("x-starter-duration-time");
         if (startTime != null) {
             long duration = System.currentTimeMillis() - startTime;
-            MDC.put(HeaderEnum.RESPONSE_TIME.getValue(), duration + " ms");
-            request.setAttribute(HeaderEnum.RESPONSE_TIME.getValue(), duration + " ms");
+            MDC.put(StarterHeaderEnum.RESPONSE_TIME.getValue(), duration + " ms");
+            request.setAttribute(StarterHeaderEnum.RESPONSE_TIME.getValue(), duration + " ms");
         }
 
         RequestLogging requestDto = new RequestLogging();
-        Object reqBodyAttr = request.getAttribute(HeaderEnum.REQUEST.getValue());
+        Object reqBodyAttr = request.getAttribute(StarterHeaderEnum.REQUEST.getValue());
         if (reqBodyAttr != null) {
             requestDto.setRequestBody(reqBodyAttr.toString());
         }
@@ -83,28 +83,28 @@ public class DefaultLoggingService implements LoggingService {
         HttpHeaderBuilder.getUrl(requestDto, request);
 
         if (logger != null) {
-            String requestId = MDC.get(HeaderEnum.REQUEST_ID.getValue());
-            String accessToken = MDC.get(HeaderEnum.ACCESS_TOKEN.getValue());
-            String username = MDC.get(HeaderEnum.USERNAME.getValue());
-            String method = MDC.get(HeaderEnum.METHOD.getValue());
-            String endpoint = MDC.get(HeaderEnum.REQUEST_ENDPOINT.getValue());
-            String forwardedFor = MDC.get(HeaderEnum.FORWARDED_FOR.getValue());
-            String packageInfo = MDC.get(HeaderEnum.PACKAGE_INFO.getValue());
+            String requestId = MDC.get(StarterHeaderEnum.REQUEST_ID.getValue());
+            String accessToken = MDC.get(StarterHeaderEnum.ACCESS_TOKEN.getValue());
+            String username = MDC.get(StarterHeaderEnum.USERNAME.getValue());
+            String method = MDC.get(StarterHeaderEnum.METHOD.getValue());
+            String endpoint = MDC.get(StarterHeaderEnum.REQUEST_ENDPOINT.getValue());
+            String forwardedFor = MDC.get(StarterHeaderEnum.FORWARDED_FOR.getValue());
+            String packageInfo = MDC.get(StarterHeaderEnum.PACKAGE_INFO.getValue());
             String requestBody = requestDto.toString();
-            String userAgent = MDC.get(HeaderEnum.USER_AGENT.getValue());
-            String responseTime = MDC.get(HeaderEnum.RESPONSE_TIME.getValue());
+            String userAgent = MDC.get(StarterHeaderEnum.USER_AGENT.getValue());
+            String responseTime = MDC.get(StarterHeaderEnum.RESPONSE_TIME.getValue());
 
-            String exception = request.getAttribute(HeaderEnum.EXCEPTION.getValue()) != null
-                    ? request.getAttribute(HeaderEnum.EXCEPTION.getValue()).toString()
+            String exception = request.getAttribute(StarterHeaderEnum.EXCEPTION.getValue()) != null
+                    ? request.getAttribute(StarterHeaderEnum.EXCEPTION.getValue()).toString()
                     : null;
-            String responseService = request.getAttribute(HeaderEnum.RESPONSE.getValue()) != null
-                    ? request.getAttribute(HeaderEnum.RESPONSE.getValue()).toString()
+            String responseService = request.getAttribute(StarterHeaderEnum.RESPONSE.getValue()) != null
+                    ? request.getAttribute(StarterHeaderEnum.RESPONSE.getValue()).toString()
                     : null;
 
             String methodName = methodParameter.getMethod().getName();
             logger.infoServiceEnd(methodName);
 
-            MDC.put(HeaderEnum.SUMMARY_LOG.getValue(), "AFTER COMPLETION");
+            MDC.put(StarterHeaderEnum.SUMMARY_LOG.getValue(), "AFTER COMPLETION");
             int statusCode = response != null ? response.getStatus() : 200;
             logger.infoAspectLog(
                     requestId, accessToken, username, method, statusCode, endpoint,

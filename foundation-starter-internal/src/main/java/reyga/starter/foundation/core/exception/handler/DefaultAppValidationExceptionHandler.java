@@ -3,24 +3,20 @@ package reyga.starter.foundation.core.exception.handler;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import reyga.starter.foundation.common.enumeration.HeaderEnum;
+import reyga.starter.foundation.common.enumeration.StarterHeaderEnum;
 import reyga.starter.foundation.common.enumeration.ServiceCodeEnum;
 import reyga.starter.foundation.common.logging.CommonLogger;
 import reyga.starter.foundation.common.logging.InjectLogger;
-import reyga.starter.foundation.common.model.dto.response.FieldErrorDetail;
 import reyga.starter.foundation.common.model.dto.response.FileErrorDetail;
 import reyga.starter.foundation.common.model.dto.response.ResponseError;
-import reyga.starter.foundation.common.util.DateUtility;
 import reyga.starter.foundation.common.util.FileUtility;
 import reyga.starter.foundation.common_io.exception.IOFaultException;
 import reyga.starter.foundation.common_io.exception.IOFaultMetadata;
 import reyga.starter.foundation.core.controller.ResponseErrorBuilder;
 import reyga.starter.foundation.core.exception.AppFaultException;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,7 +28,7 @@ public class DefaultAppValidationExceptionHandler {
 
     @ExceptionHandler(AppFaultException.class)
     public ResponseEntity<ResponseError> handleAppFaultException(AppFaultException ex, HttpServletRequest request) {
-        request.setAttribute(HeaderEnum.EXCEPTION.getValue(), ex);
+        request.setAttribute(StarterHeaderEnum.EXCEPTION.getValue(), ex);
 
         if (logger != null) {
             logger.exception("AppFaultException".toUpperCase(), ex.getFaultInfo(), ex);
@@ -42,7 +38,7 @@ public class DefaultAppValidationExceptionHandler {
 
     @ExceptionHandler(IOFaultException.class)
     public ResponseEntity<ResponseError> handleIOFaultException(IOFaultException fex, HttpServletRequest request) {
-        request.setAttribute(HeaderEnum.EXCEPTION.getValue(), fex);
+        request.setAttribute(StarterHeaderEnum.EXCEPTION.getValue(), fex);
         String message = fex.getMessage() != null ? fex.getMessage() : ServiceCodeEnum.FILE_ERROR.getMessage();
 
         List<FileErrorDetail> fileErrorDetailList = new ArrayList<>();

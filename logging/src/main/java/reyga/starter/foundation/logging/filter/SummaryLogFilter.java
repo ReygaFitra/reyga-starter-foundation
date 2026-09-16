@@ -2,7 +2,7 @@ package reyga.starter.foundation.logging.filter;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.FilterReply;
-import reyga.starter.foundation.common.enumeration.HeaderEnum;
+import reyga.starter.foundation.common.enumeration.StarterHeaderEnum;
 
 /**
  * Default summary filter instantiated directly by Logback.
@@ -12,7 +12,7 @@ public class SummaryLogFilter extends BaseSummaryLogFilter {
 
     @Override
     protected FilterReply filter(ILoggingEvent event) {
-        String summaryFlag = event.getMDCPropertyMap().get(HeaderEnum.SUMMARY_LOG.getValue());
+        String summaryFlag = event.getMDCPropertyMap().get(StarterHeaderEnum.SUMMARY_LOG.getValue());
         return "AFTER COMPLETION".equals(summaryFlag) ? FilterReply.ACCEPT : FilterReply.DENY;
     }
 }

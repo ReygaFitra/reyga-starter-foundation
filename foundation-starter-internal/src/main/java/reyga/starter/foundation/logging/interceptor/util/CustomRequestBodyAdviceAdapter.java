@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.mvc.method.annotation.RequestBodyAdviceAdapter;
-import reyga.starter.foundation.common.enumeration.HeaderEnum;
+import reyga.starter.foundation.common.enumeration.StarterHeaderEnum;
 import reyga.starter.foundation.logging.service.LoggingService;
 
 import java.lang.reflect.Type;
@@ -37,7 +37,7 @@ public class CustomRequestBodyAdviceAdapter extends RequestBodyAdviceAdapter {
         if (requestAttributes != null) {
             HttpServletRequest httpServletRequest = requestAttributes.getRequest();
             loggingService.requestBodyAdviceAdapter(httpServletRequest, body, inputMessage, parameter, targetType, converterType);
-            httpServletRequest.setAttribute(HeaderEnum.REQUEST.getValue(), body);
+            httpServletRequest.setAttribute(StarterHeaderEnum.REQUEST.getValue(), body);
         }
         return body;
     }

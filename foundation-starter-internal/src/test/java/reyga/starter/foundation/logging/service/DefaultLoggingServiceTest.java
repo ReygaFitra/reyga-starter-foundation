@@ -8,7 +8,7 @@ import org.slf4j.MDC;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
-import reyga.starter.foundation.common.enumeration.HeaderEnum;
+import reyga.starter.foundation.common.enumeration.StarterHeaderEnum;
 
 import java.lang.reflect.Method;
 import java.util.Enumeration;
@@ -33,9 +33,9 @@ class DefaultLoggingServiceTest {
         );
 
         // then
-        assertNotNull(request.getAttribute(HeaderEnum.REQUEST_ID.getValue()));
-        assertEquals("GET", request.getAttribute(HeaderEnum.METHOD.getValue()));
-        assertEquals("/test", request.getAttribute(HeaderEnum.REQUEST_ENDPOINT.getValue()));
+        assertNotNull(request.getAttribute(StarterHeaderEnum.REQUEST_ID.getValue()));
+        assertEquals("GET", request.getAttribute(StarterHeaderEnum.METHOD.getValue()));
+        assertEquals("/test", request.getAttribute(StarterHeaderEnum.REQUEST_ENDPOINT.getValue()));
         assertEquals("1", MDC.get("x-test"));
         MDC.clear();
     }
@@ -70,14 +70,14 @@ class DefaultLoggingServiceTest {
         when(response.getStatus()).thenReturn(200);
 
         request.setAttribute("x-starter-duration-time", System.currentTimeMillis());
-        request.setAttribute(HeaderEnum.REQUEST.getValue(), "req");
-        request.setAttribute(HeaderEnum.RESPONSE.getValue(), "resp");
+        request.setAttribute(StarterHeaderEnum.REQUEST.getValue(), "req");
+        request.setAttribute(StarterHeaderEnum.RESPONSE.getValue(), "resp");
 
         // when
         service.responseBodyAdviceAdapter(request, response, parameter, "body", MediaType.APPLICATION_JSON, DummyConverter.class);
 
         // then
-        assertNull(MDC.get(HeaderEnum.SUMMARY_LOG.getValue()));
+        assertNull(MDC.get(StarterHeaderEnum.SUMMARY_LOG.getValue()));
     }
 
     private HttpServletRequest mockRequest(Map<String, String> headers) {

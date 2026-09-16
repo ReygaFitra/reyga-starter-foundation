@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class LoggingPropertiesTest {
 
-    private static final String PREFIX = "reyga.custom.logging";
+    private static final String PREFIX = "reyga.config.logging";
 
     @Test
     void should_ReturnDocumentedDefaults_When_ConfigurationIsEmpty() {
@@ -34,17 +34,21 @@ class LoggingPropertiesTest {
         // then
         assertNotNull(result.console());
         assertNull(result.console().pattern());
-        assertNotNull(result.summary());
-        assertTrue(result.summary().enable());
-        assertNull(result.summary().pattern());
-        assertNotNull(result.rolling());
-        assertFalse(result.rolling().enable());
-        assertNull(result.rolling().pattern());
-        assertNull(result.rolling().filePath());
-        assertNull(result.rolling().fileName());
-        assertNull(result.rolling().summaryFileName());
-        assertNull(result.rolling().maxHistory());
-        assertNull(result.rolling().maxFileSize());
+        assertNotNull(result.file());
+        assertFalse(result.file().enable());
+        assertNull(result.file().pattern());
+        assertNull(result.file().filePath());
+        assertNull(result.file().fileName());
+        assertNull(result.file().activeFileName());
+        assertFalse(result.file().cleanHistoryOnStart());
+        assertNotNull(result.file().summary());
+        assertTrue(result.file().summary().enable());
+        assertNull(result.file().summary().pattern());
+        assertNull(result.file().summary().summaryFileName());
+        assertNull(result.file().summary().summaryActiveFileName());
+        assertFalse(result.file().summary().summaryCleanHistoryOnStart());
+        assertNull(result.file().maxHistory());
+        assertNull(result.file().maxFileSize());
     }
 
     @Test
@@ -52,15 +56,19 @@ class LoggingPropertiesTest {
         // given
         Map<String, Object> properties = new HashMap<>();
         properties.put(PREFIX + ".console.pattern", "console-pattern");
-        properties.put(PREFIX + ".summary.enable", "false");
-        properties.put(PREFIX + ".summary.pattern", "summary-pattern");
-        properties.put(PREFIX + ".rolling.enable", "true");
-        properties.put(PREFIX + ".rolling.pattern", "rolling-pattern");
-        properties.put(PREFIX + ".rolling.file-path", "logs/");
-        properties.put(PREFIX + ".rolling.file-name", "application.log");
-        properties.put(PREFIX + ".rolling.summary-file-name", "summary.log");
-        properties.put(PREFIX + ".rolling.max-history", "30");
-        properties.put(PREFIX + ".rolling.max-file-size", "20MB");
+        properties.put(PREFIX + ".file.enable", "true");
+        properties.put(PREFIX + ".file.pattern", "file-pattern");
+        properties.put(PREFIX + ".file.file-path", "logs/");
+        properties.put(PREFIX + ".file.file-name", "application-%d-%i.log.gz");
+        properties.put(PREFIX + ".file.active-file-name", "application.log");
+        properties.put(PREFIX + ".file.clean-history-on-start", "true");
+        properties.put(PREFIX + ".file.summary.enable", "false");
+        properties.put(PREFIX + ".file.summary.pattern", "summary-pattern");
+        properties.put(PREFIX + ".file.summary.summary-file-name", "summary-%d-%i.log.gz");
+        properties.put(PREFIX + ".file.summary.summary-active-file-name", "summary.log");
+        properties.put(PREFIX + ".file.summary.summary-clean-history-on-start", "true");
+        properties.put(PREFIX + ".file.max-history", "30");
+        properties.put(PREFIX + ".file.max-file-size", "20MB");
         Binder binder = new Binder(new MapConfigurationPropertySource(properties));
 
         // when
@@ -71,22 +79,26 @@ class LoggingPropertiesTest {
 
         // then
         assertEquals("console-pattern", result.console().pattern());
-        assertFalse(result.summary().enable());
-        assertEquals("summary-pattern", result.summary().pattern());
-        assertTrue(result.rolling().enable());
-        assertEquals("rolling-pattern", result.rolling().pattern());
-        assertEquals("logs/", result.rolling().filePath());
-        assertEquals("application.log", result.rolling().fileName());
-        assertEquals("summary.log", result.rolling().summaryFileName());
-        assertEquals(30, result.rolling().maxHistory());
-        assertEquals("20MB", result.rolling().maxFileSize());
+        assertTrue(result.file().enable());
+        assertEquals("file-pattern", result.file().pattern());
+        assertEquals("logs/", result.file().filePath());
+        assertEquals("application-%d-%i.log.gz", result.file().fileName());
+        assertEquals("application.log", result.file().activeFileName());
+        assertTrue(result.file().cleanHistoryOnStart());
+        assertFalse(result.file().summary().enable());
+        assertEquals("summary-pattern", result.file().summary().pattern());
+        assertEquals("summary-%d-%i.log.gz", result.file().summary().summaryFileName());
+        assertEquals("summary.log", result.file().summary().summaryActiveFileName());
+        assertTrue(result.file().summary().summaryCleanHistoryOnStart());
+        assertEquals(30, result.file().maxHistory());
+        assertEquals("20MB", result.file().maxFileSize());
     }
 
     @Test
     void should_ThrowBindException_When_MaxHistoryIsInvalid() {
         // given
         Binder binder = new Binder(new MapConfigurationPropertySource(Map.of(
-                PREFIX + ".rolling.max-history", "not-a-number"
+                PREFIX + ".file.max-history", "not-a-number"
         )));
 
         // when
@@ -95,7 +107,7 @@ class LoggingPropertiesTest {
         );
 
         // then
-        assertEquals(PREFIX + ".rolling.max-history", result.getName().toString());
+        assertEquals(PREFIX + ".file.max-history", result.getName().toString());
         assertEquals(Integer.class, result.getTarget().getType().resolve());
         assertNotNull(result.getCause());
     }

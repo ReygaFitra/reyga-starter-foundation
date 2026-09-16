@@ -7,7 +7,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.jpa.JpaSystemException;
-import reyga.starter.foundation.common.enumeration.HeaderEnum;
+import reyga.starter.foundation.common.enumeration.StarterHeaderEnum;
 import reyga.starter.foundation.common.enumeration.ServiceCodeEnum;
 import reyga.starter.foundation.common.enumeration.ServiceStatusResponseEnum;
 import reyga.starter.foundation.common.logging.CommonLogger;
@@ -53,7 +53,7 @@ class DefaultExceptionHandlerTest {
                 ServiceCodeEnum.GLOBAL_ERROR.getCode(),
                 "GENERAL ERROR"
         );
-        verify(servletRequest).setAttribute(HeaderEnum.EXCEPTION.getValue(), exception);
+        verify(servletRequest).setAttribute(StarterHeaderEnum.EXCEPTION.getValue(), exception);
         verify(logger).warn(eq("ILLEGAL ARGUMENT EXCEPTION ERROR :"), any(Object[].class));
         verify(logger).exception("ILLEGALARGUMENTEXCEPTION", null, exception);
         verifyNoMoreInteractions(servletRequest, logger);
@@ -75,7 +75,7 @@ class DefaultExceptionHandlerTest {
                 ServiceCodeEnum.GLOBAL_ERROR.getCode(),
                 ServiceCodeEnum.GLOBAL_ERROR.getMessage()
         );
-        verify(servletRequest).setAttribute(HeaderEnum.EXCEPTION.getValue(), exception);
+        verify(servletRequest).setAttribute(StarterHeaderEnum.EXCEPTION.getValue(), exception);
         verify(logger).warn(eq("GLOBAL ERROR :"), any(Object[].class));
         verify(logger).exception("GLOBAL ERROR", null, exception);
         verifyNoMoreInteractions(servletRequest, logger);
@@ -97,7 +97,7 @@ class DefaultExceptionHandlerTest {
                 ServiceCodeEnum.DATABASE_ERROR.getCode(),
                 ServiceCodeEnum.DATABASE_ERROR.getMessage()
         );
-        verify(servletRequest).setAttribute(HeaderEnum.EXCEPTION.getValue(), exception);
+        verify(servletRequest).setAttribute(StarterHeaderEnum.EXCEPTION.getValue(), exception);
         verify(logger).warn(eq("JPA ERROR :"), any(Object[].class));
         verify(logger).warn(eq("JDBC ERROR :"), any(Object[].class));
         verify(logger).exception("DATAACCESSEXCEPTION", null, exception);
@@ -121,7 +121,7 @@ class DefaultExceptionHandlerTest {
                 ServiceCodeEnum.DATABASE_ERROR.getCode(),
                 ServiceCodeEnum.DATABASE_ERROR.getMessage()
         );
-        verify(servletRequest).setAttribute(HeaderEnum.EXCEPTION.getValue(), exception);
+        verify(servletRequest).setAttribute(StarterHeaderEnum.EXCEPTION.getValue(), exception);
         verify(logger).warn(eq("JDBC ERROR :"), any(Object[].class));
         verify(logger).exception("DATAACCESSEXCEPTION", null, exception);
         verifyNoMoreInteractions(servletRequest, logger);

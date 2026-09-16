@@ -4,7 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import reyga.starter.foundation.common.enumeration.HeaderEnum;
+import reyga.starter.foundation.common.enumeration.StarterHeaderEnum;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -24,7 +24,7 @@ class BaseExceptionHandlerTest {
         // Then
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, result.getStatusCode());
         assertEquals("GLOBAL", result.getBody());
-        verify(request).setAttribute(HeaderEnum.EXCEPTION.getValue(), failure);
+        verify(request).setAttribute(StarterHeaderEnum.EXCEPTION.getValue(), failure);
         verify(handler).processGlobalErrorHandler(failure, request);
         verifyNoMoreInteractions(request);
     }
@@ -42,7 +42,7 @@ class BaseExceptionHandlerTest {
         // Then
         assertEquals(HttpStatus.SERVICE_UNAVAILABLE, result.getStatusCode());
         assertEquals("DATABASE", result.getBody());
-        verify(request).setAttribute(HeaderEnum.EXCEPTION.getValue(), failure);
+        verify(request).setAttribute(StarterHeaderEnum.EXCEPTION.getValue(), failure);
         verify(handler).processDatabaseErrorHandler(failure, request);
         verifyNoMoreInteractions(request);
     }

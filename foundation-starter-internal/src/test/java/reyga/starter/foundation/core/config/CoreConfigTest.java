@@ -1,23 +1,18 @@
 package reyga.starter.foundation.core.config;
 
 import org.junit.jupiter.api.Test;
-import reyga.starter.foundation.core.validation.ValidationProcessor;
-import reyga.starter.foundation.core.validation.ValidationUtility;
-
+import reyga.starter.foundation.core.exception.handler.DefaultValidationExceptionHandler;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CoreConfigTest {
-
     @Test
-    void should_ReturnValidationProcessorAndRegisterUtility_When_BeanIsCreated() {
+    void should_ReturnValidationExceptionHandler_When_BeanIsCreated() {
         // given
         CoreConfig config = new CoreConfig();
-
         // when
-        ValidationProcessor processor = config.validationProcessor();
-
+        DefaultValidationExceptionHandler handler = config.defaultValidationExceptionHandler();
         // then
-        assertNotNull(processor);
-        assertDoesNotThrow(ValidationUtility::chain);
+        assertNotNull(handler);
+        assertEquals(DefaultValidationExceptionHandler.class, handler.getClass());
     }
 }

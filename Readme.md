@@ -82,6 +82,8 @@ Dependency internal:
 
 ## Panduan Konfigurasi
 
+- [Panduan Utilities — 1.0.0](docs/VER1.0.0/%281.0.0%29%20UTILITIES_GUIDE.md) - konfigurasi validation utility, validation groups, format field, dan aturan null/blank dengan `FieldPresence`.
+
 - [Foundation Configuration Guide — 1.0.0](docs/VER1.0.0/%281.0.0%29%20CONFIGURATION_GUIDE.md) - feature flag,
   default bean, validation, exception handler, logging, async executor,
   resilience, contoh YAML, dan troubleshooting.

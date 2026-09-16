@@ -1,6 +1,7 @@
 package reyga.starter.foundation.common.model.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,6 +11,7 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder(toBuilder = true)
 @EqualsAndHashCode(callSuper = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonPropertyOrder({"status", "code", "message", "details"})
 public class ResponseError extends BaseResponse {
 
     private ResponseErrorDetail details;

@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import reyga.starter.foundation.common.enumeration.HeaderEnum;
+import reyga.starter.foundation.common.enumeration.StarterHeaderEnum;
 import reyga.starter.foundation.common.enumeration.ServiceCodeEnum;
 import reyga.starter.foundation.common.enumeration.ServiceStatusResponseEnum;
 import reyga.starter.foundation.common.logging.CommonLogger;
@@ -23,7 +23,6 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -57,7 +56,7 @@ class DefaultAppValidationExceptionHandlerTest {
 
         // then
         assertError(result, HttpStatus.CONFLICT, "409001", "Conflict");
-        verify(servletRequest).setAttribute(HeaderEnum.EXCEPTION.getValue(), exception);
+        verify(servletRequest).setAttribute(StarterHeaderEnum.EXCEPTION.getValue(), exception);
         verify(logger).exception("APPFAULTEXCEPTION", "duplicate", exception);
         verifyNoMoreInteractions(servletRequest, logger);
     }
@@ -99,7 +98,7 @@ class DefaultAppValidationExceptionHandlerTest {
         assertEquals(100L, detail.getLastModifiedEpochMillis());
         assertEquals(2L, detail.getOffset());
         assertEquals(8L, detail.getLength());
-        verify(servletRequest).setAttribute(HeaderEnum.EXCEPTION.getValue(), exception);
+        verify(servletRequest).setAttribute(StarterHeaderEnum.EXCEPTION.getValue(), exception);
         verify(logger).exception("IOFAULTEXCEPTION", details, exception);
         verifyNoMoreInteractions(servletRequest, logger);
     }
@@ -124,7 +123,7 @@ class DefaultAppValidationExceptionHandlerTest {
         assertNotNull(body);
         assertNotNull(body.getDetails());
         assertNull(body.getDetails().getFileDetails());
-        verify(servletRequest).setAttribute(HeaderEnum.EXCEPTION.getValue(), exception);
+        verify(servletRequest).setAttribute(StarterHeaderEnum.EXCEPTION.getValue(), exception);
         verify(logger).exception("IOFAULTEXCEPTION", List.of(), exception);
         verifyNoMoreInteractions(servletRequest, logger);
     }

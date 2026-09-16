@@ -12,25 +12,25 @@ class CommonEnumerationTest {
     @Test
     void should_ReturnConfiguredHeaderValues_When_AllHeadersAreRead() {
         // Given
-        Map<HeaderEnum, String> expected = Map.ofEntries(
-                Map.entry(HeaderEnum.ACCESS_TOKEN, "x-starter-access-token"),
-                Map.entry(HeaderEnum.USERNAME, "x-starter-user-name"),
-                Map.entry(HeaderEnum.REQUEST_ID, "x-starter-request-id"),
-                Map.entry(HeaderEnum.METHOD, "x-starter-request-method"),
-                Map.entry(HeaderEnum.STATUS_CODE, "x-starter-status-code"),
-                Map.entry(HeaderEnum.REQUEST_ENDPOINT, "x-starter-request-uri"),
-                Map.entry(HeaderEnum.FORWARDED_FOR, "x-starter-forwarded-for"),
-                Map.entry(HeaderEnum.PACKAGE_INFO, "x-starter-package-name"),
-                Map.entry(HeaderEnum.EXCEPTION, "x-starter-request-exception"),
-                Map.entry(HeaderEnum.REQUEST, "x-starter-request"),
-                Map.entry(HeaderEnum.RESPONSE, "x-starter-response"),
-                Map.entry(HeaderEnum.USER_AGENT, "x-starter-user-agent"),
-                Map.entry(HeaderEnum.RESPONSE_TIME, "x-starter-response-time"),
-                Map.entry(HeaderEnum.SUMMARY_LOG, "x-starter-summary-log")
+        Map<StarterHeaderEnum, String> expected = Map.ofEntries(
+                Map.entry(StarterHeaderEnum.ACCESS_TOKEN, "x-starter-access-token"),
+                Map.entry(StarterHeaderEnum.USERNAME, "x-starter-user-name"),
+                Map.entry(StarterHeaderEnum.REQUEST_ID, "x-starter-request-id"),
+                Map.entry(StarterHeaderEnum.METHOD, "x-starter-request-method"),
+                Map.entry(StarterHeaderEnum.STATUS_CODE, "x-starter-status-code"),
+                Map.entry(StarterHeaderEnum.REQUEST_ENDPOINT, "x-starter-request-uri"),
+                Map.entry(StarterHeaderEnum.FORWARDED_FOR, "x-starter-forwarded-for"),
+                Map.entry(StarterHeaderEnum.PACKAGE_INFO, "x-starter-package-name"),
+                Map.entry(StarterHeaderEnum.EXCEPTION, "x-starter-request-exception"),
+                Map.entry(StarterHeaderEnum.REQUEST, "x-starter-request"),
+                Map.entry(StarterHeaderEnum.RESPONSE, "x-starter-response"),
+                Map.entry(StarterHeaderEnum.USER_AGENT, "x-starter-user-agent"),
+                Map.entry(StarterHeaderEnum.RESPONSE_TIME, "x-starter-response-time"),
+                Map.entry(StarterHeaderEnum.SUMMARY_LOG, "x-starter-summary-log")
         );
 
         // When
-        HeaderEnum[] values = HeaderEnum.values();
+        StarterHeaderEnum[] values = StarterHeaderEnum.values();
 
         // Then
         assertEquals(expected.size(), values.length);

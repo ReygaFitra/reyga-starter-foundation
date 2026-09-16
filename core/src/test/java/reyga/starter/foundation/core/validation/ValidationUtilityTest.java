@@ -1,92 +1,59 @@
 package reyga.starter.foundation.core.validation;
 
-import org.junit.jupiter.api.AfterEach;
+import jakarta.validation.Validator;
 import org.junit.jupiter.api.Test;
-
-import java.lang.reflect.Field;
-import java.util.List;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class ValidationUtilityTest {
-
-    @AfterEach
-    void tearDown() throws Exception {
-        Field defaultInstance = ValidationUtility.class.getDeclaredField("defaultInstance");
-        defaultInstance.setAccessible(true);
-        defaultInstance.set(null, null);
+    @Test
+    void should_ExplainRuntimeDependency_When_ProviderIsUnavailable() {
+        // given
+        var builder = ValidationConfig.builder().useDefaultBehavior();
+        // when
+        var error = assertThrows(IllegalStateException.class, builder::build);
+        // then
+        assertEquals("Validation provider not found. Add foundation-starter to the runtime classpath.", error.getMessage());
+        assertTrue(ValidationUtility.class.isInterface());
     }
 
     @Test
-    void should_ThrowIllegalStateException_When_DefaultProcessorIsNotRegistered() throws Exception {
-        // Given
-        tearDown();
-
-        // When
-        IllegalStateException result = assertThrows(IllegalStateException.class, ValidationUtility::chain);
-
-        // Then
-        assertTrue(result.getMessage().contains("validation-handler=true"));
+    void should_RejectNullOptions_When_BuilderArgumentsAreNull() {
+        // given
+        var builder = ValidationConfig.builder();
+        // when
+        var validator = assertThrows(NullPointerException.class, () -> builder.withValidator(null));
+        var processor = assertThrows(NullPointerException.class, () -> builder.withProcessor(null));
+        var groups = assertThrows(NullPointerException.class, () -> builder.withValidationGroups((Class<?>[]) null));
+        var group = assertThrows(NullPointerException.class, () -> builder.withValidationGroups((Class<?>) null));
+        // then
+        assertEquals("validator must not be null", validator.getMessage());
+        assertEquals("processor must not be null", processor.getMessage());
+        assertEquals("groups must not be null", groups.getMessage());
+        assertEquals("group must not be null", group.getMessage());
     }
 
     @Test
-    void should_ReturnChainAndValidateWithMapPattern_When_DefaultProcessorIsRegistered() {
-        // Given
+    void should_RejectNonInterfaceGroups_When_GroupIsAClass() {
+        // given
+        var builder = ValidationConfig.builder();
+        // when
+        var error = assertThrows(IllegalArgumentException.class, () -> builder.withValidationGroups(String.class));
+        // then
+        assertEquals("validation groups must be interfaces", error.getMessage());
+    }
+
+    @Test
+    void should_ReturnBuilderWithoutUsingDependencies_When_OptionsAreConfigured() {
+        // given
+        var builder = ValidationConfig.builder();
+        Validator validator = mock(Validator.class);
         BaseValidationProcessor processor = mock(BaseValidationProcessor.class);
-        ValidationUtility.registerDefault(processor);
-
-        // When
-        ValidationUtility utility = ValidationUtility.chain().validateRequest("request");
-
-        // Then
-        assertSame(ValidationUtility.chain(), utility);
-        verify(processor).validateRequest("request", true);
-        verifyNoMoreInteractions(processor);
-    }
-
-    @Test
-    void should_ReturnChainAndValidateGroups_When_ValidationGroupsAreProvided() {
-        // Given
-        BaseValidationProcessor processor = mock(BaseValidationProcessor.class);
-        List<Class<Object>> groups = List.of(Object.class);
-        ValidationUtility.registerDefault(processor);
-
-        // When
-        ValidationUtility result = ValidationUtility.chain().validateRequest("request", groups);
-
-        // Then
-        assertSame(ValidationUtility.chain(), result);
-        verify(processor).validateRequest("request", true, groups);
-        verifyNoMoreInteractions(processor);
-    }
-
-    @Test
-    void should_DelegateValidation_When_MapPatternIsSpecified() {
-        // Given
-        BaseValidationProcessor processor = mock(BaseValidationProcessor.class);
-        ValidationUtility.registerDefault(processor);
-
-        // When
-        ValidationUtility.chain().validateRequest("request", false);
-
-        // Then
-        verify(processor).validateRequest("request", false);
-        verifyNoMoreInteractions(processor);
-    }
-
-    @Test
-    void should_DelegateGroupValidation_When_MapPatternAndGroupsAreSpecified() {
-        // Given
-        BaseValidationProcessor processor = mock(BaseValidationProcessor.class);
-        List<Class<Object>> groups = List.of(Object.class);
-        ValidationUtility.registerDefault(processor);
-
-        // When
-        ValidationUtility.chain().validateRequest("request", false, groups);
-
-        // Then
-        verify(processor).validateRequest("request", false, groups);
-        verifyNoMoreInteractions(processor);
+        // when
+        var result = builder.withValidator(validator).withProcessor(processor)
+                .useMessageDetails().useMapDetails().withValidationGroups(Runnable.class).useDefaultBehavior();
+        // then
+        assertSame(builder, result);
+        verifyNoInteractions(validator, processor);
     }
 }

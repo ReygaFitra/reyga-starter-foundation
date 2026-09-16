@@ -2,46 +2,55 @@ package reyga.starter.foundation.core.validation;
 
 import java.util.List;
 
-public final class ValidationUtility {
+/**
+ * Injectable validation contract. Create a bean with ValidationConfig.builder() or enable
+ * YAML validation. Fluent methods return the same utility, not a mutable request chain.
+ * Implementations must not retain requests. Invalid constraints use the configured
+ * processor's exception policy ({@code ValidationFaultException} for default behavior).
+ */
+public interface ValidationUtility extends AutoCloseable {
+    /**
+     * Validates with configured detail format and groups.
+     * @param request non-null request
+     * @return this utility
+     * @throws NullPointerException if request is null
+     * @throws IllegalStateException if this utility was closed
+     */
+    ValidationUtility validateRequest(Object request);
 
-    private static ValidationUtility defaultInstance;
+    /**
+     * Validates with configured detail format and explicit groups.
+     * @param request non-null request
+     * @param groups non-null group interfaces; empty selects Jakarta Default
+     * @return this utility
+     * @throws NullPointerException if request, groups or a group is null
+     * @throws IllegalArgumentException if a group is not an interface
+     * @throws IllegalStateException if this utility was closed
+     */
+    ValidationUtility validateRequest(Object request, List<? extends Class<?>> groups);
 
-    private final BaseValidationProcessor processor;
+    /**
+     * Validates with explicit detail format and configured groups.
+     * @param request non-null request
+     * @param useMapPattern true for field maps, false for message set
+     * @param <T> request type
+     */
+    <T> void validateRequest(T request, boolean useMapPattern);
 
-    private ValidationUtility(BaseValidationProcessor processor) {
-        this.processor = processor;
-    }
+    /**
+     * Validates with explicit options without changing configured defaults.
+     * @param request non-null request
+     * @param useMapPattern true for field maps, false for message set
+     * @param groups non-null group interfaces; empty selects Jakarta Default
+     * @param <T> request type
+     */
+    <T> void validateRequest(T request, boolean useMapPattern, List<? extends Class<?>> groups);
 
-    public static void registerDefault(BaseValidationProcessor processor) {
-        defaultInstance = new ValidationUtility(processor);
-    }
-
-    public static ValidationUtility chain() {
-        ValidationUtility utility = defaultInstance;
-        if (utility == null) {
-            throw new IllegalStateException(
-                    "ValidationUtility bean is not available. Ensure reyga.config.default-bean.validation-handler=true"
-            );
-        }
-        return utility;
-    }
-
-    public ValidationUtility validateRequest(Object request) {
-        processor.validateRequest(request, true);
-        return this;
-    }
-
-    public <G> ValidationUtility validateRequest(Object request, List<Class<G>> validationGroups) {
-        processor.validateRequest(request, true, validationGroups);
-        return this;
-    }
-
-    public <T> void validateRequest(T request, boolean useMapPattern) {
-        processor.validateRequest(request, useMapPattern);
-    }
-
-    public <T, G> void validateRequest(T request, boolean useMapPattern, List<Class<G>> validationGroups) {
-        processor.validateRequest(request, useMapPattern, validationGroups);
-    }
-
+    /**
+     * Releases owned resources, never caller-owned validators/processors.
+     * Spring infers this destroy method for beans; standalone callers use try-with-resources.
+     * Closing must be idempotent and performed after validation calls finish.
+     */
+    @Override
+    default void close() {}
 }
