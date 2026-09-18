@@ -40,9 +40,12 @@ allprojects {
 
 
 subprojects {
-    apply(plugin = "java-library")
-    apply(plugin = "io.spring.dependency-management")
     apply(plugin = "maven-publish")
+
+    if (name != "foundation-bom") {
+        apply(plugin = "java-library")
+        apply(plugin = "io.spring.dependency-management")
+    }
 
     val nexusReleaseRepositoryUrl = providers.gradleProperty("nexusReleaseRepositoryUrl")
     val nexusSnapshotRepositoryUrl = providers.gradleProperty("nexusSnapshotRepositoryUrl")
@@ -83,40 +86,42 @@ subprojects {
         }
     }
 
-    java {
-        toolchain {
-            languageVersion.set(JavaLanguageVersion.of(javaVersion))
+    if (name != "foundation-bom") {
+        java {
+            toolchain {
+                languageVersion.set(JavaLanguageVersion.of(javaVersion))
+            }
         }
-    }
 
-    dependencies {
-        // Use JUnit 5 + Mockito for tests.
-        testImplementation("org.junit.jupiter:junit-jupiter-api:$junitJupiterVersion")
-        testImplementation("org.junit.jupiter:junit-jupiter-params:$junitJupiterVersion")
-        testImplementation("org.mockito:mockito-core:$mockitoVersion")
-        testImplementation("org.mockito:mockito-junit-jupiter:$mockitoVersion")
-        testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitJupiterVersion")
-        testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+        dependencies {
+            // Use JUnit 5 + Mockito for tests.
+            testImplementation("org.junit.jupiter:junit-jupiter-api:$junitJupiterVersion")
+            testImplementation("org.junit.jupiter:junit-jupiter-params:$junitJupiterVersion")
+            testImplementation("org.mockito:mockito-core:$mockitoVersion")
+            testImplementation("org.mockito:mockito-junit-jupiter:$mockitoVersion")
+            testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitJupiterVersion")
+            testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
-        // This dependency is exported to consumers, that is to say found on their compile classpath.
-        api("org.apache.commons:commons-math3:$commonsMathVersion")
+            // This dependency is exported to consumers, that is to say found on their compile classpath.
+            api("org.apache.commons:commons-math3:$commonsMathVersion")
 
-        // This dependency is used internally, and not exposed to consumers on their own compile classpath.
-        implementation("com.google.guava:guava:$guavaVersion")
+            // This dependency is used internally, and not exposed to consumers on their own compile classpath.
+            implementation("com.google.guava:guava:$guavaVersion")
 
-        /**
-            Base Dependencies for all module
-         */
-        api("jakarta.persistence:jakarta.persistence-api:$jakartaPersistenceApiVersion")
-        implementation("org.springframework.boot:spring-boot-starter:$springBootVersion")
-        implementation("org.springframework.boot:spring-boot-autoconfigure:$springBootVersion")
-        implementation("org.springframework.boot:spring-boot-starter-web:$springBootVersion")
-        compileOnly("org.projectlombok:lombok:$lombokVersion")
-        annotationProcessor("org.projectlombok:lombok:$lombokVersion")
+            /**
+                Base Dependencies for all module
+             */
+            api("jakarta.persistence:jakarta.persistence-api:$jakartaPersistenceApiVersion")
+            implementation("org.springframework.boot:spring-boot-starter:$springBootVersion")
+            implementation("org.springframework.boot:spring-boot-autoconfigure:$springBootVersion")
+            implementation("org.springframework.boot:spring-boot-starter-web:$springBootVersion")
+            compileOnly("org.projectlombok:lombok:$lombokVersion")
+            annotationProcessor("org.projectlombok:lombok:$lombokVersion")
 
-    }
+        }
 
-    tasks.test {
-        useJUnitPlatform()
+        tasks.test {
+            useJUnitPlatform()
+        }
     }
 }

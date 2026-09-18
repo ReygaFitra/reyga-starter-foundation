@@ -23,6 +23,8 @@ Kemampuan utama library:
   transactional dengan fallback;
 - menyediakan Spring Boot auto-configuration dan implementasi default melalui
   artifact runtime `foundation-starter`;
+- menyediakan `foundation-bom` untuk menyelaraskan versi seluruh artifact
+  foundation dari satu deklarasi versi;
 - mendukung publikasi seluruh artifact ke Maven Local atau Nexus Repository.
 
 Library ini ditujukan sebagai foundation internal untuk beberapa service yang
@@ -38,8 +40,8 @@ Repository: https://github.com/ReygaFitra/reyga-starter-foundation
   - Java `25` dengan Gradle Java Toolchain.
   - Gradle Kotlin DSL multi-module, minimum Gradle `9.1.0`.
   - Gradle Wrapper project menggunakan Gradle `9.7.1`.
-  - Plugin `java-library`, `maven-publish`, dan Spring Dependency Management
-    `1.1.5`.
+  - Plugin `java-library`, `java-platform`, `maven-publish`, dan Spring Dependency
+    Management `1.1.5`.
 - **Spring ecosystem**
   - Spring Boot `4.0.0` untuk starter, auto-configuration, web, validation, JPA,
     dan AspectJ integration.
@@ -66,6 +68,8 @@ Repository: https://github.com/ReygaFitra/reyga-starter-foundation
 - **Distribusi**
   - Maven publication dengan sources JAR, Javadoc JAR, Maven Local, dan Nexus
     release/snapshot repository.
+  - Maven BOM berbentuk POM untuk menyelaraskan versi artifact pada consumer
+    Gradle maupun Maven.
 
 ## Struktur Module
 
@@ -240,6 +244,31 @@ auto-configuration. Module ini dipublish dengan nama artifact publik
   - `com.reyga-dev.starter:foundation-starter:<version>`.
   - Digunakan sebagai `runtimeOnly` pada Gradle atau scope `runtime` pada Maven.
 
+### `foundation-bom`
+
+Module platform yang memusatkan versi artifact Reyga Starter Foundation. BOM
+tidak membawa class, implementasi, atau auto-configuration; consumer tetap
+memilih module yang diperlukan, sedangkan versinya diperoleh dari BOM.
+
+- **Version alignment**
+  - Mengelola versi `common`, `common-database`, `common-io`, `core`, `logging`,
+    dan artifact publik `foundation-starter`.
+  - Mencegah consumer mencampur versi module foundation yang belum tentu
+    kompatibel, misalnya `common:1.0.0` dengan `core:2.0.0`.
+- **Gradle platform**
+  - Dibangun menggunakan plugin `java-platform` dan dipakai melalui
+    `platform("com.reyga-dev.starter:foundation-bom:<version>")`.
+- **Maven BOM**
+  - Dipublikasikan sebagai POM dengan bagian `dependencyManagement` dan diimpor
+    menggunakan scope `import`.
+- **Batas tanggung jawab**
+  - Tidak otomatis menambahkan semua module ke aplikasi.
+  - Tidak menggantikan `foundation-starter`; BOM mengatur versi, sedangkan
+    starter menyediakan implementasi runtime dan auto-configuration.
+  - Tidak menghasilkan binary JAR, sources JAR, atau Javadoc JAR.
+- **Artifact Maven**
+  - `com.reyga-dev.starter:foundation-bom:<version>`.
+
 ## Panduan Konfigurasi
 
 - [Panduan Utilities — 1.0.0](docs/VER1.0.0/%281.0.0%29%20UTILITIES_GUIDE.md) - konfigurasi validation utility, validation groups, format field, dan aturan null/blank dengan `FieldPresence`.
@@ -257,11 +286,6 @@ fitur dapat berbeda antarversi.
 - Folder dokumentasi menggunakan pola `docs/VER<versi>/`.
 - Nama file menggunakan pola `(<versi>) NAMA_GUIDE.md`.
 - Dokumentasi yang tersedia saat ini adalah [versi 1.0.0](docs/VER1.0.0/).
-- Untuk rilis berikutnya, tambahkan dokumentasi pada folder versi rilis tersebut
-  dan perbarui indeks serta tautan di README. Pertahankan dokumentasi versi
-  sebelumnya sebagai referensi pengguna versi lama.
-- Setiap perubahan class, interface, enum, record, konfigurasi, atau perilaku
-  publik harus disertai pembaruan dokumentasi yang terdampak pada versi terkait.
 
 Nomor versi dokumentasi diselaraskan dengan versi rilis library yang dikontrol
 melalui `projectVersion` di `gradle.properties`.
@@ -275,21 +299,42 @@ melalui `projectVersion` di `gradle.properties`.
 - `logging` bergantung pada `common`.
 - `foundation-starter-internal` bergantung pada seluruh module publik dan
   menghasilkan artifact runtime `foundation-starter`.
+- `foundation-bom` tidak menjadi dependency runtime. Module ini hanya mengelola
+  versi seluruh artifact publik foundation, termasuk `foundation-starter`.
 
 ```mermaid
-flowchart TD
-    COMMON[common]
-    DB[common-database] --> COMMON
-    IO[common-io] --> COMMON
-    CORE[core] --> COMMON
-    CORE --> IO
-    LOGGING[logging] --> COMMON
-    STARTER[foundation-starter] --> COMMON
-    STARTER --> DB
-    STARTER --> IO
-    STARTER --> CORE
-    STARTER --> LOGGING
+flowchart LR
+    BOM["foundation-bom<br/>penyelarasan versi"]
+
+    subgraph ARTIFACTS["Artifact Foundation"]
+        direction LR
+
+        STARTER["foundation-starter<br/>implementasi runtime"]
+
+        subgraph API["Public API Modules"]
+            direction TB
+            CORE["core"]
+            DATABASE["common-database"]
+            IO["common-io"]
+            LOGGING["logging"]
+            COMMON["common<br/>kontrak dasar"]
+
+            CORE -->|menggunakan| IO
+            CORE -->|menggunakan| COMMON
+            DATABASE -->|menggunakan| COMMON
+            IO -->|menggunakan| COMMON
+            LOGGING -->|menggunakan| COMMON
+        end
+
+        STARTER -->|mengemas module dan menyediakan implementasi| API
+    end
+
+    BOM -.->|mengelola versi semua artifact| ARTIFACTS
 ```
+
+Garis penuh menunjukkan dependency atau distribusi implementasi runtime. Garis
+putus-putus menunjukkan pengelolaan versi oleh BOM dan tidak menambahkan module
+tersebut sebagai dependency aplikasi.
 
 ## Build & Publish
 
@@ -316,7 +361,8 @@ atau publishing.
 
 ### Artifact yang dipublish
 
-Semua module sudah dikonfigurasi sebagai Java library + Maven publish:
+Artifact Java berikut dikonfigurasi sebagai Java library dan Maven publication:
+
 - `common`
 - `common-database`
 - `common-io`
@@ -329,6 +375,11 @@ bukan sebagai artifact `foundation-starter-internal`. JAR ini membawa bytecode
 implementasi dan resource auto-configuration; dependency API dan pihak ketiga
 tetap didistribusikan melalui metadata dependency, bukan digabungkan ke dalam JAR.
 Source dan Javadoc JAR juga diterbitkan sesuai konfigurasi module.
+
+Module `foundation-bom` dikonfigurasi sebagai Java platform dan dipublikasikan
+dengan artifact ID `foundation-bom`. Artifact ini menghasilkan POM serta Gradle
+module metadata untuk mengelola versi dependency. Karena tidak memiliki source
+code, BOM tidak menghasilkan binary JAR, sources JAR, atau Javadoc JAR.
 
 Koordinat artifact:
 - `group`: `com.reyga-dev.starter`
@@ -383,6 +434,7 @@ publish satu module saja, gunakan path task module:
 ```bash
 ./gradlew :core:publishToMavenLocal
 ./gradlew :foundation-starter-internal:publishToMavenLocal
+./gradlew :foundation-bom:publishToMavenLocal
 ```
 
 Walaupun nama source module terakhir adalah `foundation-starter-internal`,
@@ -404,6 +456,7 @@ yang dipilih berdasarkan versi. Untuk publish satu module:
 ./gradlew :common:publishAllPublicationsToNexusRepository
 ./gradlew :core:publishAllPublicationsToNexusRepository
 ./gradlew :foundation-starter-internal:publishAllPublicationsToNexusRepository
+./gradlew :foundation-bom:publishAllPublicationsToNexusRepository
 ```
 
 Untuk memeriksa rangkaian task tanpa mengunggah artifact:
@@ -413,8 +466,10 @@ Untuk memeriksa rangkaian task tanpa mengunggah artifact:
 ```
 
 Setelah publish berhasil, verifikasi pada Nexus bahwa group
-`com.reyga-dev.starter`, artifact name, version, POM, JAR, sources JAR, dan
-Javadoc JAR tersedia.
+`com.reyga-dev.starter`, artifact name, version, dan POM tersedia. Untuk artifact
+Java, periksa juga JAR, sources JAR, dan Javadoc JAR. Untuk `foundation-bom`,
+periksa isi `dependencyManagement` pada POM karena artifact ini tidak memiliki
+JAR.
 
 Repository release umumnya tidak mengizinkan versi yang sama ditimpa. Naikkan
 `projectVersion` untuk release berikutnya. Gunakan suffix `-SNAPSHOT` selama
@@ -435,8 +490,10 @@ development apabila repository snapshot mengizinkan pembaruan artifact.
 ### Menggunakan library setelah dipublish
 
 Aplikasi consumer harus menambahkan module kontrak yang digunakan pada compile
-classpath dan `foundation-starter` pada runtime classpath. Gunakan versi yang sama
-untuk seluruh artifact.
+classpath dan `foundation-starter` pada runtime classpath. Gunakan
+`foundation-bom` agar seluruh artifact memperoleh versi foundation yang sama.
+Versi cukup ditulis pada deklarasi BOM; dependency module lainnya tidak perlu
+menuliskan versi masing-masing.
 
 | Artifact | Tambahkan ketika aplikasi membutuhkan |
 |---|---|
@@ -446,10 +503,15 @@ untuk seluruh artifact.
 | `core` | base service/controller, validation, exception handling, resilience, dan transaksi |
 | `logging` | kontrak, filter, serta konfigurasi Logback foundation |
 | `foundation-starter` | implementasi default dan Spring Boot auto-configuration pada runtime |
+| `foundation-bom` | penyelarasan versi seluruh artifact foundation; tidak menyediakan class runtime |
 
 Deklarasikan secara eksplisit setiap module API yang class-nya dipakai source
 aplikasi. Jangan memakai nama source module `foundation-starter-internal` sebagai
 artifact dependency; nama artifact publiknya adalah `foundation-starter`.
+
+Sebagai contoh, jika BOM versi `1.0.0` digunakan, deklarasi `core` tanpa versi
+akan di-resolve menjadi `core:1.0.0`. BOM tidak otomatis menambahkan `core` atau
+module lainnya; BOM hanya menyediakan versinya ketika module tersebut dipilih.
 
 #### Consumer Gradle dengan Maven Local
 
@@ -482,16 +544,20 @@ Tambahkan dependency sesuai kebutuhan aplikasi:
 val foundationVersion = "1.0.0"
 
 dependencies {
-    implementation("com.reyga-dev.starter:common:$foundationVersion")
-    implementation("com.reyga-dev.starter:core:$foundationVersion")
+    implementation(platform(
+        "com.reyga-dev.starter:foundation-bom:$foundationVersion"
+    ))
+
+    implementation("com.reyga-dev.starter:common")
+    implementation("com.reyga-dev.starter:core")
 
     // Tambahkan hanya jika API module berikut dipakai langsung.
-    implementation("com.reyga-dev.starter:common-database:$foundationVersion")
-    implementation("com.reyga-dev.starter:common-io:$foundationVersion")
-    implementation("com.reyga-dev.starter:logging:$foundationVersion")
+    implementation("com.reyga-dev.starter:common-database")
+    implementation("com.reyga-dev.starter:common-io")
+    implementation("com.reyga-dev.starter:logging")
 
     // Menyediakan implementasi dan auto-configuration pada runtime.
-    runtimeOnly("com.reyga-dev.starter:foundation-starter:$foundationVersion")
+    runtimeOnly("com.reyga-dev.starter:foundation-starter")
 }
 ```
 
@@ -506,9 +572,13 @@ repositories {
 def foundationVersion = "1.0.0"
 
 dependencies {
-    implementation "com.reyga-dev.starter:common:${foundationVersion}"
-    implementation "com.reyga-dev.starter:core:${foundationVersion}"
-    runtimeOnly "com.reyga-dev.starter:foundation-starter:${foundationVersion}"
+    implementation platform(
+        "com.reyga-dev.starter:foundation-bom:${foundationVersion}"
+    )
+
+    implementation "com.reyga-dev.starter:common"
+    implementation "com.reyga-dev.starter:core"
+    runtimeOnly "com.reyga-dev.starter:foundation-starter"
 }
 ```
 
@@ -607,24 +677,34 @@ repositories {
 
 Maven otomatis memeriksa local repository `~/.m2/repository`, sehingga tidak
 perlu menambahkan `<repository>` khusus setelah library dipublish dengan Gradle
-ke Maven Local. Tambahkan module yang digunakan dan runtime starter pada
-`pom.xml` consumer:
+ke Maven Local. Impor `foundation-bom` melalui `dependencyManagement`, kemudian
+tambahkan module yang digunakan dan runtime starter pada `pom.xml` consumer:
 
 ```xml
 <properties>
     <reyga-foundation.version>1.0.0</reyga-foundation.version>
 </properties>
 
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>com.reyga-dev.starter</groupId>
+            <artifactId>foundation-bom</artifactId>
+            <version>${reyga-foundation.version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+
 <dependencies>
     <dependency>
         <groupId>com.reyga-dev.starter</groupId>
         <artifactId>common</artifactId>
-        <version>${reyga-foundation.version}</version>
     </dependency>
     <dependency>
         <groupId>com.reyga-dev.starter</groupId>
         <artifactId>core</artifactId>
-        <version>${reyga-foundation.version}</version>
     </dependency>
 
     <!-- Tambahkan common-database, common-io, atau logging jika dipakai langsung. -->
@@ -632,7 +712,6 @@ ke Maven Local. Tambahkan module yang digunakan dan runtime starter pada
     <dependency>
         <groupId>com.reyga-dev.starter</groupId>
         <artifactId>foundation-starter</artifactId>
-        <version>${reyga-foundation.version}</version>
         <scope>runtime</scope>
     </dependency>
 </dependencies>
@@ -645,17 +724,14 @@ langsung oleh source aplikasi:
 <dependency>
     <groupId>com.reyga-dev.starter</groupId>
     <artifactId>common-database</artifactId>
-    <version>${reyga-foundation.version}</version>
 </dependency>
 <dependency>
     <groupId>com.reyga-dev.starter</groupId>
     <artifactId>common-io</artifactId>
-    <version>${reyga-foundation.version}</version>
 </dependency>
 <dependency>
     <groupId>com.reyga-dev.starter</groupId>
     <artifactId>logging</artifactId>
-    <version>${reyga-foundation.version}</version>
 </dependency>
 ```
 
