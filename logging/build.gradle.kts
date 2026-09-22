@@ -21,6 +21,7 @@ publishing {
 dependencies {
     implementation(project(":common"))
 
+    api("org.springframework.boot:spring-boot-starter-web:$springBootVersion")
     api("ch.qos.logback:logback-classic:$logbackClassicVersion")
 }
 

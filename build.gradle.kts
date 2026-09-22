@@ -15,9 +15,7 @@ val javaVersion = providers.gradleProperty("javaVersion").get().toInt()
 val springBootVersion: String by project
 val junitJupiterVersion: String by project
 val mockitoVersion: String by project
-val commonsMathVersion: String by project
-val guavaVersion: String by project
-val jakartaPersistenceApiVersion: String by project
+val byteBuddyVersion: String by project
 val lombokVersion: String by project
 
 plugins {
@@ -99,22 +97,11 @@ subprojects {
             testImplementation("org.junit.jupiter:junit-jupiter-params:$junitJupiterVersion")
             testImplementation("org.mockito:mockito-core:$mockitoVersion")
             testImplementation("org.mockito:mockito-junit-jupiter:$mockitoVersion")
+            testImplementation("net.bytebuddy:byte-buddy:$byteBuddyVersion")
+            testRuntimeOnly("net.bytebuddy:byte-buddy-agent:$byteBuddyVersion")
             testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitJupiterVersion")
             testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
-            // This dependency is exported to consumers, that is to say found on their compile classpath.
-            api("org.apache.commons:commons-math3:$commonsMathVersion")
-
-            // This dependency is used internally, and not exposed to consumers on their own compile classpath.
-            implementation("com.google.guava:guava:$guavaVersion")
-
-            /**
-                Base Dependencies for all module
-             */
-            api("jakarta.persistence:jakarta.persistence-api:$jakartaPersistenceApiVersion")
-            implementation("org.springframework.boot:spring-boot-starter:$springBootVersion")
-            implementation("org.springframework.boot:spring-boot-autoconfigure:$springBootVersion")
-            implementation("org.springframework.boot:spring-boot-starter-web:$springBootVersion")
             compileOnly("org.projectlombok:lombok:$lombokVersion")
             annotationProcessor("org.projectlombok:lombok:$lombokVersion")
 

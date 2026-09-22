@@ -45,15 +45,16 @@ Repository: https://github.com/ReygaFitra/reyga-starter-foundation
 - **Spring ecosystem**
   - Spring Boot `4.0.0` untuk starter, auto-configuration, web, validation, JPA,
     dan AspectJ integration.
+  - Spring Framework `7.0.1` untuk Spring Web dan Spring JDBC.
   - Spring Data Commons `4.0.0` untuk kontrak pagination.
-  - Spring JDBC `6.2.9` dan `JdbcTemplate` untuk akses database.
+  - Spring JDBC dan `JdbcTemplate` untuk akses database.
 - **Jakarta API dan mapping**
   - Jakarta Persistence API `3.1.0`.
   - Jakarta Validation API `3.1.1`.
   - MapStruct `1.6.3` dan Lombok `1.18.38`.
-- **Resilience dan cache**
+- **Resilience**
   - Resilience4j `2.3.0` untuk rate limiter, circuit breaker, dan retry.
-  - Caffeine `3.1.8` untuk cache instance rate limiter.
+  - Spring Cache abstraction untuk integrasi cache pada rate limiter.
 - **File, security, dan report**
   - Apache Tika `3.3.0` untuk deteksi media type dan ekstraksi content.
   - OWASP Java HTML Sanitizer `20240325.1` untuk sanitasi HTML.
@@ -96,8 +97,7 @@ Module kontrak dasar yang digunakan bersama oleh seluruh foundation.
 - **Utility umum**
   - Menyediakan `DateUtility`, `FileUtility`, dan `MapperUtility`.
 - **Dependency utama**
-  - Spring Boot Data JPA, MapStruct, Jakarta Persistence, Lombok, Commons Math,
-    dan Guava.
+  - Spring Boot Web, MapStruct, Jakarta Persistence, dan Lombok.
 - **Artifact Maven**
   - `com.reyga-dev.starter:common:<version>`.
 
@@ -179,8 +179,14 @@ event, aspect, transaction, dan exception model.
   - Menyediakan `ResilienceService`, `TransactionalExecutor`, dan
     `BaseTransactionalExecutor`.
 - **Aspect dan event**
-  - Menyediakan `@AroundExecution`, `AspectAround`, `AspectProcessor`,
-    `BaseAspectAround`, `GenericEvent`, dan `BaseGenericEventListener`.
+  - Menyediakan advice Around, Before, After, After Returning, dan After
+    Throwing melalui anotasi `@AroundExecution`, `@BeforeExecution`,
+    `@AfterExecution`, `@AfterReturningExecution`, dan
+    `@AfterThrowingExecution`.
+  - Setiap advice mempunyai base behavior dan konfigurasi pemilihan bean sendiri,
+    dengan validasi konfigurasi saat startup.
+  - Menyediakan `GenericEvent` dan `BaseGenericEventListener` untuk event
+    aplikasi.
 - **Dependency internal**
   - Bergantung pada module `common` dan `common-io`; implementasi default service,
     handler, validator, dan transaction executor disediakan runtime starter.
@@ -189,6 +195,7 @@ event, aspect, transaction, dan exception model.
 - **Panduan terkait**
   - [Service Implementation Guide](docs/VER1.0.0/%281.0.0%29%20SERVICE_IMPLEMENTATION_GUIDE.md).
   - [Controller Implementation Guide](docs/VER1.0.0/%281.0.0%29%20CONTROLLER_IMPLEMENTATION_GUIDE.md).
+  - [Utilities Guide](docs/VER1.0.0/%281.0.0%29%20UTILITIES_GUIDE.md#k-aspect-advice).
 
 ### `logging`
 
@@ -271,7 +278,7 @@ memilih module yang diperlukan, sedangkan versinya diperoleh dari BOM.
 
 ## Panduan Konfigurasi
 
-- [Panduan Utilities — 1.0.0](docs/VER1.0.0/%281.0.0%29%20UTILITIES_GUIDE.md) - konfigurasi validation utility, validation groups, format field, dan aturan null/blank dengan `FieldPresence`.
+- [Panduan Utilities — 1.0.0](docs/VER1.0.0/%281.0.0%29%20UTILITIES_GUIDE.md) - penggunaan validation, resilience, transaction, Aspect Advice, file, report, mapping, dan utility umum.
 
 - [Foundation Configuration Guide — 1.0.0](docs/VER1.0.0/%281.0.0%29%20CONFIGURATION_GUIDE.md) - feature flag,
   default bean, validation, exception handler, logging, async executor,
@@ -488,6 +495,34 @@ development apabila repository snapshot mengizinkan pembaruan artifact.
   gunakan versi snapshot sesuai kebijakan Nexus.
 
 ### Menggunakan library setelah dipublish
+
+#### Dependency transitif yang disediakan
+
+Artifact library mempublikasikan dependency yang diperlukan oleh API dan runtime.
+Consumer tidak perlu mendeklarasikan ulang dependency seperti Spring AOP,
+Jakarta Validation, Resilience4j, Tika, OWASP Sanitizer, JasperReports, Spring
+JDBC, atau Logback selama dependency transitif tidak dikecualikan.
+
+Dependency langsung yang tercantum pada POM setiap artifact adalah:
+
+| Artifact | Scope compile/API | Scope runtime |
+|---|---|---|
+| `common` | Spring Boot Starter Web `4.0.0`, Jakarta Persistence API `3.1.0`, MapStruct `1.6.3` | - |
+| `common-database` | `common`, Spring Data Commons `4.0.0`, Spring JDBC `7.0.1` | Oracle JDBC `23.7.0.25.01` |
+| `common-io` | Spring Web `7.0.1`, Apache Tika `3.3.0`, OWASP Java HTML Sanitizer `20240325.1`, JasperReports `7.0.6` | - |
+| `core` | `common`, Spring Boot Starter Validation `4.0.0`, Jakarta Validation API `3.1.1`, Resilience4j `2.3.0`, Spring Boot Starter Data JPA `4.0.0`, Spring Boot Starter AspectJ `4.0.0` | - |
+| `logging` | Spring Boot Starter Web `4.0.0`, Logback Classic `1.5.38` | `common` |
+| `foundation-starter` | Seluruh module publik foundation | Spring Boot Data JPA, Validation, AspectJ, Resilience4j, Tika, OWASP Sanitizer, serta JasperReports core dan exporter |
+| `foundation-bom` | Constraint versi seluruh artifact foundation | - |
+
+Konfigurasi Gradle `api` dipakai ketika tipe dependency muncul pada public API
+library. Konfigurasi `implementation` dipublikasikan sebagai dependency runtime.
+Dependency build seperti Lombok, MapStruct processor, JUnit, Mockito, dan Jackson
+untuk test tidak ikut dipublikasikan kepada consumer.
+
+Untuk Aspect Advice, `spring-boot-starter-aspectj` berasal secara transitif dari
+artifact `core`. Consumer cukup menambahkan `core` dan `foundation-starter`
+sesuai contoh berikut tanpa menambahkan Spring AOP secara manual.
 
 Aplikasi consumer harus menambahkan module kontrak yang digunakan pada compile
 classpath dan `foundation-starter` pada runtime classpath. Gunakan
@@ -838,6 +873,7 @@ Untuk melihat struktur project:
 
 Semua versi dependency/plugin dipusatkan di `gradle.properties`, termasuk:
 - `springBootVersion`
+- `springFrameworkVersion`
 - `springBootPluginVersion`
 - `javaVersion`
-- versi library pendukung lain (lombok, resilience4j, caffeine, logback, dll)
+- versi library pendukung lain (Lombok, Resilience4j, Logback, Tika, dan lainnya)

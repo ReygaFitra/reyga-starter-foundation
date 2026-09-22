@@ -7,14 +7,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a Spring-managed method for processing by the configured
- * {@code BaseAspectAround} behavior.
- *
- * <p>Interception is active only when {@code reyga.config.aspect.around=true}
- * and {@code reyga.config.aspect.behavior} references a valid behavior bean.</p>
+ * Marks a Spring-managed method for processing after it throws by the configured
+ * {@code BaseAspectAfterThrowing} behavior.
  */
 @Documented
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface AroundExecution {
+public @interface AfterThrowingExecution {
 }

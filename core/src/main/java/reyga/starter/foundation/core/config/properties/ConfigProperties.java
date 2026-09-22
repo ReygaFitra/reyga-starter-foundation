@@ -23,9 +23,15 @@ public record ConfigProperties(
 
     public record Aspect(
             @DefaultValue("false") boolean around,
+            @DefaultValue("") String behavior,
             @DefaultValue("false") boolean before,
+            @DefaultValue("") String beforeBehavior,
+            @DefaultValue("false") boolean after,
+            @DefaultValue("") String afterBehavior,
             @DefaultValue("false") boolean afterReturning,
-            @DefaultValue("false") boolean afterThrowing
+            @DefaultValue("") String afterReturningBehavior,
+            @DefaultValue("false") boolean afterThrowing,
+            @DefaultValue("") String afterThrowingBehavior
     ) {
     }
 
