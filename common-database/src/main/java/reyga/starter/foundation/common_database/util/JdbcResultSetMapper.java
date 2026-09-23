@@ -1,12 +1,17 @@
 package reyga.starter.foundation.common_database.util;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class JdbcResultSetMapper {
 
+    @NoArgsConstructor(access = AccessLevel.PRIVATE)
     public static class Nullable {
         public static String getString(ResultSet rs, String column) throws SQLException {
             return rs.getString(column);
@@ -37,6 +42,7 @@ public class JdbcResultSetMapper {
         }
     }
 
+    @NoArgsConstructor(access = AccessLevel.PRIVATE)
     public static class Mandatory {
         public static String getString(ResultSet rs, String column) throws SQLException {
             return rs.getString(column);

@@ -7,8 +7,26 @@
  * in the user manual at https://docs.gradle.org/6.9.1/userguide/multi_project_builds.html
  */
 
+pluginManagement {
+    val springDependencyManagementPluginVersion: String by settings
+    val springBootPluginVersion: String by settings
+
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+    }
+    plugins {
+        id("io.spring.dependency-management") version springDependencyManagementPluginVersion
+        id("org.springframework.boot") version springBootPluginVersion
+    }
+}
+
 rootProject.name = "reyga-starter-foundation"
 include("common")
 include("common-database")
+include("common-io")
 include("logging")
 include("core")
+include("foundation-starter-internal")
+include("foundation-dependencies")
+include("foundation-bom")

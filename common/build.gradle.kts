@@ -1,3 +1,10 @@
+val projectGroup: String by project
+val springBootVersion: String by project
+val mapstructVersion: String by project
+val lombokMapstructBindingVersion: String by project
+val jacksonDatabindVersion: String by project
+val jakartaPersistenceApiVersion: String by project
+
 plugins {
     `java-library`
     `maven-publish`
@@ -7,15 +14,20 @@ publishing {
     publications {
         create<MavenPublication>("mavenJava") {
             from(components["java"])
-            groupId = "com.reyga-dev.starter"
+            groupId = projectGroup
             artifactId = "common"
-            version = "1.0.0"
+            version = project.version.toString()
         }
     }
 }
 
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.5.3")
+    api("org.springframework.boot:spring-boot-starter-web:$springBootVersion")
+    api("jakarta.persistence:jakarta.persistence-api:$jakartaPersistenceApiVersion")
+    api("org.mapstruct:mapstruct:$mapstructVersion")
+    testImplementation("com.fasterxml.jackson.core:jackson-databind:$jacksonDatabindVersion")
+    annotationProcessor("org.mapstruct:mapstruct-processor:$mapstructVersion")
+    annotationProcessor("org.projectlombok:lombok-mapstruct-binding:$lombokMapstructBindingVersion")
 }
 
 java {

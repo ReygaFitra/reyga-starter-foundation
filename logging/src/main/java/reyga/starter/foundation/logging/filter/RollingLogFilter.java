@@ -1,18 +1,16 @@
 package reyga.starter.foundation.logging.filter;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.filter.Filter;
 import ch.qos.logback.core.spi.FilterReply;
-import lombok.Setter;
 
-public class RollingLogFilter extends Filter<ILoggingEvent> {
-
-    @Setter
-    private static BaseRollingLogFilter delegate;
+/**
+ * Default rolling filter instantiated directly by Logback.
+ * Customize filtering by extending BaseRollingLogFilter and selecting that class in Logback XML.
+ */
+public class RollingLogFilter extends BaseRollingLogFilter {
 
     @Override
-    public FilterReply decide(ILoggingEvent event) {
-        return delegate != null ? delegate.decide(event) : FilterReply.NEUTRAL;
+    protected FilterReply filter(ILoggingEvent event) {
+        return FilterReply.NEUTRAL;
     }
-
 }

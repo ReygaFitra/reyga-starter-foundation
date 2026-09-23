@@ -1,127 +1,181 @@
 package reyga.starter.foundation.common_database.processor;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
-import org.springframework.jdbc.core.BatchPreparedStatementSetter;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.stereotype.Component;
-import reyga.starter.foundation.common.logging.BaseLogging;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import reyga.starter.foundation.common_database.util.QueryBuilder;
-import reyga.starter.foundation.common_database.util.SafeQueryBuilder;
 
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
-@Component
-@RequiredArgsConstructor
-public class QueryProcessor extends BaseLogging {
+/**
+ * Execution abstraction for SQL represented by {@link QueryBuilder} or supplied as raw SQL.
+ * Implementations own the JDBC interaction, while repository implementations own query
+ * composition and row mapping.
+ *
+ * <p>Builder-based operations build the latest builder state before execution. Raw methods
+ * should be reserved for database-specific SQL that cannot be represented by the builder.</p>
+ */
+public interface QueryProcessor {
 
-    private final JdbcTemplate jdbcTemplate;
+    /**
+     * Executes a query and returns all mapped rows.
+     *
+     * @param builder SELECT query builder
+     * @param rowMapper row mapper
+     * @param <T> result type
+     * @return all mapped rows
+     */
+    <T> List<T> fetch(QueryBuilder builder, RowMapper<T> rowMapper);
 
-    public <T> List<T> fetch(QueryBuilder builder, RowMapper<T> rowMapper) {
-        String sql = builder.build();
-        log.info("Constructed query: " + sql);
-        List<Object> params = builder.getParameters();
-        return jdbcTemplate.query(sql, rowMapper, params.toArray());
-    }
+    /**
+     * Executes a query and wraps its row list.
+     *
+     * @param builder SELECT query builder
+     * @param rowMapper row mapper
+     * @param <T> result type
+     * @return optional mapped row list
+     */
+    <T> Optional<List<T>> optionalFetch(QueryBuilder builder, RowMapper<T> rowMapper);
 
-    public <T> List<T> fetch(SafeQueryBuilder builder, RowMapper<T> rowMapper) {
-        String sql = builder.build();
-        log.info("Constructed query: " + sql);
-        List<Object> params = builder.getParameters();
-        return jdbcTemplate.query(sql, rowMapper, params.toArray());
-    }
+    /**
+     * Executes a query and returns its first row.
+     *
+     * @param builder SELECT query builder
+     * @param rowMapper row mapper
+     * @param <T> result type
+     * @return first mapped row
+     */
+    <T> T fetchOne(QueryBuilder builder, RowMapper<T> rowMapper);
 
-    public <T> Optional<T> fetchOne(QueryBuilder builder, RowMapper<T> rowMapper) {
-        List<T> results = fetch(builder, rowMapper);
-        return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
-    }
+    /**
+     * Executes a query and optionally returns its first row.
+     *
+     * @param builder SELECT query builder
+     * @param rowMapper row mapper
+     * @param <T> result type
+     * @return first mapped row or an empty optional
+     */
+    <T> Optional<T> optionalFetchOne(QueryBuilder builder, RowMapper<T> rowMapper);
 
-    public <T> Optional<T> fetchOne(SafeQueryBuilder builder, RowMapper<T> rowMapper) {
-        List<T> results = fetch(builder, rowMapper);
-        return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
-    }
+    /**
+     * Executes a query using single-row semantics.
+     *
+     * @param builder single-row SELECT query builder
+     * @param rowMapper row mapper
+     * @param <T> result type
+     * @return mapped row
+     */
+    <T> T fetchOneBy(QueryBuilder builder, RowMapper<T> rowMapper);
 
-    public int execute(QueryBuilder builder) {
-        String sql = builder.build();
-        log.info("Constructed query: " + sql);
-        List<Object> params = builder.getParameters();
-        return jdbcTemplate.update(sql, params.toArray());
-    }
+    /**
+     * Executes a query using optional single-row semantics.
+     *
+     * @param builder single-row SELECT query builder
+     * @param rowMapper row mapper
+     * @param <T> result type
+     * @return mapped row or an empty optional
+     */
+    <T> Optional<T> optionalFetchOneBy(QueryBuilder builder, RowMapper<T> rowMapper);
 
-    public int execute(SafeQueryBuilder builder) {
-        String sql = builder.build();
-        log.info("Constructed query: " + sql);
-        List<Object> params = builder.getParameters();
-        return jdbcTemplate.update(sql, params.toArray());
-    }
+    /**
+     * Executes a data modification builder.
+     *
+     * Executes a paginated select and derives its count query from the supplied builder.
+     * The builder must describe a SELECT query and must not contain untrusted SQL fragments.
+     *
+     * @param builder query used for both page content and total count
+     * @param rowMapper mapper for page content
+     * @param pageable zero-based page request; {@link Pageable#unpaged()} is supported
+     * @param <T> content type
+     * @return page content and total number of matching rows
+     */
+    default <T> Page<T> fetchPage(QueryBuilder builder, RowMapper<T> rowMapper, Pageable pageable) {
+        Objects.requireNonNull(builder, "builder must not be null");
+        Objects.requireNonNull(rowMapper, "rowMapper must not be null");
+        Objects.requireNonNull(pageable, "pageable must not be null");
 
-    public int[] batchExecute(QueryBuilder builder, List<Object[]> batchParams) {
-        String sql = builder.build();
-        log.info("Constructed query: " + sql);
-        return jdbcTemplate.batchUpdate(sql, batchParams);
-    }
-
-    public int[] batchExecute(SafeQueryBuilder builder, List<Object[]> batchParams) {
-        String sql = builder.build();
-        log.info("Constructed query: " + sql);
-        return jdbcTemplate.batchUpdate(sql, batchParams);
-    }
-
-    public int[] batchExecute(List<QueryBuilder> builders) {
-        List<Integer> results = new ArrayList<>();
-        for (QueryBuilder builder : builders) {
-            String sql = builder.build();
-            log.info("Query ==> : " + sql);
-            results.add(jdbcTemplate.update(sql, builder.getParameters().toArray()));
+        if (pageable.isUnpaged()) {
+            builder.paginate(pageable);
+            return new PageImpl<>(fetch(builder, rowMapper));
         }
-        return results.stream().mapToInt(Integer::intValue).toArray();
+
+        String countSql = builder.buildCount();
+        Object[] countParameters = builder.getCountParameters().toArray();
+        builder.paginate(pageable);
+        List<T> content = fetch(builder, rowMapper);
+        long total = fetchOneRaw(countSql, (resultSet, rowNumber) -> resultSet.getLong(1), countParameters)
+                .orElse(0L);
+        return new PageImpl<>(content, pageable, total);
     }
 
-    public int[] batchExecute(List<QueryBuilder> builders, List<SafeQueryBuilder> safeBuilders, boolean isSafeBuilder) {
-        List<Integer> results = new ArrayList<>();
-        if (isSafeBuilder) {
-            for (SafeQueryBuilder safeBuilder : safeBuilders) {
-                String sql = safeBuilder.build();
-                log.info("Query ==> : " + sql);
-                results.add(jdbcTemplate.update(sql, safeBuilder.getParameters().toArray()));
-            }
-        } else {
-            for (QueryBuilder builder : builders) {
-                String sql = builder.build();
-                log.info("Query ==> : " + sql);
-                results.add(jdbcTemplate.update(sql, builder.getParameters().toArray()));
-            }
-        }
-        return results.stream().mapToInt(Integer::intValue).toArray();
-    }
+    /**
+     * Executes one statement for multiple parameter groups.
+     *
+     * @param builder INSERT, UPDATE, or DELETE builder
+     * @return affected row count
+     */
+    int execute(QueryBuilder builder);
 
-    public int[] batchExecute(String sql, List<Object[]> batchParams) {
-        return jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
-            @Override
-            public void setValues(PreparedStatement ps, int i) throws SQLException {
-                Object[] params = batchParams.get(i);
-                for (int j = 0; j < params.length; j++) {
-                    ps.setObject(j + 1, params[j]);
-                }
-            }
+    /**
+     * Executes multiple independently built statements.
+     *
+     * @param builder statement builder
+     * @param batchParams parameter groups in placeholder order
+     * @return affected row counts
+     */
+    int[] batchExecute(QueryBuilder builder, List<Object[]> batchParams);
 
-            @Override
-            public int getBatchSize() {
-                return batchParams.size();
-            }
-        });
-    }
+    /**
+     * Executes one raw statement for multiple parameter groups.
+     *
+     * @param builders statement builders
+     * @return affected row counts
+     */
+    int[] batchExecute(List<QueryBuilder> builders);
 
-    public <T> List<T> fetchRaw(String sql, RowMapper<T> rowMapper, Object... params) throws DataAccessException {
-        return jdbcTemplate.query(sql, rowMapper, params);
-    }
+    /**
+     * Executes a raw query and returns all mapped rows.
+     *
+     * @param sql raw parameterized SQL
+     * @param batchParams parameter groups in placeholder order
+     * @return affected row counts
+     */
+    int[] batchExecute(String sql, List<Object[]> batchParams);
 
-    public int executeRaw(String sql, Object... params) throws DataAccessException {
-        return jdbcTemplate.update(sql, params);
-    }
+    /**
+     * Executes a raw query using optional single-row semantics.
+     *
+     * @param sql raw parameterized SELECT
+     * @param rowMapper row mapper
+     * @param params bind parameters
+     * @param <T> result type
+     * @return all mapped rows
+     * @throws DataAccessException when JDBC execution fails
+     */
+    <T> List<T> fetchRaw(String sql, RowMapper<T> rowMapper, Object... params) throws DataAccessException;
+
+    /**
+     * Executes a raw query using optional single-row semantics.
+     *
+     * @param sql raw parameterized SELECT
+     * @param rowMapper row mapper
+     * @param params bind parameters
+     * @param <T> result type
+     * @return mapped row or an empty optional
+     */
+    <T> Optional<T> fetchOneRaw(String sql, RowMapper<T> rowMapper, Object... params);
+
+    /**
+     * Executes a raw data modification statement.
+     *
+     * @param sql raw parameterized INSERT, UPDATE, or DELETE
+     * @param params bind parameters
+     * @return affected row count
+     * @throws DataAccessException when JDBC execution fails
+     */
+    int executeRaw(String sql, Object... params) throws DataAccessException;
 }

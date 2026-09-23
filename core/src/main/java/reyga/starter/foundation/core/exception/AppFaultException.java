@@ -7,10 +7,10 @@ import org.springframework.http.HttpStatus;
 @Setter @Getter
 public class AppFaultException extends RuntimeException {
 
-    private Object faultInfo;
-    private String errorCode;
-    private String errorMessage;
-    private HttpStatus statusCode;
+    private final transient Object faultInfo;
+    private final String errorCode;
+    private final String errorMessage;
+    private final HttpStatus statusCode;
 
     public AppFaultException(String errorCode, String errorMessage, Object faultInfo, HttpStatus statusCode) {
         super(errorMessage);
@@ -20,8 +20,24 @@ public class AppFaultException extends RuntimeException {
         this.statusCode = statusCode;
     }
 
+    public AppFaultException(String errorCode, String errorMessage, Object faultInfo, Throwable cause, HttpStatus statusCode) {
+        super(errorMessage, cause);
+        this.faultInfo = faultInfo;
+        this.errorCode = errorCode;
+        this.errorMessage = errorMessage;
+        this.statusCode = statusCode;
+    }
+
     public AppFaultException(AppFaultContent faultContent) {
-        super(faultContent.getMessage());
+        super(faultContent.getErrorMessage());
+        this.faultInfo = faultContent.getFaultInfo();
+        this.errorCode = faultContent.getErrorCode();
+        this.errorMessage = faultContent.getErrorMessage();
+        this.statusCode = faultContent.getStatusCode();
+    }
+
+    public AppFaultException(AppFaultContent faultContent, Throwable cause) {
+        super(faultContent.getErrorMessage(), cause);
         this.faultInfo = faultContent.getFaultInfo();
         this.errorCode = faultContent.getErrorCode();
         this.errorMessage = faultContent.getErrorMessage();

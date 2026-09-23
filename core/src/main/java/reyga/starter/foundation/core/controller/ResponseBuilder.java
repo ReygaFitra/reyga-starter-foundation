@@ -1,38 +1,19 @@
 package reyga.starter.foundation.core.controller;
 
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.NoArgsConstructor;
-import org.slf4j.MDC;
-import org.springframework.web.context.request.RequestAttributes;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
-import reyga.starter.foundation.common.enumeration.HeaderEnum;
-import reyga.starter.foundation.common.logging.BaseLogging;
-import reyga.starter.foundation.common.util.DateUtil;
-import reyga.starter.foundation.common.util.MapperUtil;
-import reyga.starter.foundation.core.dto.response.ResponseData;
-import reyga.starter.foundation.core.dto.response.ResponseError;
-import reyga.starter.foundation.core.dto.response.ResponseErrorDetail;
+import reyga.starter.foundation.common.logging.CommonLogger;
+import reyga.starter.foundation.common.logging.InjectLogger;
+import reyga.starter.foundation.common.model.dto.response.*;
+import reyga.starter.foundation.common.util.DateUtility;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @NoArgsConstructor
-public class ResponseBuilder extends BaseLogging {
+public class ResponseBuilder {
 
-    protected static <T> void setMDCResponse(T data) {
-        RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
-        HttpServletRequest request;
-
-        if (requestAttributes instanceof ServletRequestAttributes) {
-            request = ((ServletRequestAttributes) requestAttributes).getRequest();
-            if (data instanceof ResponseData<?>) {
-                request.setAttribute(HeaderEnum.RESPONSE.getValue(), data.toString());
-            } else {
-                request.setAttribute(HeaderEnum.RESPONSE.getValue(), MapperUtil.convertDtoToJsonString(data, true));
-            }
-            MDC.put(HeaderEnum.RESPONSE.getValue(), data.toString());
-        }
-    }
+    @InjectLogger
+    protected CommonLogger logger;
 
     protected static <T> ResponseData<T> buildResponseData(T data, String status, String code, String message) {
         return ResponseData.<T>builder()
@@ -44,7 +25,7 @@ public class ResponseBuilder extends BaseLogging {
     }
 
     protected static ResponseError buildResponseError(String status, String code, String message) {
-        return ResponseError.Builder.newBuilder()
+        return ResponseError.builder()
                 .status(status)
                 .code(code)
                 .message(message)
@@ -52,14 +33,34 @@ public class ResponseBuilder extends BaseLogging {
     }
 
     protected static ResponseError buildResponseError(String status, String code, String message, String business, String additionalInfo) {
-        return ResponseError.Builder.newBuilder()
-                .status(status)
-                .code(code)
-                .message(message)
-                .details(ResponseErrorDetail.Builder.newBuilder()
+        return buildResponseError(status, code, message).toBuilder()
+                .details(ResponseErrorDetail.builder()
                         .business(business)
                         .additionalInfo(additionalInfo)
-                        .timestamp(DateUtil.getTimestamp(LocalDateTime.now()))
+                        .timestamp(DateUtility.getTimestamp(LocalDateTime.now()))
+                        .build())
+                .build();
+    }
+
+    protected static ResponseError buildResponseError(String status, String code, String message, String business, String additionalInfo, List<FieldErrorDetail> fieldErrorDetails) {
+        return buildResponseError(status, code, message).toBuilder()
+                .details(ResponseErrorDetail.builder()
+                        .business(business)
+                        .additionalInfo(additionalInfo)
+                        .timestamp(DateUtility.getTimestamp(LocalDateTime.now()))
+                        .requestFieldDetails(fieldErrorDetails)
+                        .build())
+                .build();
+    }
+
+    protected static ResponseError buildResponseError(String status, String code, String message, String business, String additionalInfo, List<FieldErrorDetail> requestFieldsErrorDetail, List<FileErrorDetail> fileErrorDetails) {
+        return buildResponseError(status, code, message).toBuilder()
+                .details(ResponseErrorDetail.builder()
+                        .business(business)
+                        .additionalInfo(additionalInfo)
+                        .timestamp(DateUtility.getTimestamp(LocalDateTime.now()))
+                        .requestFieldDetails(requestFieldsErrorDetail)
+                        .fileDetails(fileErrorDetails)
                         .build())
                 .build();
     }

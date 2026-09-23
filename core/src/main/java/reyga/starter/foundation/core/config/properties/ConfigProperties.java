@@ -1,46 +1,66 @@
 package reyga.starter.foundation.core.config.properties;
 
-import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
-@Data
 @ConfigurationProperties(prefix = "reyga.config")
-public class ConfigProperties {
+public record ConfigProperties(
+        @DefaultValue Default defaultBean,
+        @DefaultValue RateLimiter rateLimiter,
+        @DefaultValue CircuitBreaker circuitBreaker,
+        @DefaultValue Retry retry,
+        @DefaultValue Aspect aspect
+) {
 
-    @Data
-    public static class Exception {
-        private boolean enableDefault = true;
+    public record Default(
+            @DefaultValue("false") boolean exceptionHandler,
+            @DefaultValue("false") boolean validationHandler,
+            @DefaultValue("false") boolean loggingHandler,
+            @DefaultValue("false") boolean requestResponseAdvice,
+            @DefaultValue("false") boolean utilities
+    ) {
     }
 
-    @Data
-    public static class Validation {
-        private boolean enableDefault = true;
+    public record Aspect(
+            @DefaultValue("false") boolean around,
+            @DefaultValue("") String behavior,
+            @DefaultValue("false") boolean before,
+            @DefaultValue("") String beforeBehavior,
+            @DefaultValue("false") boolean after,
+            @DefaultValue("") String afterBehavior,
+            @DefaultValue("false") boolean afterReturning,
+            @DefaultValue("") String afterReturningBehavior,
+            @DefaultValue("false") boolean afterThrowing,
+            @DefaultValue("") String afterThrowingBehavior
+    ) {
     }
 
-    @Data
-    public static class RateLimiter {
-        private boolean required = false;
-        private Integer timeoutMilis;
-        private Integer maxRequest;
-        private Integer refreshPeriodSeconds;
+    public record RateLimiter(
+            @DefaultValue("false") boolean required,
+            @DefaultValue("60000") int timeoutMilis,
+            @DefaultValue("3") int maxRequest,
+            @DefaultValue("6000") int refreshPeriodSeconds
+    ) {
     }
 
-    @Data
-    public static class CircuitBreaker {
-        private boolean required = false;
-        private float failureRateThreshold;
-        private float slowCallRateThreshold;
-        private long slowCallDurationThresholdSeconds;
-        private int minimumNumberOfCalls;
-        private int slidingWindowSize;
-        private int permittedNumberOfCallsInHalfOpenState;
-        private long waitDurationInOpenStateSeconds;
-        private boolean automaticTransitionFromOpenToHalfOpenEnabled;
+    public record CircuitBreaker(
+            @DefaultValue("false") boolean required,
+            float failureRateThreshold,
+            float slowCallRateThreshold,
+            long slowCallDurationThresholdSeconds,
+            int minimumNumberOfCalls,
+            int slidingWindowSize,
+            int permittedNumberOfCallsInHalfOpenState,
+            long waitDurationInOpenStateSeconds,
+            boolean automaticTransitionFromOpenToHalfOpenEnabled
+    ) {
     }
 
-    @Data
-    public static class LocalCache {
-        private Integer expiresMinutes;
-        private Integer maxSize;
+    public record Retry(
+            @DefaultValue("false") boolean required,
+            @DefaultValue("3") int maxAttempts,
+            @DefaultValue("10000") long waitDurationMillis,
+            @DefaultValue("true") boolean failAfterMaxAttempts
+    ) {
     }
 }

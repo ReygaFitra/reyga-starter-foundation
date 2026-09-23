@@ -4,28 +4,72 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
-import lombok.RequiredArgsConstructor;
-import reyga.starter.foundation.common.logging.BaseLogging;
+import reyga.starter.foundation.common.logging.CommonLogger;
+import reyga.starter.foundation.common.logging.InjectLogger;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
-@RequiredArgsConstructor
-public abstract class BaseValidationProcessor extends BaseLogging {
+/**
+ * Base class for processing Jakarta Bean Validation.
+ * Provides core logic for validating request objects and handling constraint violations.
+ */
+public abstract class BaseValidationProcessor {
 
-    private final ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
-    private final Validator validator = factory.getValidator();
+    @InjectLogger
+    protected CommonLogger logger;
 
-    protected <T> void validateRequest(T request, boolean useMapPattern) {
+    private final Validator validator;
+
+    /**
+     * Uses an externally managed validator without creating or closing its factory.
+     * @param validator non-null Jakarta validator
+     * @throws NullPointerException if validator is null
+     */
+    protected BaseValidationProcessor(Validator validator) {
+        this.validator = Objects.requireNonNull(validator, "validator must not be null");
+    }
+
+    /**
+     * Initializes the Validator using the default ValidatorFactory.
+     */
+    protected BaseValidationProcessor() {
+        try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
+            this.validator = factory.getValidator();
+        } catch (Exception e) {
+            if (logger != null) {
+                logger.error("Error Occurred in ValidatorFactory: ", e.getMessage());
+            }
+            throw new IllegalArgumentException(e);
+        }
+    }
+
+    /**
+     * Validates the given request object.
+     *
+     * @param request       the object to validate
+     * @param useMapPattern if true, uses {@link #violationsMapHandle}, otherwise uses {@link #violationsSetHandle}
+     * @param <T>           the type of the request object
+     */
+    public <T> void validateRequest(T request, boolean useMapPattern) {
         Set<ConstraintViolation<T>> violations = validator.validate(request);
         if (useMapPattern) {
             violationsMapHandle(violations);
         } else {
             violationsSetHandle(violations);
         }
-    };
+    }
 
-    protected <T, GT> void validateRequest(T request, boolean useMapPattern, List<Class<GT>> validationGroups) {
+    /**
+     * Validates the given request object against specific validation groups.
+     *
+     * @param request          the object to validate
+     * @param useMapPattern    if true, uses {@link #violationsMapHandle}, otherwise uses {@link #violationsSetHandle}
+     * @param validationGroups the list of validation groups to apply
+     * @param <T>              the type of the request object
+     */
+    public <T> void validateRequest(T request, boolean useMapPattern, List<? extends Class<?>> validationGroups) {
         Class<?>[] valGroupArr = validationGroups.toArray(new Class<?>[0]);
         Set<ConstraintViolation<T>> violations = validator.validate(request, valGroupArr);
         if (useMapPattern) {
@@ -33,9 +77,22 @@ public abstract class BaseValidationProcessor extends BaseLogging {
         } else {
             violationsSetHandle(violations);
         }
-    };
+    }
 
+    /**
+     * Handles validation violations using a set-based approach.
+     *
+     * @param violations the set of constraint violations
+     * @param <T>        the type of the validated object
+     */
     protected abstract <T> void violationsSetHandle(Set<ConstraintViolation<T>> violations);
+
+    /**
+     * Handles validation violations using a map-based approach.
+     *
+     * @param violations the set of constraint violations
+     * @param <T>        the type of the validated object
+     */
     protected abstract <T> void violationsMapHandle(Set<ConstraintViolation<T>> violations);
 
 }

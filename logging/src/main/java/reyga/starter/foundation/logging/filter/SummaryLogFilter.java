@@ -1,28 +1,18 @@
 package reyga.starter.foundation.logging.filter;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.filter.Filter;
 import ch.qos.logback.core.spi.FilterReply;
-import lombok.Setter;
-import reyga.starter.foundation.common.enumeration.HeaderEnum;
+import reyga.starter.foundation.common.enumeration.StarterHeaderEnum;
 
-public class SummaryLogFilter extends Filter<ILoggingEvent> {
-
-    @Setter
-    private static BaseSummaryLogFilter delegate;
+/**
+ * Default summary filter instantiated directly by Logback.
+ * Customize filtering by extending BaseSummaryLogFilter and selecting that class in Logback XML.
+ */
+public class SummaryLogFilter extends BaseSummaryLogFilter {
 
     @Override
-    public FilterReply decide(ILoggingEvent event) {
-        if (delegate != null) {
-            return delegate.decide(event);
-        }
-
-        String summaryFlag = event.getMDCPropertyMap().get(HeaderEnum.SUMMARY_LOG.getValue());
-        if ("AFTER COMPLETION".equals(summaryFlag)) {
-            return FilterReply.ACCEPT;
-        }
-
-        return FilterReply.DENY;
+    protected FilterReply filter(ILoggingEvent event) {
+        String summaryFlag = event.getMDCPropertyMap().get(StarterHeaderEnum.SUMMARY_LOG.getValue());
+        return "AFTER COMPLETION".equals(summaryFlag) ? FilterReply.ACCEPT : FilterReply.DENY;
     }
-
 }
