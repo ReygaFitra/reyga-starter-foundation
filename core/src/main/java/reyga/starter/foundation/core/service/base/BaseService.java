@@ -1,5 +1,6 @@
 package reyga.starter.foundation.core.service.base;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.springframework.http.HttpStatus;
 import reyga.starter.foundation.common.enumeration.ServiceCodeEnum;
 import reyga.starter.foundation.common.logging.CommonLogger;
@@ -8,6 +9,8 @@ import reyga.starter.foundation.common.model.dto.request.BaseRequest;
 import reyga.starter.foundation.core.exception.AppFaultContent;
 import reyga.starter.foundation.core.exception.AppFaultException;
 import reyga.starter.foundation.core.service.foundation.FoundationService;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Abstract base class for all services in the foundation layer.
@@ -17,6 +20,10 @@ import reyga.starter.foundation.core.service.foundation.FoundationService;
  * @param <R> The type of the response object
  */
 public abstract class BaseService<T extends BaseRequest, R> implements FoundationService<T, R> {
+
+    private static final ObjectMapper MAPPER = JsonMapper.builder()
+            .addMixIn(BaseRequest.class, RequestLogMixin.class)
+            .build();
 
     @InjectLogger
     protected CommonLogger logger;
@@ -78,8 +85,14 @@ public abstract class BaseService<T extends BaseRequest, R> implements Foundatio
     protected void logInformation(T request) {
         if (logger != null) {
             logger.info("Executing Service...");
-            logger.info("Request : ", String.valueOf(request));
+            if (request != null) {
+                logger.info("Request : ", MAPPER.writeValueAsString(request));
+            }
         }
+    }
+
+    @JsonIgnoreProperties({"servletRequest", "servletResponse"})
+    private abstract static class RequestLogMixin {
     }
 
 }

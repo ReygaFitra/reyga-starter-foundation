@@ -13,8 +13,18 @@ import reyga.starter.foundation.common.logging.CommonLogger;
 import reyga.starter.foundation.common.model.dto.request.BaseRequest;
 import reyga.starter.foundation.core.exception.AppFaultException;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class BaseServiceTest {
@@ -35,6 +45,7 @@ class BaseServiceTest {
     void should_ReturnOrchestratedResult_When_ServletParametersAreNotRequired() {
         // Given
         DummyRequest request = new DummyRequest();
+        request.setName("customer-01");
         service.setUseHttpParams(false);
 
         // When
@@ -48,7 +59,17 @@ class BaseServiceTest {
         executionOrder.verify(service).validateRequest(request);
         executionOrder.verify(service).buildProcess(request);
         verify(logger).info("Executing Service...");
-        verify(logger).info("Request : ", String.valueOf(request));
+        verify(logger).info("Request : ", "{\"name\":\"customer-01\"}");
+        verifyNoMoreInteractions(logger);
+    }
+
+    @Test
+    void should_LogOnlyExecutionStart_When_RequestIsNull() {
+        // When
+        service.logInformation(null);
+
+        // Then
+        verify(logger).info("Executing Service...");
         verifyNoMoreInteractions(logger);
     }
 
@@ -56,6 +77,7 @@ class BaseServiceTest {
     void should_ReturnOrchestratedResult_When_RequiredServletParametersAreProvided() {
         // Given
         DummyRequest request = new DummyRequest();
+        request.setName("customer-01");
         request.setServletRequest(servletRequest);
         request.setServletResponse(servletResponse);
         service.setUseHttpParams(true);
@@ -69,6 +91,9 @@ class BaseServiceTest {
         verify(service).buildProcess(request);
         assertSame(servletRequest, request.getServletRequest());
         assertSame(servletResponse, request.getServletResponse());
+        verify(logger).info("Executing Service...");
+        verify(logger).info("Request : ", "{\"name\":\"customer-01\"}");
+        verifyNoMoreInteractions(logger);
     }
 
     @Test
@@ -146,6 +171,15 @@ class BaseServiceTest {
     }
 
     private static class DummyRequest extends BaseRequest {
+        private String name;
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
     }
 
     private static class TestableService extends BaseService<DummyRequest, String> {

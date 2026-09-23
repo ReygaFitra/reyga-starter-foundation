@@ -14,6 +14,7 @@ dependencies {
         api(project(":core"))
         api(project(":logging"))
 
+        api(project(":foundation-dependencies"))
         api("$projectGroup:foundation-starter:$projectVersion")
     }
 }

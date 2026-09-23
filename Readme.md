@@ -25,6 +25,8 @@ Kemampuan utama library:
   artifact runtime `foundation-starter`;
 - menyediakan `foundation-bom` untuk menyelaraskan versi seluruh artifact
   foundation dari satu deklarasi versi;
+- menyediakan `foundation-dependencies` sebagai bundle opt-in seluruh dependency
+  produksi pihak ketiga pada compile classpath consumer;
 - mendukung publikasi seluruh artifact ke Maven Local atau Nexus Repository.
 
 Library ini ditujukan sebagai foundation internal untuk beberapa service yang
@@ -259,7 +261,7 @@ memilih module yang diperlukan, sedangkan versinya diperoleh dari BOM.
 
 - **Version alignment**
   - Mengelola versi `common`, `common-database`, `common-io`, `core`, `logging`,
-    dan artifact publik `foundation-starter`.
+    `foundation-starter`, dan `foundation-dependencies`.
   - Mencegah consumer mencampur versi module foundation yang belum tentu
     kompatibel, misalnya `common:1.0.0` dengan `core:2.0.0`.
 - **Gradle platform**
@@ -275,6 +277,34 @@ memilih module yang diperlukan, sedangkan versinya diperoleh dari BOM.
   - Tidak menghasilkan binary JAR, sources JAR, atau Javadoc JAR.
 - **Artifact Maven**
   - `com.reyga-dev.starter:foundation-bom:<version>`.
+
+### `foundation-dependencies`
+
+Module aggregator opt-in yang membawa seluruh dependency produksi pihak ketiga
+yang digunakan Reyga Starter Foundation. Module ini menghasilkan JAR kosong;
+fungsi utamanya berada pada metadata dependency di POM dan Gradle Module Metadata.
+
+- **Dependency yang disediakan**
+  - Spring Boot Web, Validation, Data JPA, dan AspectJ starter.
+  - Spring Web, Spring JDBC, serta Spring Data Commons.
+  - Jakarta Persistence, Jakarta Validation, MapStruct, Resilience4j, dan
+    Logback Classic.
+  - Apache Tika, OWASP Java HTML Sanitizer, JasperReports beserta exporter, dan
+    Oracle JDBC.
+- **Cara kerja**
+  - Seluruh dependency dideklarasikan sebagai Gradle `api` dan dipublikasikan
+    sebagai Maven scope `compile`.
+  - Consumer yang menambahkan artifact ini memperoleh seluruh dependency pada
+    compile dan runtime classpath secara transitif.
+- **Batas tanggung jawab**
+  - Tidak membawa class API atau implementasi Reyga Starter Foundation.
+  - Tidak membawa dependency test, Lombok, atau annotation processor seperti
+    MapStruct Processor.
+  - Cocok untuk aplikasi yang memang memakai sebagian besar fitur foundation;
+    aplikasi yang ingin classpath lebih kecil dapat tetap memakai dependency
+    transitif dari module API masing-masing.
+- **Artifact Maven**
+  - `com.reyga-dev.starter:foundation-dependencies:<version>`.
 
 ## Panduan Konfigurasi
 
@@ -306,17 +336,23 @@ melalui `projectVersion` di `gradle.properties`.
 - `logging` bergantung pada `common`.
 - `foundation-starter-internal` bergantung pada seluruh module publik dan
   menghasilkan artifact runtime `foundation-starter`.
+- `foundation-dependencies` mengagregasi seluruh dependency produksi pihak
+  ketiga sebagai dependency transitif compile dan tidak bergantung pada module
+  source foundation.
 - `foundation-bom` tidak menjadi dependency runtime. Module ini hanya mengelola
-  versi seluruh artifact publik foundation, termasuk `foundation-starter`.
+  versi seluruh artifact publik foundation, termasuk `foundation-starter` dan
+  `foundation-dependencies`.
 
 ```mermaid
 flowchart LR
     BOM["foundation-bom<br/>penyelarasan versi"]
+    THIRD_PARTY["Dependency pihak ketiga<br/>Spring, Resilience4j, Tika,<br/>JasperReports, Logback, JDBC"]
 
     subgraph ARTIFACTS["Artifact Foundation"]
         direction LR
 
         STARTER["foundation-starter<br/>implementasi runtime"]
+        DEPENDENCIES["foundation-dependencies<br/>bundle dependency opt-in"]
 
         subgraph API["Public API Modules"]
             direction TB
@@ -334,14 +370,15 @@ flowchart LR
         end
 
         STARTER -->|mengemas module dan menyediakan implementasi| API
+        DEPENDENCIES -->|membawa pada compile classpath| THIRD_PARTY
     end
 
     BOM -.->|mengelola versi semua artifact| ARTIFACTS
 ```
 
-Garis penuh menunjukkan dependency atau distribusi implementasi runtime. Garis
-putus-putus menunjukkan pengelolaan versi oleh BOM dan tidak menambahkan module
-tersebut sebagai dependency aplikasi.
+Garis penuh menunjukkan dependency, bundle compile, atau distribusi implementasi
+runtime. Garis putus-putus menunjukkan pengelolaan versi oleh BOM dan tidak
+menambahkan module tersebut sebagai dependency aplikasi.
 
 ## Build & Publish
 
@@ -375,6 +412,7 @@ Artifact Java berikut dikonfigurasi sebagai Java library dan Maven publication:
 - `common-io`
 - `core`
 - `logging`
+- `foundation-dependencies`
 
 Module source `foundation-starter-internal` menyediakan implementasi default dan
 auto-configuration. Hasil build-nya dipublish sebagai artifact `foundation-starter`,
@@ -387,6 +425,12 @@ Module `foundation-bom` dikonfigurasi sebagai Java platform dan dipublikasikan
 dengan artifact ID `foundation-bom`. Artifact ini menghasilkan POM serta Gradle
 module metadata untuk mengelola versi dependency. Karena tidak memiliki source
 code, BOM tidak menghasilkan binary JAR, sources JAR, atau Javadoc JAR.
+
+Module `foundation-dependencies` dipublikasikan sebagai Java library aggregator.
+Binary JAR-nya tidak memuat class aplikasi; POM dan Gradle Module Metadata-nya
+mendeklarasikan seluruh dependency produksi pihak ketiga dengan scope compile.
+Source dan Javadoc JAR kosong tetap diterbitkan agar bentuk publication konsisten
+dengan artifact Java lainnya.
 
 Koordinat artifact:
 - `group`: `com.reyga-dev.starter`
@@ -441,6 +485,7 @@ publish satu module saja, gunakan path task module:
 ```bash
 ./gradlew :core:publishToMavenLocal
 ./gradlew :foundation-starter-internal:publishToMavenLocal
+./gradlew :foundation-dependencies:publishToMavenLocal
 ./gradlew :foundation-bom:publishToMavenLocal
 ```
 
@@ -463,6 +508,7 @@ yang dipilih berdasarkan versi. Untuk publish satu module:
 ./gradlew :common:publishAllPublicationsToNexusRepository
 ./gradlew :core:publishAllPublicationsToNexusRepository
 ./gradlew :foundation-starter-internal:publishAllPublicationsToNexusRepository
+./gradlew :foundation-dependencies:publishAllPublicationsToNexusRepository
 ./gradlew :foundation-bom:publishAllPublicationsToNexusRepository
 ```
 
@@ -513,6 +559,7 @@ Dependency langsung yang tercantum pada POM setiap artifact adalah:
 | `core` | `common`, Spring Boot Starter Validation `4.0.0`, Jakarta Validation API `3.1.1`, Resilience4j `2.3.0`, Spring Boot Starter Data JPA `4.0.0`, Spring Boot Starter AspectJ `4.0.0` | - |
 | `logging` | Spring Boot Starter Web `4.0.0`, Logback Classic `1.5.38` | `common` |
 | `foundation-starter` | Seluruh module publik foundation | Spring Boot Data JPA, Validation, AspectJ, Resilience4j, Tika, OWASP Sanitizer, serta JasperReports core dan exporter |
+| `foundation-dependencies` | Seluruh dependency produksi pihak ketiga yang digunakan foundation | - |
 | `foundation-bom` | Constraint versi seluruh artifact foundation | - |
 
 Konfigurasi Gradle `api` dipakai ketika tipe dependency muncul pada public API
@@ -538,6 +585,7 @@ menuliskan versi masing-masing.
 | `core` | base service/controller, validation, exception handling, resilience, dan transaksi |
 | `logging` | kontrak, filter, serta konfigurasi Logback foundation |
 | `foundation-starter` | implementasi default dan Spring Boot auto-configuration pada runtime |
+| `foundation-dependencies` | seluruh dependency produksi pihak ketiga pada compile classpath |
 | `foundation-bom` | penyelarasan versi seluruh artifact foundation; tidak menyediakan class runtime |
 
 Deklarasikan secara eksplisit setiap module API yang class-nya dipakai source
@@ -547,6 +595,12 @@ artifact dependency; nama artifact publiknya adalah `foundation-starter`.
 Sebagai contoh, jika BOM versi `1.0.0` digunakan, deklarasi `core` tanpa versi
 akan di-resolve menjadi `core:1.0.0`. BOM tidak otomatis menambahkan `core` atau
 module lainnya; BOM hanya menyediakan versinya ketika module tersebut dipilih.
+
+Untuk memperoleh seluruh dependency pihak ketiga melalui satu deklarasi,
+tambahkan `foundation-dependencies`. Artifact ini bersifat opt-in karena membawa
+dependency untuk semua fitur, termasuk JasperReports exporter dan Oracle JDBC.
+Consumer tetap menambahkan module foundation yang API-nya digunakan serta
+`foundation-starter` untuk implementasi runtime.
 
 #### Consumer Gradle dengan Maven Local
 
@@ -586,6 +640,9 @@ dependencies {
     implementation("com.reyga-dev.starter:common")
     implementation("com.reyga-dev.starter:core")
 
+    // Opsional: membawa seluruh dependency produksi pihak ketiga.
+    implementation("com.reyga-dev.starter:foundation-dependencies")
+
     // Tambahkan hanya jika API module berikut dipakai langsung.
     implementation("com.reyga-dev.starter:common-database")
     implementation("com.reyga-dev.starter:common-io")
@@ -613,6 +670,7 @@ dependencies {
 
     implementation "com.reyga-dev.starter:common"
     implementation "com.reyga-dev.starter:core"
+    implementation "com.reyga-dev.starter:foundation-dependencies"
     runtimeOnly "com.reyga-dev.starter:foundation-starter"
 }
 ```
@@ -740,6 +798,12 @@ tambahkan module yang digunakan dan runtime starter pada `pom.xml` consumer:
     <dependency>
         <groupId>com.reyga-dev.starter</groupId>
         <artifactId>core</artifactId>
+    </dependency>
+
+    <!-- Opsional: membawa seluruh dependency produksi pihak ketiga. -->
+    <dependency>
+        <groupId>com.reyga-dev.starter</groupId>
+        <artifactId>foundation-dependencies</artifactId>
     </dependency>
 
     <!-- Tambahkan common-database, common-io, atau logging jika dipakai langsung. -->
