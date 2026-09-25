@@ -129,7 +129,7 @@ Module kontrak persistence berbasis Spring JDBC dan SQL builder.
   - `com.reyga-dev.starter:common-database:<version>`.
 
 - **Panduan terkait**
-  - [Repository Implementation Guide](docs/VER1.0.0/%281.0.0%29%20REPOSITORY_IMPLEMENTATION_GUIDE.md).
+  - [Repository Implementation Guide](docs/REPOSITORY_IMPLEMENTATION_GUIDE.md).
 
 ### `common-io`
 
@@ -155,7 +155,26 @@ Module kontrak untuk inspeksi, sanitasi, diagnostic I/O, dan report generation.
 - **Artifact Maven**
   - `com.reyga-dev.starter:common-io:<version>`.
 - **Panduan terkait**
-  - [Utilities Guide](docs/VER1.0.0/%281.0.0%29%20UTILITIES_GUIDE.md).
+  - [Utilities Guide](docs/UTILITIES_GUIDE.md).
+
+### `common-http`
+
+Module kontrak HTTP client berbasis OkHttp untuk call sinkron, asinkron, dan
+response caching.
+
+- **HTTP client contract**
+  - Menyediakan `StarterHttpClient` dengan tipe request, response, callback, dan
+    cache dari OkHttp.
+  - Call asinkron mengembalikan handle `Call` untuk inspeksi atau pembatalan.
+  - Response dari call sinkron dan callback asinkron wajib ditutup oleh consumer.
+- **Implementasi runtime**
+  - `DefaultStarterHttpClient` menggunakan satu `OkHttpClient` reusable agar
+    connection pool dan dispatcher dapat dipakai lintas request.
+  - Bean default bersifat opt-in melalui
+    `reyga.config.default-bean.http-client=true`; bean `OkHttpClient` atau
+    `StarterHttpClient` milik consumer mengambil prioritas.
+- **Artifact Maven**
+  - `com.reyga-dev.starter:common-http:<version>`.
 
 ### `core`
 
@@ -195,9 +214,9 @@ event, aspect, transaction, dan exception model.
 - **Artifact Maven**
   - `com.reyga-dev.starter:core:<version>`.
 - **Panduan terkait**
-  - [Service Implementation Guide](docs/VER1.0.0/%281.0.0%29%20SERVICE_IMPLEMENTATION_GUIDE.md).
-  - [Controller Implementation Guide](docs/VER1.0.0/%281.0.0%29%20CONTROLLER_IMPLEMENTATION_GUIDE.md).
-  - [Utilities Guide](docs/VER1.0.0/%281.0.0%29%20UTILITIES_GUIDE.md#k-aspect-advice).
+  - [Service Implementation Guide](docs/SERVICE_IMPLEMENTATION_GUIDE.md).
+  - [Controller Implementation Guide](docs/CONTROLLER_IMPLEMENTATION_GUIDE.md).
+  - [Utilities Guide](docs/UTILITIES_GUIDE.md#k-aspect-advice).
 
 ### `logging`
 
@@ -232,12 +251,13 @@ auto-configuration. Module ini dipublish dengan nama artifact publik
 - **Auto-configuration**
   - Menyediakan `FoundationDefaultAutoConfiguration`, `CoreConfig`,
     `ValidationAutoConfiguration`, `CommonConfig`, `CommonDatabaseConfig`,
-    `CommonIOConfig`, `LoggingConfig`, dan `AsyncLoggingConfig`.
+    `CommonIOConfig`, `CommonHttpAutoConfiguration`, `LoggingConfig`, dan
+    `AsyncLoggingConfig`.
 - **Default implementations**
   - Menyediakan `DefaultQueryProcessor`, `DefaultFileInspector`,
     `DefaultFileSanitizer`, `DefaultReportBuilder`, `DefaultValidationUtility`,
-    `DefaultTransactionalExecutor`, `DefaultResilienceService`, dan
-    `DefaultLoggingService`.
+    `DefaultTransactionalExecutor`, `DefaultResilienceService`,
+    `DefaultStarterHttpClient`, dan `DefaultLoggingService`.
 - **Exception handling**
   - Menyediakan default handler untuk application fault, validation fault,
     database error, I/O error, dan exception umum.
@@ -247,8 +267,8 @@ auto-configuration. Module ini dipublish dengan nama artifact publik
 - **Provider discovery**
   - Mendaftarkan provider report dan validation melalui Java `ServiceLoader`.
 - **Dependency internal**
-  - Mendistribusikan `common`, `common-database`, `common-io`, `core`, dan
-    `logging` sebagai dependency metadata.
+  - Mendistribusikan `common`, `common-database`, `common-io`, `common-http`,
+    `core`, dan `logging` sebagai dependency metadata.
 - **Artifact Maven**
   - `com.reyga-dev.starter:foundation-starter:<version>`.
   - Digunakan sebagai `runtimeOnly` pada Gradle atau scope `runtime` pada Maven.
@@ -260,10 +280,10 @@ tidak membawa class, implementasi, atau auto-configuration; consumer tetap
 memilih module yang diperlukan, sedangkan versinya diperoleh dari BOM.
 
 - **Version alignment**
-  - Mengelola versi `common`, `common-database`, `common-io`, `core`, `logging`,
-    `foundation-starter`, dan `foundation-dependencies`.
+  - Mengelola versi `common`, `common-database`, `common-io`, `common-http`,
+    `core`, `logging`, `foundation-starter`, dan `foundation-dependencies`.
   - Mencegah consumer mencampur versi module foundation yang belum tentu
-    kompatibel, misalnya `common:1.0.0` dengan `core:2.0.0`.
+    kompatibel, misalnya `common:1.1.0` dengan `core:2.0.0`.
 - **Gradle platform**
   - Dibangun menggunakan plugin `java-platform` dan dipakai melalui
     `platform("com.reyga-dev.starter:foundation-bom:<version>")`.
@@ -289,8 +309,8 @@ fungsi utamanya berada pada metadata dependency di POM dan Gradle Module Metadat
   - Spring Web, Spring JDBC, serta Spring Data Commons.
   - Jakarta Persistence, Jakarta Validation, MapStruct, Resilience4j, dan
     Logback Classic.
-  - Apache Tika, OWASP Java HTML Sanitizer, JasperReports beserta exporter, dan
-    Oracle JDBC.
+  - Apache Tika, OWASP Java HTML Sanitizer, JasperReports beserta exporter,
+    OkHttp, dan Oracle JDBC.
 - **Cara kerja**
   - Seluruh dependency dideklarasikan sebagai Gradle `api` dan dipublikasikan
     sebagai Maven scope `compile`.
@@ -308,30 +328,26 @@ fungsi utamanya berada pada metadata dependency di POM dan Gradle Module Metadat
 
 ## Panduan Konfigurasi
 
-- [Panduan Utilities — 1.0.0](docs/VER1.0.0/%281.0.0%29%20UTILITIES_GUIDE.md) - penggunaan validation, resilience, transaction, Aspect Advice, file, report, mapping, dan utility umum.
+- [Panduan Utilities](docs/UTILITIES_GUIDE.md) - penggunaan validation,
+  resilience, transaction, Aspect Advice, file, report, mapping, HTTP client,
+  dan utility umum.
 
-- [Foundation Configuration Guide — 1.0.0](docs/VER1.0.0/%281.0.0%29%20CONFIGURATION_GUIDE.md) - feature flag,
+- [Foundation Configuration Guide](docs/CONFIGURATION_GUIDE.md) - feature flag,
   default bean, validation, exception handler, logging, async executor,
   resilience, contoh YAML, dan troubleshooting.
 
-## Versioning Dokumentasi
-
-Dokumentasi mengikuti versi library. Gunakan panduan yang sesuai dengan versi
-artifact yang digunakan project, karena kontrak API, konfigurasi, dan perilaku
-fitur dapat berbeda antarversi.
-
-- Folder dokumentasi menggunakan pola `docs/VER<versi>/`.
-- Nama file menggunakan pola `(<versi>) NAMA_GUIDE.md`.
-- Dokumentasi yang tersedia saat ini adalah [versi 1.0.0](docs/VER1.0.0/).
-
-Nomor versi dokumentasi diselaraskan dengan versi rilis library yang dikontrol
-melalui `projectVersion` di `gradle.properties`.
+Dokumentasi di folder `docs/` selalu menjelaskan API, konfigurasi, dan perilaku
+pada source project saat ini. Setiap perubahan kontrak atau runtime behavior harus
+memperbarui panduan terkait dalam development yang sama. Versi artifact tetap
+dikontrol terpusat melalui `projectVersion` di `gradle.properties`.
 
 ## Dependency Antar Module
 
 - `common` menjadi kontrak dasar tanpa dependency ke module foundation lain.
 - `common-database` bergantung pada `common`.
 - `common-io` bergantung pada `common`.
+- `common-http` mengekspos kontrak OkHttp dan tidak bergantung pada module
+  foundation lainnya.
 - `core` bergantung pada `common` dan `common-io`.
 - `logging` bergantung pada `common`.
 - `foundation-starter-internal` bergantung pada seluruh module publik dan
@@ -359,6 +375,7 @@ flowchart LR
             CORE["core"]
             DATABASE["common-database"]
             IO["common-io"]
+            HTTP["common-http"]
             LOGGING["logging"]
             COMMON["common<br/>kontrak dasar"]
 
@@ -410,6 +427,7 @@ Artifact Java berikut dikonfigurasi sebagai Java library dan Maven publication:
 - `common`
 - `common-database`
 - `common-io`
+- `common-http`
 - `core`
 - `logging`
 - `foundation-dependencies`
@@ -442,7 +460,7 @@ Isi konfigurasi berikut pada `gradle.properties` sebelum melakukan publish:
 
 ```properties
 projectGroup=com.reyga-dev.starter
-projectVersion=1.0.0
+projectVersion=1.1.0
 
 nexusReleaseRepositoryUrl=https://nexus.example.com/repository/maven-releases/
 nexusSnapshotRepositoryUrl=https://nexus.example.com/repository/maven-snapshots/
@@ -556,6 +574,7 @@ Dependency langsung yang tercantum pada POM setiap artifact adalah:
 | `common` | Spring Boot Starter Web `4.0.0`, Jakarta Persistence API `3.1.0`, MapStruct `1.6.3` | - |
 | `common-database` | `common`, Spring Data Commons `4.0.0`, Spring JDBC `7.0.1` | Oracle JDBC `23.7.0.25.01` |
 | `common-io` | Spring Web `7.0.1`, Apache Tika `3.3.0`, OWASP Java HTML Sanitizer `20240325.1`, JasperReports `7.0.6` | - |
+| `common-http` | OkHttp JVM `5.5.0` | - |
 | `core` | `common`, Spring Boot Starter Validation `4.0.0`, Jakarta Validation API `3.1.1`, Resilience4j `2.3.0`, Spring Boot Starter Data JPA `4.0.0`, Spring Boot Starter AspectJ `4.0.0` | - |
 | `logging` | Spring Boot Starter Web `4.0.0`, Logback Classic `1.5.38` | `common` |
 | `foundation-starter` | Seluruh module publik foundation | Spring Boot Data JPA, Validation, AspectJ, Resilience4j, Tika, OWASP Sanitizer, serta JasperReports core dan exporter |
@@ -582,6 +601,7 @@ menuliskan versi masing-masing.
 | `common` | DTO, enum, kontrak logging, dan utility umum |
 | `common-database` | `BaseJdbcRepository`, `QueryBuilder`, `QueryProcessor`, dan mapper JDBC |
 | `common-io` | `FileInspector`, `FileSanitizer`, report builder, dan exception I/O |
+| `common-http` | `StarterHttpClient` untuk HTTP call sinkron, asinkron, dan response caching |
 | `core` | base service/controller, validation, exception handling, resilience, dan transaksi |
 | `logging` | kontrak, filter, serta konfigurasi Logback foundation |
 | `foundation-starter` | implementasi default dan Spring Boot auto-configuration pada runtime |
@@ -592,8 +612,8 @@ Deklarasikan secara eksplisit setiap module API yang class-nya dipakai source
 aplikasi. Jangan memakai nama source module `foundation-starter-internal` sebagai
 artifact dependency; nama artifact publiknya adalah `foundation-starter`.
 
-Sebagai contoh, jika BOM versi `1.0.0` digunakan, deklarasi `core` tanpa versi
-akan di-resolve menjadi `core:1.0.0`. BOM tidak otomatis menambahkan `core` atau
+Sebagai contoh, jika BOM versi `1.1.0` digunakan, deklarasi `core` tanpa versi
+akan di-resolve menjadi `core:1.1.0`. BOM tidak otomatis menambahkan `core` atau
 module lainnya; BOM hanya menyediakan versinya ketika module tersebut dipilih.
 
 Untuk memperoleh seluruh dependency pihak ketiga melalui satu deklarasi,
@@ -630,7 +650,7 @@ repositories {
 Tambahkan dependency sesuai kebutuhan aplikasi:
 
 ```kotlin
-val foundationVersion = "1.0.0"
+val foundationVersion = "1.1.0"
 
 dependencies {
     implementation(platform(
@@ -646,6 +666,7 @@ dependencies {
     // Tambahkan hanya jika API module berikut dipakai langsung.
     implementation("com.reyga-dev.starter:common-database")
     implementation("com.reyga-dev.starter:common-io")
+    implementation("com.reyga-dev.starter:common-http")
     implementation("com.reyga-dev.starter:logging")
 
     // Menyediakan implementasi dan auto-configuration pada runtime.
@@ -661,7 +682,7 @@ repositories {
     mavenCentral()
 }
 
-def foundationVersion = "1.0.0"
+def foundationVersion = "1.1.0"
 
 dependencies {
     implementation platform(
@@ -775,7 +796,7 @@ tambahkan module yang digunakan dan runtime starter pada `pom.xml` consumer:
 
 ```xml
 <properties>
-    <reyga-foundation.version>1.0.0</reyga-foundation.version>
+    <reyga-foundation.version>1.1.0</reyga-foundation.version>
 </properties>
 
 <dependencyManagement>
@@ -806,7 +827,7 @@ tambahkan module yang digunakan dan runtime starter pada `pom.xml` consumer:
         <artifactId>foundation-dependencies</artifactId>
     </dependency>
 
-    <!-- Tambahkan common-database, common-io, atau logging jika dipakai langsung. -->
+    <!-- Tambahkan common-database, common-io, common-http, atau logging jika dipakai langsung. -->
 
     <dependency>
         <groupId>com.reyga-dev.starter</groupId>
@@ -827,6 +848,10 @@ langsung oleh source aplikasi:
 <dependency>
     <groupId>com.reyga-dev.starter</groupId>
     <artifactId>common-io</artifactId>
+</dependency>
+<dependency>
+    <groupId>com.reyga-dev.starter</groupId>
+    <artifactId>common-http</artifactId>
 </dependency>
 <dependency>
     <groupId>com.reyga-dev.starter</groupId>
@@ -905,7 +930,7 @@ Selaraskan versi starter dengan seluruh module API.
 Starter memuat seluruh auto-configuration. Aplikasi yang menggunakan database
 tetap harus menyediakan driver, datasource, dan `JdbcTemplate`. Fitur opt-in
 mengikuti flag konfigurasi masing-masing pada
-[Foundation Configuration Guide](docs/VER1.0.0/%281.0.0%29%20CONFIGURATION_GUIDE.md).
+[Foundation Configuration Guide](docs/CONFIGURATION_GUIDE.md).
 
 Untuk output logging bawaan, tambahkan konfigurasi berikut pada
 `application.properties`:
@@ -941,3 +966,55 @@ Semua versi dependency/plugin dipusatkan di `gradle.properties`, termasuk:
 - `springBootPluginVersion`
 - `javaVersion`
 - versi library pendukung lain (Lombok, Resilience4j, Logback, Tika, dan lainnya)
+
+## Technology and Dependency Credits
+
+Reyga Starter Foundation dibangun dengan project pihak ketiga dan teknologi
+berikut. Versi pada tabel mengikuti deklarasi langsung di `gradle.properties`
+dan build script project. Dependency transitif tetap mengikuti metadata dan
+lisensi dari masing-masing project upstream.
+
+### Platform, build, dan publishing
+
+| Teknologi | Versi | Penggunaan |
+|---|---:|---|
+| [Java / OpenJDK](https://openjdk.org/projects/jdk/25/) | 25 | Bahasa, compiler, dan toolchain utama. |
+| [Gradle](https://gradle.org/) | Wrapper 9.7.1; minimum 9.1.0 | Multi-module build dengan Kotlin DSL. |
+| [Spring Dependency Management Plugin](https://github.com/spring-gradle-plugins/dependency-management-plugin) | 1.1.5 | Dependency management pada module Java. |
+| [Gradle Maven Publish Plugin](https://docs.gradle.org/current/userguide/publishing_maven.html) | Mengikuti Gradle | Pembuatan POM, sources JAR, Javadoc JAR, dan publication. |
+| [Maven Central](https://central.sonatype.com/) | - | Resolution dependency publik. |
+| [Sonatype Nexus Repository](https://www.sonatype.com/products/sonatype-nexus-repository) | Sesuai environment | Distribusi artifact release dan snapshot. |
+
+### Dependency API dan runtime
+
+| Project | Versi | Artifact atau penggunaan utama |
+|---|---:|---|
+| [Spring Boot](https://spring.io/projects/spring-boot) | 4.0.0 | Starter Web, Validation, Data JPA, AspectJ, auto-configuration, dan starter test. |
+| [Spring Framework](https://spring.io/projects/spring-framework) | 7.0.1 | Spring Web dan Spring JDBC. |
+| [Spring Data Commons](https://spring.io/projects/spring-data) | 4.0.0 | Kontrak dan implementasi pagination. |
+| [Jakarta Persistence](https://jakarta.ee/specifications/persistence/) | 3.1.0 | Persistence API pada kontrak publik. |
+| [Jakarta Bean Validation](https://jakarta.ee/specifications/bean-validation/) | 3.1.1 | Validation API dan constraint foundation. |
+| [MapStruct](https://mapstruct.org/) | 1.6.3 | Mapping contract dan annotation processor. |
+| [Project Lombok](https://projectlombok.org/) | 1.18.38 | Compile-time boilerplate generation. |
+| [Lombok MapStruct Binding](https://central.sonatype.com/artifact/org.projectlombok/lombok-mapstruct-binding) | 0.2.0 | Integrasi urutan annotation processing Lombok dan MapStruct. |
+| [Resilience4j](https://resilience4j.readme.io/) | 2.3.0 | Rate limiter, circuit breaker, retry, dan facade resilience. |
+| [Logback](https://logback.qos.ch/) | 1.5.38 | Console, rolling file, dan summary logging. |
+| [Apache Tika](https://tika.apache.org/) | 3.3.0 | Deteksi media type dan ekstraksi content file. |
+| [OWASP Java HTML Sanitizer](https://github.com/OWASP/java-html-sanitizer) | 20240325.1 | Sanitasi HTML dan pemeriksaan perubahan payload. |
+| [JasperReports Library](https://community.jaspersoft.com/project/jasperreports-library/) | 7.0.6 | Report engine serta exporter PDF, JSON, dan Excel POI. |
+| [Oracle JDBC](https://www.oracle.com/database/technologies/appdev/jdbc.html) | 23.7.0.25.01 | Driver `ojdbc11` untuk runtime database Oracle. |
+| [OkHttp](https://lysine.dev/okhttp/) | 5.5.0 | HTTP client JVM, asynchronous call, connection pooling, dan response caching. |
+
+### Dependency pengujian
+
+| Project | Versi | Penggunaan |
+|---|---:|---|
+| [JUnit Jupiter](https://junit.org/) | 5.12.2 | Test API, parameterized test, dan test engine. |
+| [Mockito](https://site.mockito.org/) | 5.14.2 | Mocking collaborator dan verifikasi interaksi. |
+| [Byte Buddy](https://bytebuddy.net/) | 1.17.7 | Runtime instrumentation untuk Mockito pada Java 25. |
+| [Jackson Databind](https://github.com/FasterXML/jackson-databind) | 2.21.2 | Pengujian kontrak serialisasi JSON pada module `common`. |
+| [JUnit Platform](https://docs.junit.org/5.12.2/api/org.junit.platform.launcher/org/junit/platform/launcher/Launcher.html) | Mengikuti dependency management | Launcher untuk eksekusi test Gradle. |
+
+Terima kasih kepada para maintainer dan contributor seluruh project tersebut.
+Nama project, merek dagang, dan lisensinya tetap dimiliki oleh pemilik
+masing-masing.

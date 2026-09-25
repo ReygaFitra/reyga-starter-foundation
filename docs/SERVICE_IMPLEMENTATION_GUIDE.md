@@ -1,4 +1,4 @@
-# Panduan Implementasi Service — 1.0.0
+# Panduan Implementasi Service
 
 Ikuti panduan ini untuk membuat service dengan `BaseService<Request, Response>`,
 memvalidasi input, menjalankan proses bisnis, dan memanggilnya dari controller.
@@ -6,7 +6,7 @@ memvalidasi input, menjalankan proses bisnis, dan memanggilnya dari controller.
 ## A. Sebelum Mulai
 
 Siapkan dependency `core`, `common`, dan runtime `foundation-starter` versi
-`1.0.0` sesuai [Panduan Konfigurasi](%281.0.0%29%20CONFIGURATION_GUIDE.md).
+`1.1.0` sesuai [Panduan Konfigurasi](CONFIGURATION_GUIDE.md).
 Sediakan bean `ValidationUtility` melalui `ValidationConfig.builder()` atau
 aktifkan `reyga.config.default-bean.validation-handler=true`. Contoh DTO menggunakan Lombok; aktifkan annotation processing
 pada project aplikasi.
@@ -526,7 +526,7 @@ seperti contoh di atas. Pilih anotasi sesuai kebutuhan DTO, misalnya
 `@FieldPresence` untuk null/blank atau `@FieldFormat` untuk format.
 
 Konfigurasi bean manual/YAML, validation groups, serta referensi anotasi tersedia
-pada [Panduan Utilities](%281.0.0%29%20UTILITIES_GUIDE.md).
+pada [Panduan Utilities](UTILITIES_GUIDE.md).
 `@Valid` pada controller hanya berlaku untuk jalur HTTP; validasi pada service
 juga melindungi pemanggilan dari scheduler dan listener.
 
@@ -621,4 +621,4 @@ verifyNoInteractions(customerRepository);
 | Non-HTTP caller selalu gagal | Pastikan service non-HTTP mengembalikan `false` dari `useHttpServletParameter()`. |
 
 Panduan controller lainnya tersedia pada
-[Panduan Implementasi Controller](%281.0.0%29%20CONTROLLER_IMPLEMENTATION_GUIDE.md).
+[Panduan Implementasi Controller](CONTROLLER_IMPLEMENTATION_GUIDE.md).
