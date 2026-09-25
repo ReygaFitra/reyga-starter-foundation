@@ -37,6 +37,7 @@ dependencies {
     api(project(":common-io"))
     api(project(":core"))
     api(project(":logging"))
+    api(project(":common-http"))
 
     implementation("org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion")
     implementation("org.springframework.boot:spring-boot-starter-validation:$springBootVersion")
@@ -44,7 +45,6 @@ dependencies {
     implementation("io.github.resilience4j:resilience4j-all:$resilience4jVersion")
     implementation("org.apache.tika:tika-core:${apacheTikaVersion}")
     implementation("com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:${owaspSanitizerVersion}")
-
     implementation("net.sf.jasperreports:jasperreports:$jasperReportsVersion")
     implementation("net.sf.jasperreports:jasperreports-pdf:$jasperReportsVersion")
     implementation("net.sf.jasperreports:jasperreports-json:$jasperReportsVersion")

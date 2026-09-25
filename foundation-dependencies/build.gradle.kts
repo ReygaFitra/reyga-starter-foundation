@@ -11,6 +11,7 @@ val owaspSanitizerVersion: String by project
 val jasperReportsVersion: String by project
 val logbackClassicVersion: String by project
 val ojdbcVersion: String by project
+val okHttpVersion: String by project
 
 plugins {
     `java-library`
@@ -39,6 +40,7 @@ dependencies {
     api("net.sf.jasperreports:jasperreports-pdf:$jasperReportsVersion")
     api("net.sf.jasperreports:jasperreports-json:$jasperReportsVersion")
     api("net.sf.jasperreports:jasperreports-excel-poi:$jasperReportsVersion")
+    api("com.squareup.okhttp3:okhttp-jvm:$okHttpVersion")
 
     api("com.oracle.database.jdbc:ojdbc11:$ojdbcVersion")
 }
