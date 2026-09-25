@@ -13,6 +13,7 @@ dependencies {
         api(project(":common-database"))
         api(project(":core"))
         api(project(":logging"))
+        api(project(":common-http"))
 
         api(project(":foundation-dependencies"))
         api("$projectGroup:foundation-starter:$projectVersion")

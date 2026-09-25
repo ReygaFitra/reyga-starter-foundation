@@ -1,15 +1,15 @@
-# Panduan Implementasi Repository — 1.0.0
+# Panduan Implementasi Repository
 
 Panduan ini menjelaskan pola implementasi repository JDBC menggunakan module `common-database`.
 Tujuannya adalah menjaga kontrak domain tetap sederhana, memusatkan eksekusi JDBC pada
 `QueryProcessor`, dan menyusun SQL melalui `QueryBuilder` serta `QueryFunction`.
 
 Untuk constructor injection `QueryProcessor`, aplikasi memerlukan dependency API
-`common-database` pada scope compile dan artifact `foundation-starter:1.0.0` pada
+`common-database` pada scope compile dan artifact `foundation-starter:1.1.0` pada
 scope runtime. Siapkan datasource aplikasi agar `JdbcTemplate` tersedia.
 Tidak ada flag YAML khusus untuk menggunakan `QueryProcessor`.
 Contoh dependency tersedia pada
-[Panduan Konfigurasi](%281.0.0%29%20CONFIGURATION_GUIDE.md#a-langkah-1-siapkan-dependency-aplikasi).
+[Panduan Konfigurasi](CONFIGURATION_GUIDE.md#a-langkah-1-siapkan-dependency-aplikasi).
 
 ## A. Sebelum Mulai
 

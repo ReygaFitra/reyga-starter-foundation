@@ -1,11 +1,11 @@
-# Panduan Implementasi Controller — 1.0.0
+# Panduan Implementasi Controller
 
 Panduan ini menyediakan contoh implementasi controller menggunakan base class
 `BaseController` dan `ResilienceBaseController`.
 
 Untuk contoh end-to-end mulai dari request DTO, implementasi service, penggunaan
 servlet parameter, hingga pemanggilan `execute()` di controller, lihat
-[Panduan Implementasi Service](%281.0.0%29%20SERVICE_IMPLEMENTATION_GUIDE.md).
+[Panduan Implementasi Service](SERVICE_IMPLEMENTATION_GUIDE.md).
 
 Ketika service aplikasi extends `BaseService`, controller harus memanggil
 `service.execute(request)` sebagai entry point business flow. Jika service
@@ -33,7 +33,7 @@ meskipun aplikasi mengaktifkan pengurutan properti Jackson secara alfabetis.
 ### Langkah 1: siapkan service dan DTO
 
 Gunakan `FindCustomerService`, `FindCustomerRequest`, dan `FindCustomerResponse`
-dari [Panduan Service](%281.0.0%29%20SERVICE_IMPLEMENTATION_GUIDE.md).
+dari [Panduan Service](SERVICE_IMPLEMENTATION_GUIDE.md).
 Service tersebut tidak memerlukan servlet context.
 
 ### Langkah 2: buat controller dan panggil execute
@@ -147,7 +147,7 @@ Walaupun controller pada contoh hanya menggunakan rate limiter,
 Siapkan juga transaction manager aplikasi untuk menggunakan `utilities: true`.
 
 Detail dan batas nilai setiap property dijelaskan dalam
-[Panduan Konfigurasi Foundation](%281.0.0%29%20CONFIGURATION_GUIDE.md).
+[Panduan Konfigurasi Foundation](CONFIGURATION_GUIDE.md).
 
 ### Fitur utama
 

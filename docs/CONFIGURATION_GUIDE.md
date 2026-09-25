@@ -1,4 +1,4 @@
-# Panduan Konfigurasi — 1.0.0
+# Panduan Konfigurasi
 
 Gunakan panduan ini untuk menyiapkan dependency aplikasi, memilih fitur yang
 dibutuhkan, dan mengatur perilakunya melalui `application.yml` atau
@@ -10,14 +10,15 @@ contoh profile, dan penyelesaian masalah penggunaan.
 ## A. Langkah 1: Siapkan Dependency Aplikasi
 
 Tambahkan module API yang dipakai (`core`, `common`, `common-database`,
-`common-io`, atau `logging`) sebagai dependency compile. Selaraskan semuanya
-pada versi `1.0.0`. Tambahkan starter berikut untuk menggunakan fitur bawaan:
+`common-io`, `common-http`, atau `logging`) sebagai dependency compile.
+Selaraskan semuanya dengan `projectVersion` library (`1.1.0` saat ini).
+Tambahkan starter berikut untuk menggunakan fitur bawaan:
 
 ```xml
 <dependency>
     <groupId>com.reyga-dev.starter</groupId>
     <artifactId>foundation-starter</artifactId>
-    <version>1.0.0</version>
+<version>1.1.0</version>
     <scope>runtime</scope>
 </dependency>
 ```
@@ -54,7 +55,7 @@ Jika memakai `utilities: true`, siapkan pula transaction manager aplikasi.
 
 Untuk contoh implementasi request, kontrak interface, concrete service, servlet
 context, dan pemanggilan `execute()` dari controller, lihat
-[Service Implementation Guide](%281.0.0%29%20SERVICE_IMPLEMENTATION_GUIDE.md).
+[Service Implementation Guide](SERVICE_IMPLEMENTATION_GUIDE.md).
 
 > Semua feature flag `reyga.config.*` menggunakan nilai default `false`, kecuali
 > dinyatakan lain. Tidak ada master switch tunggal untuk seluruh library.
@@ -78,6 +79,7 @@ reyga:
       exception-handler: true
       validation-handler: true
       logging-handler: true
+      http-client: false
       utilities: false
     aspect:
       around: false
@@ -113,9 +115,9 @@ Prasyarat dependency dan datasource tetap berlaku.
 
 ## C. Langkah 3: Pilih Panduan Implementasi
 
-- [Service](%281.0.0%29%20SERVICE_IMPLEMENTATION_GUIDE.md): DTO, validasi, proses bisnis, dan servlet context.
-- [Controller](%281.0.0%29%20CONTROLLER_IMPLEMENTATION_GUIDE.md): pemanggilan `execute()`, response, dan rate limiter.
-- [Repository](%281.0.0%29%20REPOSITORY_IMPLEMENTATION_GUIDE.md): interface repository, query, dan pagination.
+- [Service](SERVICE_IMPLEMENTATION_GUIDE.md): DTO, validasi, proses bisnis, dan servlet context.
+- [Controller](CONTROLLER_IMPLEMENTATION_GUIDE.md): pemanggilan `execute()`, response, dan rate limiter.
+- [Repository](REPOSITORY_IMPLEMENTATION_GUIDE.md): interface repository, query, dan pagination.
 
 ## D. Ringkasan Aktivasi Fitur
 
@@ -124,6 +126,7 @@ Prasyarat dependency dan datasource tetap berlaku.
 | Global exception handler | `reyga.config.default-bean.exception-handler` | `false` | Menangani exception umum dan database dengan format error standar.                                                  |
 | Programmatic validation | `reyga.config.default-bean.validation-handler` | `false` | Mengaktifkan validasi programmatic melalui injection `ValidationUtility`. |
 | HTTP request/response logging | `reyga.config.default-bean.logging-handler` | `false` | Mencatat request dan response HTTP.                                                          |
+| Default HTTP client | `reyga.config.default-bean.http-client` | `false` | Mendaftarkan reusable `OkHttpClient` dan `StarterHttpClient`. |
 | Default utilities | `reyga.config.default-bean.utilities` | `false` | Mendaftarkan `ResilienceService` dan `TransactionalExecutor`.                                                              |
 | Around aspect | `reyga.config.aspect.around` | `false` | Mendaftarkan aspect untuk method beranotasi `@AroundExecution`.                                                            |
 | Around behavior | `reyga.config.aspect.behavior` | string kosong | Nama bean turunan `BaseAspectAround` yang digunakan ketika around aspect aktif.                                            |
@@ -187,7 +190,7 @@ detail error (default `true`). Jika aplikasi sudah menyediakan bean
 `ValidationUtility`, bean manual diprioritaskan.
 
 Tutorial bean manual/YAML, validation groups, dan anotasi field tersedia di
-[Panduan Utilities](%281.0.0%29%20UTILITIES_GUIDE.md).
+[Panduan Utilities](UTILITIES_GUIDE.md).
 
 ## G. HTTP Request/Response Logging
 
@@ -471,6 +474,28 @@ flag aktif tetapi aplikasi tidak menyediakan transaction manager, startup contex
 akan gagal. Flag ini juga tidak otomatis membuat registry Resilience4j; aktifkan
 masing-masing konfigurasi resilience yang memang akan dipakai.
 
+### Default HTTP client
+
+Tambahkan artifact `common-http`, lalu aktifkan bean bawaan:
+
+```yaml
+reyga:
+  config:
+    default-bean:
+      http-client: true
+```
+
+Konfigurasi ini membuat satu `OkHttpClient` reusable dan satu
+`StarterHttpClient`. Untuk mengatur timeout, interceptor, proxy, authenticator,
+atau TLS, deklarasikan bean `OkHttpClient` sendiri; auto-configuration akan
+menggunakannya tanpa membuat client kedua. Bean `StarterHttpClient` milik aplikasi
+juga mengambil prioritas atas implementasi bawaan.
+
+Tutup setiap `Response` dari call sinkron dengan try-with-resources. Callback
+asinkron juga bertanggung jawab menutup response yang diterimanya. Method caching
+tetap mengikuti header dan aturan cache HTTP, serta tidak mengambil alih lifecycle
+`Cache` yang diberikan consumer.
+
 ## J. Rate Limiter
 
 ```yaml
@@ -503,7 +528,7 @@ Untuk `ResilienceBaseController`, aktifkan juga
 `reyga.config.circuit-breaker.required=true` karena constructor class tersebut
 selalu membutuhkan `CircuitBreakerRegistry`, meskipun endpoint hanya memanggil
 helper rate limiter. Contoh constructor injection dan pemanggilan helper tersedia
-pada [Panduan Implementasi Controller](%281.0.0%29%20CONTROLLER_IMPLEMENTATION_GUIDE.md#contoh-rate-limiter-menggunakan-config-yaml).
+pada [Panduan Implementasi Controller](CONTROLLER_IMPLEMENTATION_GUIDE.md#contoh-rate-limiter-menggunakan-config-yaml).
 
 ## K. Circuit Breaker
 
@@ -534,13 +559,13 @@ reyga:
 | `minimum-number-of-calls` | `0` | Minimum call sebelum failure/slow-call rate dihitung. |
 | `sliding-window-size` | `0` | Ukuran sliding window. |
 | `permitted-number-of-calls-in-half-open-state` | `0` | Call yang diizinkan saat half-open. |
-| `wait-duration-in-open-state-seconds` | `0` | Belum mengubah durasi open pada versi 1.0.0; lihat catatan perilaku di bawah. |
+| `wait-duration-in-open-state-seconds` | `0` | Belum mengubah durasi open; lihat catatan perilaku di bawah. |
 | `automatic-transition-from-open-to-half-open-enabled` | `false` | Mengaktifkan transisi otomatis ke half-open. |
 
 Nilai binding `0` bukan berarti valid untuk Resilience4j. Mengaktifkan fitur tanpa
 nilai yang sesuai batas Resilience4j dapat menggagalkan startup.
 
-> Perilaku versi 1.0.0: durasi menunggu dalam state open mengikuti nilai
+> Perilaku saat ini: durasi menunggu dalam state open mengikuti nilai
 > `slow-call-duration-threshold-seconds`. Mengubah
 > `wait-duration-in-open-state-seconds` saja belum mengubah durasi tersebut.
 > Pertimbangkan keterkaitan ini saat menentukan konfigurasi circuit breaker.
@@ -591,9 +616,9 @@ Setiap flag yang bernilai `true` mewajibkan property behavior pasangannya berisi
 nama bean Spring dari class yang extends base behavior advice tersebut. Tutorial
 pembuatan behavior, anotasi method, lifecycle, penanganan exception, dan
 troubleshooting tersedia pada bagian
-[Aspect Advice di Panduan Utilities](%281.0.0%29%20UTILITIES_GUIDE.md#k-aspect-advice).
+[Aspect Advice di Panduan Utilities](UTILITIES_GUIDE.md#k-aspect-advice).
 
-## N. Pilihan Fitur pada Versi 1.0.0
+## N. Pilihan Fitur Saat Ini
 
 Gunakan `logging-handler` untuk mengaktifkan pencatatan HTTP, bukan
 `request-response-advice`. Advice `around`, `before`, `after`, `after-returning`,
@@ -688,6 +713,7 @@ REYGA_CONFIG_LOGGING_FILE_ASYNC_LOGS_MAX_POOL_SIZE=20
 | Gejala | Pemeriksaan |
 |---|---|
 | Bean `ValidationUtility` tidak ditemukan | Buat bean dengan `ValidationConfig.builder()` atau aktifkan `reyga.config.default-bean.validation-handler=true`. |
+| Bean `StarterHttpClient` tidak ditemukan | Tambahkan module `common-http` dan aktifkan `reyga.config.default-bean.http-client=true`, atau deklarasikan bean sendiri. |
 | Context gagal karena `PlatformTransactionManager` | Nonaktifkan `utilities` atau sediakan transaction manager. |
 | Context gagal karena `JdbcTemplate` | Pastikan dependency JDBC, driver, dan konfigurasi datasource aplikasi tersedia. |
 | Context gagal saat circuit breaker aktif | Isi semua parameter dengan nilai valid untuk Resilience4j. |

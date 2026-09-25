@@ -1,8 +1,8 @@
-# Panduan Utilities - 1.0.0
+# Panduan Utilities
 
 Panduan ini menjelaskan cara menggunakan utility publik yang disediakan library
 pada aplikasi. Konfigurasi lengkap setiap feature flag tersedia di
-[Panduan Konfigurasi](%281.0.0%29%20CONFIGURATION_GUIDE.md).
+[Panduan Konfigurasi](CONFIGURATION_GUIDE.md).
 
 ## A. Validation
 
@@ -39,7 +39,7 @@ public class CreateCustomerService
 ```
 
 Contoh service dan pemanggilan `execute()` dari controller tersedia pada
-[Panduan Implementasi Service](%281.0.0%29%20SERVICE_IMPLEMENTATION_GUIDE.md).
+[Panduan Implementasi Service](SERVICE_IMPLEMENTATION_GUIDE.md).
 
 ### A.2. Konfigurasi wajib untuk validation handler
 
@@ -534,7 +534,7 @@ aktifkan kedua registry jika controller meng-extend class tersebut, walaupun sat
 endpoint hanya memakai rate limiter.
 
 Contoh implementasi controller tersedia pada
-[Panduan Implementasi Controller](%281.0.0%29%20CONTROLLER_IMPLEMENTATION_GUIDE.md#contoh-rate-limiter-menggunakan-config-yaml).
+[Panduan Implementasi Controller](CONTROLLER_IMPLEMENTATION_GUIDE.md#contoh-rate-limiter-menggunakan-config-yaml).
 
 ## C. Transactional Utility
 
@@ -618,7 +618,7 @@ Contoh konfigurasi Gradle:
 
 ```kotlin
 dependencies {
-    implementation("com.reyga-dev.starter:common:1.0.0")
+implementation("com.reyga-dev.starter:common:1.1.0")
     implementation("org.mapstruct:mapstruct:1.6.3")
     annotationProcessor("org.mapstruct:mapstruct-processor:1.6.3")
 }
@@ -635,7 +635,7 @@ Contoh konfigurasi Maven:
     <dependency>
         <groupId>com.reyga-dev.starter</groupId>
         <artifactId>common</artifactId>
-        <version>1.0.0</version>
+<version>1.1.0</version>
     </dependency>
     <dependency>
         <groupId>org.mapstruct</groupId>
@@ -1518,7 +1518,259 @@ dan proxy Spring tidak mengintersepsinya. Pola override yang sama berlaku untuk
 | Behavior tidak terpanggil | Pastikan target merupakan Spring bean, method memakai anotasi yang sesuai, dipanggil melalui proxy, dan tidak final. Untuk turunan `BaseService`, override dan anotasi `execute()` seperti contoh di atas. |
 
 Konfigurasi singkat seluruh feature flag tetap tersedia pada
-[Panduan Konfigurasi](%281.0.0%29%20CONFIGURATION_GUIDE.md#m-aspect-advice).
+[Panduan Konfigurasi](CONFIGURATION_GUIDE.md#m-aspect-advice).
+
+## L. Common HTTP Client
+
+Module `common-http` menyediakan kontrak `StarterHttpClient` untuk menjalankan
+request OkHttp secara sinkron, asinkron, atau dengan response cache. Aplikasi
+consumer menggunakan kontrak dari artifact `common-http`, sedangkan implementasi
+default dan auto-configuration tersedia melalui artifact runtime
+`foundation-starter`.
+
+`StarterHttpClient` aman digunakan oleh beberapa thread. Implementasi default
+menggunakan satu `OkHttpClient` reusable agar connection pool dan dispatcher
+dapat digunakan lintas request. Jangan membuat `OkHttpClient` baru untuk setiap
+request.
+
+### L.1. Dependency dan aktivasi bean
+
+Jika aplikasi menggunakan Foundation BOM, tambahkan module API tanpa menuliskan
+versi lagi:
+
+```kotlin
+val foundationVersion = "1.1.0"
+
+dependencies {
+    implementation(platform(
+        "com.reyga-dev.starter:foundation-bom:$foundationVersion"
+    ))
+    implementation("com.reyga-dev.starter:common-http")
+    runtimeOnly("com.reyga-dev.starter:foundation-starter")
+}
+```
+
+Konfigurasi Maven yang setara setelah mengimpor `foundation-bom`:
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>com.reyga-dev.starter</groupId>
+        <artifactId>common-http</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>com.reyga-dev.starter</groupId>
+        <artifactId>foundation-starter</artifactId>
+        <scope>runtime</scope>
+    </dependency>
+</dependencies>
+```
+
+Aktifkan implementasi bawaan melalui konfigurasi berikut:
+
+```yaml
+reyga:
+  config:
+    default-bean:
+      http-client: true
+```
+
+Flag tersebut bernilai `false` secara default. Ketika aktif, starter membuat satu
+bean `OkHttpClient` dan satu bean `StarterHttpClient`. Bean dengan tipe yang sama
+dari aplikasi mengambil prioritas, sehingga konfigurasi HTTP dapat disesuaikan
+tanpa mengganti kontrak yang digunakan service.
+
+### L.2. Menjalankan request sinkron
+
+Bangun `Request` menggunakan API OkHttp, lalu panggil `call(...)`. Setiap
+`Response` wajib ditutup, termasuk response dengan status non-2xx:
+
+```java
+package com.example.customer.integration;
+
+import java.io.IOException;
+
+import okhttp3.HttpUrl;
+import okhttp3.Request;
+import okhttp3.Response;
+import org.springframework.stereotype.Component;
+import reyga.starter.foundation.common_http.client.StarterHttpClient;
+
+@Component
+public class CustomerGateway {
+
+    private final StarterHttpClient httpClient;
+
+    public CustomerGateway(StarterHttpClient httpClient) {
+        this.httpClient = httpClient;
+    }
+
+    public String findCustomer(String customerId) throws IOException {
+        HttpUrl url = new HttpUrl.Builder()
+                .scheme("https")
+                .host("customer.example.com")
+                .addPathSegment("customers")
+                .addPathSegment(customerId)
+                .build();
+        Request request = new Request.Builder()
+                .url(url)
+                .get()
+                .build();
+
+        try (Response response = httpClient.call(request)) {
+            if (!response.isSuccessful()) {
+                throw new IOException(
+                        "Customer API returned HTTP " + response.code()
+                );
+            }
+            return response.body().string();
+        }
+    }
+}
+```
+
+`call(...)` meneruskan `IOException` dari koneksi, protocol, atau cancellation
+kepada caller. Hindari membaca body lebih dari sekali karena body response
+bersifat one-shot. Jangan mencatat authorization header, token, atau seluruh body
+yang mungkin memuat data sensitif.
+
+### L.3. Menjalankan request asinkron dan cancellation
+
+`asynchronousCall(...)` segera mengembalikan `Call`. Simpan handle tersebut jika
+request perlu dibatalkan ketika timeout bisnis tercapai atau lifecycle pemanggil
+berakhir:
+
+```java
+import java.io.IOException;
+import java.util.function.Consumer;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Request;
+import okhttp3.Response;
+
+public Call findCustomerAsync(
+        Consumer<IOException> failureHandler,
+        Consumer<String> responseHandler
+) {
+    Request request = new Request.Builder()
+            .url("https://customer.example.com/customers/CUS-01")
+            .get()
+            .build();
+
+    return httpClient.asynchronousCall(request, new Callback() {
+        @Override
+        public void onFailure(Call call, IOException exception) {
+            failureHandler.accept(exception);
+        }
+
+        @Override
+        public void onResponse(Call call, Response response) throws IOException {
+            try (response) {
+                if (!response.isSuccessful()) {
+                    failureHandler.accept(new IOException(
+                            "Customer API returned HTTP " + response.code()
+                    ));
+                    return;
+                }
+                responseHandler.accept(response.body().string());
+            }
+        }
+    });
+}
+```
+
+Method tersebut dapat dipanggil dan dibatalkan dari lifecycle pemanggil:
+
+```java
+Call call = customerGateway.findCustomerAsync(
+        failureHandler,
+        responseHandler
+);
+
+// Dipanggil hanya jika request memang tidak lagi dibutuhkan.
+call.cancel();
+```
+
+Callback berjalan pada dispatcher OkHttp. Pastikan callback thread-safe dan
+hindari pekerjaan CPU atau blocking yang panjang pada thread tersebut. Method
+`onResponse(...)` tetap wajib menutup `Response`, termasuk ketika parsing atau
+business validation gagal.
+
+### L.4. Response caching
+
+Caching mengikuti aturan HTTP seperti method request, `Cache-Control`, `Expires`,
+dan validator response. Menyediakan `Cache` tidak membuat response yang semula
+non-cacheable menjadi cacheable.
+
+Untuk cache yang dipakai banyak request, konfigurasikan satu bean `Cache` dan satu
+bean `OkHttpClient` berumur panjang. Setelah itu, gunakan `call(...)` seperti
+biasa karena OkHttp akan memilih network response atau cached response:
+
+```java
+package com.example.config;
+
+import java.nio.file.Path;
+import java.time.Duration;
+
+import okhttp3.Cache;
+import okhttp3.OkHttpClient;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration(proxyBeanMethods = false)
+public class HttpClientConfiguration {
+
+    @Bean(destroyMethod = "close")
+    Cache httpResponseCache() {
+        Path cacheDirectory = Path.of("var", "cache", "customer-http");
+        return new Cache(cacheDirectory.toFile(), 50L * 1024L * 1024L);
+    }
+
+    @Bean
+    OkHttpClient okHttpClient(Cache cache) {
+        return new OkHttpClient.Builder()
+                .cache(cache)
+                .connectTimeout(Duration.ofSeconds(5))
+                .readTimeout(Duration.ofSeconds(20))
+                .callTimeout(Duration.ofSeconds(30))
+                .build();
+    }
+}
+```
+
+Auto-configuration menggunakan bean `OkHttpClient` tersebut saat membuat
+`StarterHttpClient`. Pastikan directory cache hanya digunakan oleh satu instance
+`Cache`, mempunyai permission yang sesuai, dan tidak menyimpan response sensitif
+tanpa kebijakan cache server yang tepat.
+
+`callWithResponseCaching(request, cache)` tersedia jika cache memang harus dipilih
+untuk call tertentu. Method ini membuat client turunan yang tetap berbagi
+connection pool dan dispatcher dengan client utama. Lifecycle `Cache` tetap
+dimiliki caller; jangan menutupnya selama request lain masih menggunakannya.
+
+### L.5. Menyesuaikan `OkHttpClient`
+
+Deklarasikan bean `OkHttpClient` sendiri ketika aplikasi perlu timeout,
+interceptor, proxy, authenticator, certificate pinning, atau konfigurasi TLS.
+Auto-configuration tidak membuat client kedua jika bean tersebut sudah tersedia.
+
+Tetapkan timeout eksplisit sesuai karakteristik upstream dan lakukan retry hanya
+untuk operasi yang aman atau idempotent. Interceptor tidak boleh mencatat
+credential, authorization header, cookie sensitif, atau body tanpa masking.
+Pertahankan validasi certificate dan hostname bawaan kecuali aplikasi mempunyai
+kebutuhan keamanan yang telah ditinjau.
+
+Ringkasan perilaku API:
+
+| Method | Eksekusi | Nilai kembali | Tanggung jawab caller |
+|---|---|---|---|
+| `call(request)` | Sinkron | `Response` | Menutup response dan menangani `IOException`. |
+| `asynchronousCall(request, callback)` | Asinkron | `Call` | Menutup response pada callback dan membatalkan call hanya bila diperlukan. |
+| `callWithResponseCaching(request, cache)` | Sinkron dengan cache tertentu | `Response` | Menutup response serta mengelola lifecycle cache. |
+
+Ringkasan property dan troubleshooting tersedia pada
+[Panduan Konfigurasi](CONFIGURATION_GUIDE.md#default-http-client).
 
 ## Ringkasan pemilihan utility
 
@@ -1537,7 +1789,9 @@ Konfigurasi singkat seluruh feature flag tetap tersedia pada
 | Error operasi I/O terstruktur | `IOFaultException`, `IOFaultMetadata` | Ditangani handler bawaan sebagai file error HTTP 400 |
 | Mapping entity dan DTO | `BaseMapper`, `CommonMapperConfig` | MapStruct annotation processor |
 | Representasi diagnostic DTO | `MapperUtility` | Tidak memerlukan bean |
+| HTTP call sinkron, asinkron, dan caching | `StarterHttpClient` | `http-client: true` atau bean aplikasi |
 
 Untuk unit test service, mock kontrak `ValidationUtility`, `ResilienceService`,
-atau `TransactionalExecutor`. Untuk menguji anotasi DTO, gunakan Jakarta
-`Validator` atau `ValidationUtility` yang dibangun melalui `ValidationConfig`.
+`TransactionalExecutor`, atau `StarterHttpClient`. Untuk menguji anotasi DTO,
+gunakan Jakarta `Validator` atau `ValidationUtility` yang dibangun melalui
+`ValidationConfig`.
