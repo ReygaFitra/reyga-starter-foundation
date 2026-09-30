@@ -1,5 +1,10 @@
 package reyga.starter.foundation.common.logging;
 
+import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -10,13 +15,12 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.HandlerMapping;
 import reyga.starter.foundation.common.model.dto.request.RequestLogging;
 
-import java.lang.reflect.Method;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 class HttpHeaderBuilderTest {
 
@@ -72,7 +76,7 @@ class HttpHeaderBuilderTest {
 
         // Then
         assertEquals(Map.of("query", "value"), logging.getRequestParams());
-        assertSame(paths, logging.getRequestPathVariable());
+        assertEquals(paths, logging.getRequestPathVariable());
         verify(request).getParameterNames();
         verify(request).getParameter("query");
         verify(request).getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
@@ -148,6 +152,49 @@ class HttpHeaderBuilderTest {
         verify(request).getHeaderNames();
         verify(request).getHeader("x-one");
         verify(request).getHeader("x-two");
+        verifyNoMoreInteractions(request);
+    }
+
+    @Test
+    void should_RedactSensitiveHeaders_When_HeaderMapIsBuilt() {
+        // Given
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        Map<String, String> headers = Map.of(
+                "Authorization", "Bearer secret",
+                "X-Api-Key", "api-secret",
+                "x-starter-access-token", "starter-secret",
+                "x-request-id", "request-1"
+        );
+        when(request.getHeaderNames()).thenReturn(Collections.enumeration(headers.keySet()));
+        headers.forEach((key, value) -> when(request.getHeader(key)).thenReturn(value));
+        MDC.put("Authorization", "previous-secret");
+
+        // When
+        Map<String, String> result = HttpHeaderBuilder.buildHeadersMap(request);
+
+        // Then
+        assertEquals("[REDACTED]", result.get("Authorization"));
+        assertEquals("[REDACTED]", result.get("X-Api-Key"));
+        assertEquals("[REDACTED]", result.get("x-starter-access-token"));
+        assertEquals("request-1", result.get("x-request-id"));
+        assertEquals("[REDACTED]", MDC.get("Authorization"));
+        assertEquals("[REDACTED]", MDC.get("X-Api-Key"));
+        assertEquals("[REDACTED]", MDC.get("x-starter-access-token"));
+        assertEquals("request-1", MDC.get("x-request-id"));
+    }
+
+    @Test
+    void should_ReturnEmptyMap_When_HeaderEnumerationIsUnavailable() {
+        // Given
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getHeaderNames()).thenReturn(null);
+
+        // When
+        Map<String, String> result = HttpHeaderBuilder.buildHeadersMap(request);
+
+        // Then
+        assertEquals(Map.of(), result);
+        verify(request).getHeaderNames();
         verifyNoMoreInteractions(request);
     }
 

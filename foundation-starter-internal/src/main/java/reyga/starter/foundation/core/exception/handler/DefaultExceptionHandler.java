@@ -46,9 +46,9 @@ public class DefaultExceptionHandler extends BaseExceptionHandler<ResponseError>
             errors.put("illegalArgumentException", exception.getStackTrace()[0].toString());
 
             try {
-                logger.warn("ILLEGAL ARGUMENT EXCEPTION ERROR :", mapper.writeValueAsString(errors));
+        logger.warn("Illegal Argument Exception", mapper.writeValueAsString(errors));
             } catch (JacksonException e1) {
-                logger.error(JACKSON_WARN, e1.getMessage());
+            logger.errorWithCause(JACKSON_WARN, e1);
             }
 
         } else {
@@ -60,9 +60,9 @@ public class DefaultExceptionHandler extends BaseExceptionHandler<ResponseError>
             );
             errors.put("Global Error", exception.getStackTrace()[0].toString());
             try {
-                logger.warn("GLOBAL ERROR :", mapper.writeValueAsString(errors));
+        logger.warn("Global Error", mapper.writeValueAsString(errors));
             } catch (JacksonException e1) {
-                logger.error(JACKSON_WARN, e1.getMessage());
+            logger.errorWithCause(JACKSON_WARN, e1);
             }
 
         }
@@ -80,18 +80,18 @@ public class DefaultExceptionHandler extends BaseExceptionHandler<ResponseError>
             exceptionType = "JpaSystemException";
             errors.put("JPA-SYSTEM-ERROR", exception.getStackTrace()[0].toString());
             try {
-                logger.warn("JPA ERROR :", mapper.writeValueAsString(errors));
+        logger.warn("JPA Error", mapper.writeValueAsString(errors));
             } catch (JacksonException e1) {
-                logger.error(JACKSON_WARN, e1.getMessage());
+            logger.errorWithCause(JACKSON_WARN, e1);
             }
         }
         if (exception instanceof DataAccessException) {
             exceptionType = "DataAccessException";
             errors.put("JDBC-ERROR", exception.getStackTrace()[0].toString());
             try {
-                logger.warn("JDBC ERROR :", mapper.writeValueAsString(errors));
+        logger.warn("JDBC Error", mapper.writeValueAsString(errors));
             } catch (JacksonException e1) {
-                logger.error(JACKSON_WARN, e1.getMessage());
+            logger.errorWithCause(JACKSON_WARN, e1);
             }
         }
         logger.exception(exceptionType.toUpperCase(), null, exception);

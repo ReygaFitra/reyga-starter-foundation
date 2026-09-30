@@ -39,7 +39,7 @@ public abstract class BaseValidationProcessor {
             this.validator = factory.getValidator();
         } catch (Exception e) {
             if (logger != null) {
-                logger.error("Error Occurred in ValidatorFactory: ", e.getMessage());
+            logger.errorWithCause("ValidatorFactory initialization failed", e);
             }
             throw new IllegalArgumentException(e);
         }

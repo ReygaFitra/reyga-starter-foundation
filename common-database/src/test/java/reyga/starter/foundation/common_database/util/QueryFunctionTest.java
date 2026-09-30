@@ -1,13 +1,37 @@
 package reyga.starter.foundation.common_database.util;
 
-import org.junit.jupiter.api.Test;
-
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class QueryFunctionTest {
+
+    @Test
+    void should_PreserveLegacyDefaults_When_ExpressionsAreEmptyOrNull() {
+        assertEquals("COUNT(*)", QueryFunction.count(""));
+        assertEquals("COUNT(*)", QueryFunction.count("\t\n"));
+        assertEquals("UPPER(null)", QueryFunction.upper(null));
+        assertEquals("LOWER(null)", QueryFunction.lower(null));
+        assertEquals("LENGTH(null)", QueryFunction.length(null));
+        assertEquals("CONCAT()", QueryFunction.concat());
+    }
+
+    @Test
+    void should_EscapeCharacterLiteral_When_FallbackIsQuote() {
+        assertEquals("COALESCE(name, '''')", QueryFunction.coalesce("name", '\''));
+    }
+
+    @Test
+    void should_RejectNullTemporalArgument_When_EitherPositionIsNull() {
+        assertThrows(NullPointerException.class, () -> QueryFunction.toDate("2026", null));
+        assertThrows(NullPointerException.class, () -> QueryFunction.toTimestamp(null, "YYYY"));
+    }
 
     @Test
     void should_ReturnCountAllExpression_When_ColumnIsNullBlankOrStar() {

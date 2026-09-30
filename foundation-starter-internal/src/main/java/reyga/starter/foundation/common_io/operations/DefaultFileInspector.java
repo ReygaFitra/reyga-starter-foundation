@@ -393,7 +393,7 @@ public class DefaultFileInspector implements FileInspector {
 
     private void printLog(Exception e) {
         if (logger != null) {
-            logger.warn("Error Message :", e.getMessage());
+                logger.warn("Error Message", e.getMessage());
         }
     }
 }

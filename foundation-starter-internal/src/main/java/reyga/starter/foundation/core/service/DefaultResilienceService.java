@@ -138,7 +138,7 @@ public class DefaultResilienceService implements ResilienceService {
 
     private void printRequestNotPermitted(RequestNotPermitted requestNotPermitted) {
         if (logger != null) {
-            logger.warn("Request Not Permitted :", requestNotPermitted.getMessage());
+            logger.warn("Request Not Permitted", requestNotPermitted.getMessage());
         }
     }
 

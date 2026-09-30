@@ -583,7 +583,7 @@ public class DefaultFileSanitizer implements FileSanitizer {
 
     private void printLog(Exception e) {
         if (logger != null) {
-            logger.warn("Error Message : {}", e.getMessage());
+                logger.warn("Error Message", e.getMessage());
         }
     }
 }

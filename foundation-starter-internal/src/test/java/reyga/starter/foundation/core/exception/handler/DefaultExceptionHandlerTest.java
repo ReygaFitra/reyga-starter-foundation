@@ -54,7 +54,7 @@ class DefaultExceptionHandlerTest {
                 "GENERAL ERROR"
         );
         verify(servletRequest).setAttribute(StarterHeaderEnum.EXCEPTION.getValue(), exception);
-        verify(logger).warn(eq("ILLEGAL ARGUMENT EXCEPTION ERROR :"), any(Object[].class));
+        verify(logger).warn(eq("Illegal Argument Exception"), any(Object[].class));
         verify(logger).exception("ILLEGALARGUMENTEXCEPTION", null, exception);
         verifyNoMoreInteractions(servletRequest, logger);
     }
@@ -76,7 +76,7 @@ class DefaultExceptionHandlerTest {
                 ServiceCodeEnum.GLOBAL_ERROR.getMessage()
         );
         verify(servletRequest).setAttribute(StarterHeaderEnum.EXCEPTION.getValue(), exception);
-        verify(logger).warn(eq("GLOBAL ERROR :"), any(Object[].class));
+        verify(logger).warn(eq("Global Error"), any(Object[].class));
         verify(logger).exception("GLOBAL ERROR", null, exception);
         verifyNoMoreInteractions(servletRequest, logger);
     }
@@ -98,8 +98,8 @@ class DefaultExceptionHandlerTest {
                 ServiceCodeEnum.DATABASE_ERROR.getMessage()
         );
         verify(servletRequest).setAttribute(StarterHeaderEnum.EXCEPTION.getValue(), exception);
-        verify(logger).warn(eq("JPA ERROR :"), any(Object[].class));
-        verify(logger).warn(eq("JDBC ERROR :"), any(Object[].class));
+        verify(logger).warn(eq("JPA Error"), any(Object[].class));
+        verify(logger).warn(eq("JDBC Error"), any(Object[].class));
         verify(logger).exception("DATAACCESSEXCEPTION", null, exception);
         verifyNoMoreInteractions(servletRequest, logger);
     }
@@ -122,7 +122,7 @@ class DefaultExceptionHandlerTest {
                 ServiceCodeEnum.DATABASE_ERROR.getMessage()
         );
         verify(servletRequest).setAttribute(StarterHeaderEnum.EXCEPTION.getValue(), exception);
-        verify(logger).warn(eq("JDBC ERROR :"), any(Object[].class));
+        verify(logger).warn(eq("JDBC Error"), any(Object[].class));
         verify(logger).exception("DATAACCESSEXCEPTION", null, exception);
         verifyNoMoreInteractions(servletRequest, logger);
     }

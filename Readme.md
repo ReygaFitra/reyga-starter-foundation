@@ -116,10 +116,17 @@ Module kontrak persistence berbasis Spring JDBC dan SQL builder.
   - Menyediakan `QueryBuilder` untuk SELECT, INSERT, UPDATE, DELETE, join,
     grouping, sorting, parameter binding, dan pagination.
   - Menyediakan `QueryFunction`, `QueryOperator`, `QueryJoinType`, dan `QueryType`
+    dengan helper fungsi PostgreSQL, MySQL, Oracle, SQL Server, dan SQLite.
     agar query tidak bergantung pada string operator bebas.
 - **Result mapping**
-  - Menyediakan `JdbcResultSetMapper`, `@MapperColumn`, dan
-    `MapperColumnProcessor` untuk mapping row database ke object.
+  - Menyediakan `JdbcResultSetBuilder` untuk membuat `RowMapper` dengan pembacaan
+    kolom melalui `JdbcResultSetMapper`, serta `@MapperColumn` dan
+    `MapperColumnProcessor` untuk mapping berbasis annotation.
+  - Mapping bertipe mempertahankan SQL NULL pada kolom nullable dan menolak SQL
+    NULL pada kolom mandatory.
+  - Mapping JSON mendukung nested object, array, dan generic collection melalui
+    decoder consumer, dengan pembaca JDBC text, character stream, atau UTF-8
+    binary stream yang dapat disesuaikan dengan driver database.
 - **Pagination**
   - Menggunakan `Page`, `Pageable`, dan `PageImpl` dari Spring Data Commons.
 - **Dependency internal**

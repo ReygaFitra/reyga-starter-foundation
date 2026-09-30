@@ -59,7 +59,7 @@ public class MapperColumnProcessor<E> {
 
             } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
                 if (logger != null) {
-                    logger.error(e.getMessage(), e);
+            logger.errorWithCause(e.getMessage(), e);
                 }
                 throw new RuntimeException(e);
             }

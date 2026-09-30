@@ -134,7 +134,7 @@ class MapperColumnProcessorTest {
 
         // Then
         assertInstanceOf(NoSuchMethodException.class, exception.getCause());
-        verify(logger).error(exception.getCause().getMessage(), exception.getCause());
+        verify(logger).errorWithCause(exception.getCause().getMessage(), exception.getCause());
         verifyNoMoreInteractions(logger);
         verifyNoInteractions(resultSet);
     }

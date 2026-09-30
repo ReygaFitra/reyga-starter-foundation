@@ -2,6 +2,7 @@ package reyga.starter.foundation.common_database.processor;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Page;
@@ -30,6 +31,7 @@ import static org.mockito.AdditionalMatchers.aryEq;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -70,13 +72,13 @@ class DefaultQueryProcessorTest {
 
         // then
         assertSame(expected, result);
-        verify(logger).info("Executing query: " + SELECT_SQL);
+        verifySafeQueryMetadataLogs();
         verify(jdbcTemplate).query(eq(SELECT_SQL), eq(rowMapper), aryEq(new Object[]{true}));
         verifyNoMoreInteractions(jdbcTemplate, logger, rowMapper);
     }
 
     @Test
-    void should_PropagateDataAccessExceptionAfterLogging_When_FetchFails() {
+    void should_PropagateDataAccessExceptionAndLogFailureMetadata_When_FetchFails() {
         // given
         QueryBuilder builder = selectBuilder();
         DataAccessResourceFailureException expected =
@@ -92,7 +94,12 @@ class DefaultQueryProcessorTest {
 
         // then
         assertSame(expected, result);
-        verify(logger).info("Executing query: " + SELECT_SQL);
+        verifySafeQueryMetadataLogs(
+                "operation=SELECT",
+                "execution=FETCH_MANY",
+                "outcome=FAILURE",
+                "failureType=DataAccessResourceFailureException"
+        );
         verify(jdbcTemplate).query(eq(SELECT_SQL), eq(rowMapper), aryEq(new Object[]{true}));
         verifyNoMoreInteractions(jdbcTemplate, logger, rowMapper);
     }
@@ -111,7 +118,7 @@ class DefaultQueryProcessorTest {
         // then
         assertTrue(result.isPresent());
         assertSame(expected, result.orElseThrow());
-        verify(logger).info("Executing query: " + SELECT_SQL);
+        verifySafeQueryMetadataLogs();
         verify(jdbcTemplate).query(eq(SELECT_SQL), eq(rowMapper), aryEq(new Object[]{true}));
         verifyNoMoreInteractions(jdbcTemplate, logger, rowMapper);
     }
@@ -128,7 +135,7 @@ class DefaultQueryProcessorTest {
 
         // then
         assertTrue(result.isEmpty());
-        verify(logger).info("Executing query: " + SELECT_SQL);
+        verifySafeQueryMetadataLogs();
         verify(jdbcTemplate).query(eq(SELECT_SQL), eq(rowMapper), aryEq(new Object[]{true}));
         verifyNoMoreInteractions(jdbcTemplate, logger, rowMapper);
     }
@@ -145,7 +152,7 @@ class DefaultQueryProcessorTest {
 
         // then
         assertEquals("first", result);
-        verify(logger).info("Executing query: " + SELECT_SQL);
+        verifySafeQueryMetadataLogs();
         verify(jdbcTemplate).query(eq(SELECT_SQL), eq(rowMapper), aryEq(new Object[]{true}));
         verifyNoMoreInteractions(jdbcTemplate, logger, rowMapper);
     }
@@ -165,7 +172,7 @@ class DefaultQueryProcessorTest {
 
         // then
         assertEquals(NoSuchElementException.class, result.getClass());
-        verify(logger).info("Executing query: " + SELECT_SQL);
+        verifySafeQueryMetadataLogs();
         verify(jdbcTemplate).query(eq(SELECT_SQL), eq(rowMapper), aryEq(new Object[]{true}));
         verifyNoMoreInteractions(jdbcTemplate, logger, rowMapper);
     }
@@ -182,7 +189,7 @@ class DefaultQueryProcessorTest {
 
         // then
         assertEquals(Optional.of("first"), result);
-        verify(logger).info("Executing query: " + SELECT_SQL);
+        verifySafeQueryMetadataLogs();
         verify(jdbcTemplate).query(eq(SELECT_SQL), eq(rowMapper), aryEq(new Object[]{true}));
         verifyNoMoreInteractions(jdbcTemplate, logger, rowMapper);
     }
@@ -199,7 +206,7 @@ class DefaultQueryProcessorTest {
 
         // then
         assertTrue(result.isEmpty());
-        verify(logger).info("Executing query: " + SELECT_SQL);
+        verifySafeQueryMetadataLogs();
         verify(jdbcTemplate).query(eq(SELECT_SQL), eq(rowMapper), aryEq(new Object[]{true}));
         verifyNoMoreInteractions(jdbcTemplate, logger, rowMapper);
     }
@@ -216,7 +223,7 @@ class DefaultQueryProcessorTest {
 
         // then
         assertEquals("one", result);
-        verify(logger).info("Executing query: " + SELECT_SQL);
+        verifySafeQueryMetadataLogs();
         verify(jdbcTemplate).queryForObject(eq(SELECT_SQL), eq(rowMapper), aryEq(new Object[]{true}));
         verifyNoMoreInteractions(jdbcTemplate, logger, rowMapper);
     }
@@ -233,7 +240,7 @@ class DefaultQueryProcessorTest {
 
         // then
         assertEquals(Optional.of("one"), result);
-        verify(logger).info("Executing query: " + SELECT_SQL);
+        verifySafeQueryMetadataLogs();
         verify(jdbcTemplate).queryForObject(eq(SELECT_SQL), eq(rowMapper), aryEq(new Object[]{true}));
         verifyNoMoreInteractions(jdbcTemplate, logger, rowMapper);
     }
@@ -250,7 +257,7 @@ class DefaultQueryProcessorTest {
 
         // then
         assertTrue(result.isEmpty());
-        verify(logger).info("Executing query: " + SELECT_SQL);
+        verifySafeQueryMetadataLogs();
         verify(jdbcTemplate).queryForObject(eq(SELECT_SQL), eq(rowMapper), aryEq(new Object[]{true}));
         verifyNoMoreInteractions(jdbcTemplate, logger, rowMapper);
     }
@@ -267,7 +274,7 @@ class DefaultQueryProcessorTest {
 
         // then
         assertTrue(result.isEmpty());
-        verify(logger).info("Executing query: " + SELECT_SQL);
+        verifySafeQueryMetadataLogs();
         verify(jdbcTemplate).queryForObject(eq(SELECT_SQL), eq(rowMapper), aryEq(new Object[]{true}));
         verifyNoMoreInteractions(jdbcTemplate, logger, rowMapper);
     }
@@ -295,8 +302,7 @@ class DefaultQueryProcessorTest {
         assertEquals(5L, result.getTotalElements());
         assertEquals(3, result.getTotalPages());
         assertEquals(Sort.by(Sort.Order.desc("name")), result.getSort());
-        verify(logger).info("Executing query: " + contentSql);
-        verify(logger).info("Executing query: " + countSql);
+        verifySafeQueryMetadataLogs();
         verify(jdbcTemplate).query(eq(contentSql), eq(rowMapper), aryEq(new Object[]{true, 2, 2L}));
         verify(jdbcTemplate).queryForObject(eq(countSql), eq(Long.class), aryEq(new Object[]{true}));
         verifyNoMoreInteractions(jdbcTemplate, logger, rowMapper);
@@ -319,7 +325,7 @@ class DefaultQueryProcessorTest {
         assertEquals(2L, result.getTotalElements());
         assertFalse(result.getPageable().isPaged());
         assertEquals(Sort.unsorted(), result.getSort());
-        verify(logger).info("Executing query: " + contentSql);
+        verifySafeQueryMetadataLogs();
         verify(jdbcTemplate).query(eq(contentSql), eq(rowMapper), aryEq(new Object[]{}));
         verify(jdbcTemplate, never()).queryForObject(anyString(), eq(Long.class), any(Object[].class));
         verifyNoMoreInteractions(jdbcTemplate, logger, rowMapper);
@@ -344,8 +350,7 @@ class DefaultQueryProcessorTest {
         assertTrue(result.isEmpty());
         assertEquals(0L, result.getTotalElements());
         assertEquals(0, result.getTotalPages());
-        verify(logger).info("Executing query: " + contentSql);
-        verify(logger).info("Executing query: " + countSql);
+        verifySafeQueryMetadataLogs();
         verify(jdbcTemplate).query(eq(contentSql), eq(rowMapper), aryEq(new Object[]{10, 0L}));
         verify(jdbcTemplate).queryForObject(eq(countSql), eq(Long.class), aryEq(new Object[]{}));
         verifyNoMoreInteractions(jdbcTemplate, logger, rowMapper);
@@ -411,7 +416,7 @@ class DefaultQueryProcessorTest {
 
         // then
         assertEquals(1, result);
-        verify(logger).info("Executing query: " + UPDATE_SQL);
+        verifySafeQueryMetadataLogs();
         verify(jdbcTemplate).update(eq(UPDATE_SQL), aryEq(new Object[]{"Reyga", "CUS-01"}));
         verifyNoMoreInteractions(jdbcTemplate, logger);
         verifyNoInteractions(rowMapper);
@@ -435,7 +440,7 @@ class DefaultQueryProcessorTest {
         // then
         assertSame(expected, result);
         assertArrayEquals(new int[]{1, 1}, result);
-        verify(logger).info("Executing query: " + sql);
+        verifySafeQueryMetadataLogs();
         verify(jdbcTemplate).batchUpdate(sql, batchParameters);
         verifyNoMoreInteractions(jdbcTemplate, logger);
         verifyNoInteractions(rowMapper);
@@ -456,8 +461,7 @@ class DefaultQueryProcessorTest {
 
         // then
         assertArrayEquals(new int[]{1, 2}, result);
-        verify(logger).info("Query ==> : " + UPDATE_SQL);
-        verify(logger).info("Query ==> : " + secondSql);
+        verifySafeQueryMetadataLogs();
         verify(jdbcTemplate).update(eq(UPDATE_SQL), aryEq(new Object[]{"Reyga", "CUS-01"}));
         verify(jdbcTemplate).update(eq(secondSql), aryEq(new Object[]{"CUS-02"}));
         verifyNoMoreInteractions(jdbcTemplate, logger);
@@ -505,7 +509,8 @@ class DefaultQueryProcessorTest {
         verify(statement).setObject(1, "CUS-02");
         verify(statement).setObject(2, "Ayu");
         verifyNoMoreInteractions(statement, jdbcTemplate);
-        verifyNoInteractions(logger, rowMapper);
+        verifySafeQueryMetadataLogs();
+        verifyNoInteractions(rowMapper);
     }
 
     @Test
@@ -533,11 +538,12 @@ class DefaultQueryProcessorTest {
         assertSame(expected, result);
         verify(statement).setObject(1, "CUS-01");
         verifyNoMoreInteractions(statement, jdbcTemplate);
-        verifyNoInteractions(logger, rowMapper);
+        verifySafeQueryMetadataLogs();
+        verifyNoInteractions(rowMapper);
     }
 
     @Test
-    void should_ReturnRowsWithoutLogging_When_FetchRawSucceeds() {
+    void should_ReturnRowsAndLogSafeMetadata_When_FetchRawSucceeds() {
         // given
         List<String> expected = List.of("one");
         when(jdbcTemplate.query(eq(SELECT_SQL), eq(rowMapper), any(Object[].class)))
@@ -550,7 +556,30 @@ class DefaultQueryProcessorTest {
         assertSame(expected, result);
         verify(jdbcTemplate).query(eq(SELECT_SQL), eq(rowMapper), aryEq(new Object[]{true}));
         verifyNoMoreInteractions(jdbcTemplate);
-        verifyNoInteractions(logger, rowMapper);
+        verifySafeQueryMetadataLogs();
+        verifyNoInteractions(rowMapper);
+    }
+
+    @Test
+    void should_OmitSqlAndParametersFromMetadata_When_RawQueryContainsSensitiveData() {
+        // given
+        String sensitiveSql = "SELECT password FROM users WHERE token = 'top-secret' AND owner = ?";
+        when(jdbcTemplate.query(eq(sensitiveSql), eq(rowMapper), any(Object[].class)))
+                .thenReturn(List.of());
+
+        // when
+        List<String> result = processor.fetchRaw(sensitiveSql, rowMapper, "sensitive-owner");
+
+        // then
+        assertTrue(result.isEmpty());
+        verify(jdbcTemplate).query(
+                eq(sensitiveSql),
+                eq(rowMapper),
+                aryEq(new Object[]{"sensitive-owner"})
+        );
+        verifySafeQueryMetadataLogs("operation=SELECT", "execution=RAW_FETCH_MANY", "rows=0");
+        verifyNoMoreInteractions(jdbcTemplate, logger);
+        verifyNoInteractions(rowMapper);
     }
 
     @Test
@@ -564,7 +593,7 @@ class DefaultQueryProcessorTest {
 
         // then
         assertEquals(Optional.of("one"), result);
-        verify(logger).info("Executing query: " + SELECT_SQL);
+        verifySafeQueryMetadataLogs();
         verify(jdbcTemplate).queryForObject(eq(SELECT_SQL), eq(rowMapper), aryEq(new Object[]{true}));
         verifyNoMoreInteractions(jdbcTemplate, logger, rowMapper);
     }
@@ -580,7 +609,7 @@ class DefaultQueryProcessorTest {
 
         // then
         assertTrue(result.isEmpty());
-        verify(logger).info("Executing query: " + SELECT_SQL);
+        verifySafeQueryMetadataLogs();
         verify(jdbcTemplate).queryForObject(eq(SELECT_SQL), eq(rowMapper), aryEq(new Object[]{true}));
         verifyNoMoreInteractions(jdbcTemplate, logger, rowMapper);
     }
@@ -596,13 +625,13 @@ class DefaultQueryProcessorTest {
 
         // then
         assertTrue(result.isEmpty());
-        verify(logger).info("Executing query: " + SELECT_SQL);
+        verifySafeQueryMetadataLogs();
         verify(jdbcTemplate).queryForObject(eq(SELECT_SQL), eq(rowMapper), aryEq(new Object[]{true}));
         verifyNoMoreInteractions(jdbcTemplate, logger, rowMapper);
     }
 
     @Test
-    void should_ReturnAffectedRowCountWithoutLogging_When_ExecuteRawSucceeds() {
+    void should_ReturnAffectedRowCountAndLogSafeMetadata_When_ExecuteRawSucceeds() {
         // given
         when(jdbcTemplate.update(eq(UPDATE_SQL), any(Object[].class))).thenReturn(1);
 
@@ -613,7 +642,8 @@ class DefaultQueryProcessorTest {
         assertEquals(1, result);
         verify(jdbcTemplate).update(eq(UPDATE_SQL), aryEq(new Object[]{"Reyga", "CUS-01"}));
         verifyNoMoreInteractions(jdbcTemplate);
-        verifyNoInteractions(logger, rowMapper);
+        verifySafeQueryMetadataLogs();
+        verifyNoInteractions(rowMapper);
     }
 
     private QueryBuilder selectBuilder() {
@@ -624,5 +654,41 @@ class DefaultQueryProcessorTest {
     private QueryBuilder updateBuilder() {
         return QueryBuilder.builder().update("users").set("name", "Reyga")
                 .where().equals("id", "CUS-01").done();
+    }
+
+    private void verifySafeQueryMetadataLogs(String... expectedFragments) {
+        ArgumentCaptor<Object[]> valuesCaptor = ArgumentCaptor.forClass(Object[].class);
+        verify(logger, atLeastOnce()).info(eq("DATABASE_QUERY"), valuesCaptor.capture());
+
+        List<String> metadataLogs = valuesCaptor.getAllValues().stream()
+                .map(values -> {
+                    assertEquals(1, values.length);
+                    return String.valueOf(values[0]);
+                })
+                .toList();
+
+        for (String metadata : metadataLogs) {
+            assertTrue(metadata.matches(
+                    "operation=(SELECT|INSERT|UPDATE|DELETE|MERGE|CALL|COMPOUND|OTHER|UNKNOWN)"
+                            + " \\| execution=[A-Z_]+"
+                            + " \\| outcome=(SUCCESS|FAILURE)"
+                            + " \\| durationMs=\\d+"
+                            + " \\| .+"
+            ));
+            assertFalse(metadata.contains(SELECT_SQL));
+            assertFalse(metadata.contains(UPDATE_SQL));
+            assertFalse(metadata.contains("users"));
+            assertFalse(metadata.contains("Reyga"));
+            assertFalse(metadata.contains("CUS-01"));
+            assertFalse(metadata.contains("database unavailable"));
+            assertFalse(metadata.contains("top-secret"));
+            assertFalse(metadata.contains("sensitive-owner"));
+            assertFalse(metadata.contains("password"));
+            assertFalse(metadata.contains("token"));
+        }
+
+        for (String expectedFragment : expectedFragments) {
+            assertTrue(metadataLogs.stream().anyMatch(metadata -> metadata.contains(expectedFragment)));
+        }
     }
 }

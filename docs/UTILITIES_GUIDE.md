@@ -1772,6 +1772,95 @@ Ringkasan perilaku API:
 Ringkasan property dan troubleshooting tersedia pada
 [Panduan Konfigurasi](CONFIGURATION_GUIDE.md#default-http-client).
 
+## M. Common Logger
+
+`CommonLogger` menyediakan format log foundation di atas SLF4J. Gunakan
+`@InjectLogger` pada Spring bean ketika runtime `foundation-starter` tersedia:
+
+```java
+@Service
+public class PaymentService {
+
+    @InjectLogger
+    private CommonLogger logger;
+
+    public void process(String paymentId) {
+        logger.info("Payment ID", paymentId);
+    }
+}
+```
+
+Field yang diberi `@InjectLogger` harus bertipe tepat `CommonLogger`, tidak boleh
+`static` atau `final`, dan boleh berada pada superclass. Nilai logger yang sudah
+diisi consumer tidak akan diganti. Konfigurasi gagal saat inisialisasi bean jika
+anotasi dipasang pada field yang tidak valid.
+
+Untuk object yang tidak dikelola Spring, gunakan factory:
+
+```java
+private static final CommonLogger LOGGER =
+        CommonLoggerFactory.getLogger(PaymentMapper.class);
+```
+
+Gunakan overload key-value agar data diagnostic mempunyai label yang stabil:
+
+```java
+logger.info("Payment ID", paymentId);
+logger.warn("Retry Count", retryCount);
+logger.errorWithCause("Payment processing failed", exception);
+```
+
+Overload throwable mempertahankan stack trace pada level error. Jangan mengganti
+exception dengan `exception.getMessage()` karena root cause dan stack trace akan
+hilang. Formatting message hanya dilakukan ketika log level terkait aktif.
+
+Runtime starter mendaftarkan Spring MVC `HandlerInterceptor` dan menulis satu log
+`SERVICE_EXECUTION` melalui `afterCompletion` setelah request selesai.
+Ringkasan tersebut memuat outcome, handler, request ID, method, endpoint, status,
+durasi, caller, metadata request, dan error. Interceptor tidak membaca request body
+atau response body. Contoh formatnya:
+
+```text
+SERVICE_EXECUTION | outcome=SUCCESS | handler=com.example.NotificationController#update | requestId=request-01 | http={method=PUT, endpoint=/notifications/1, status=200, duration=12 ms} | caller={username=operator, clientAddress=127.0.0.1, userAgent=client/1.0} | request={requestParams=null, requestMultiPart=null, requestPathVariable={id=1}, requestBody=null} | response= | error=
+```
+
+Consumer yang perlu menulis ringkasan serupa dapat menggunakan
+`infoServiceSummary(ServiceExecutionSummary)`. Setiap ringkasan ditulis dalam satu
+baris; karakter carriage return dan line feed pada value diubah menjadi bentuk
+escaped. Access token tidak dimasukkan ke ringkasan. Header umum yang sensitif,
+termasuk `Authorization`, `Proxy-Authorization`, cookie, API key, dan
+`x-starter-access-token`, disensor sebelum disimpan pada map header dan MDC.
+Consumer tetap wajib melakukan masking terhadap request, response, username,
+alamat jaringan, serta data personal lain sesuai kebutuhan aplikasinya.
+
+## N. Mapping Result Set JDBC
+
+Untuk helper ekspresi SQL umum dan PostgreSQL, MySQL, Oracle, SQL Server, serta SQLite,
+lihat [QueryFunction pada repository guide](REPOSITORY_IMPLEMENTATION_GUIDE.md#i-queryfunction).
+Helper menerima SQL tepercaya dan tidak melakukan parameter binding.
+Panduan tersebut juga mencakup fungsi string, regex, angka, tanggal, serta pembacaan
+dan perubahan JSON untuk setiap kelompok database.
+
+`JdbcResultSetBuilder` membuat Spring `RowMapper` dengan callback yang membaca
+kolom melalui `JdbcResultSetMapper`. Gunakan `getNullable(column, type)` untuk
+mempertahankan SQL NULL dan `getMandatory(column, type)` untuk menolaknya dengan
+`SQLDataException` (SQL state `22004`). Gunakan wrapper untuk angka dan boolean;
+nilai `0` dan `false` tetap merupakan nilai mandatory yang valid.
+
+Untuk kolom JSON, gunakan `getNullableJson(column, decoder)` atau
+`getMandatoryJson(column, decoder)` dengan `JdbcJsonDecoder<T>`. Decoder consumer
+memetakan nested object, array, dan generic collection ke model domain. Pembacaan
+JDBC dipilih melalui `JdbcJsonColumnReaders`: text, character stream, atau UTF-8
+binary stream, dan dapat diganti dengan reader khusus driver. API publik tidak
+bergantung pada tipe JSON vendor atau library parser tertentu.
+
+Builder ini tidak memerlukan bean Spring atau property aktivasi. Getter static
+lama tetap tersedia dengan perilaku sebelumnya. Contoh record, konversi tipe,
+aturan driver JDBC, thread-safety, dan integrasi `QueryProcessor` tersedia pada
+[Panduan Repository](REPOSITORY_IMPLEMENTATION_GUIDE.md#mapping-kolom-nullable-dan-mandatory).
+Contoh decoder, batas dokumen, perbedaan SQL NULL/JSON null, dan penyimpanan LOB
+tersedia pada [Mapping JSON](REPOSITORY_IMPLEMENTATION_GUIDE.md#mapping-kolom-json-dan-nested-json).
+
 ## Ringkasan pemilihan utility
 
 | Kebutuhan | API utama | Konfigurasi |
@@ -1788,8 +1877,10 @@ Ringkasan property dan troubleshooting tersedia pada
 | Pembuatan report JasperReports | `ReportBuilder` | Provider runtime dari `foundation-starter` |
 | Error operasi I/O terstruktur | `IOFaultException`, `IOFaultMetadata` | Ditangani handler bawaan sebagai file error HTTP 400 |
 | Mapping entity dan DTO | `BaseMapper`, `CommonMapperConfig` | MapStruct annotation processor |
+| Mapping baris JDBC dengan nullability eksplisit | `JdbcResultSetBuilder`, `JdbcResultSetMapper` | Tidak memerlukan bean |
 | Representasi diagnostic DTO | `MapperUtility` | Tidak memerlukan bean |
 | HTTP call sinkron, asinkron, dan caching | `StarterHttpClient` | `http-client: true` atau bean aplikasi |
+| Logging terformat dan injection logger | `CommonLogger`, `@InjectLogger` | Otomatis melalui `foundation-starter` atau gunakan `CommonLoggerFactory` |
 
 Untuk unit test service, mock kontrak `ValidationUtility`, `ResilienceService`,
 `TransactionalExecutor`, atau `StarterHttpClient`. Untuk menguji anotasi DTO,

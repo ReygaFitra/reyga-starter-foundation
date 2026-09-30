@@ -266,7 +266,7 @@ class DefaultFileInspectorTest {
         // Then
         assertFault(exception, "Failed to detect content type", IOOperation.DETECT_CONTENT_TYPE, IOStorageType.MEMORY);
         assertSame(cause, exception.getCause());
-        verify(logger, atLeastOnce()).warn(eq("Error Message :"), any(Object[].class));
+        verify(logger, atLeastOnce()).warn(eq("Error Message"), any(Object[].class));
     }
 
     @Test
@@ -290,7 +290,7 @@ class DefaultFileInspectorTest {
         assertNotNull(detection.getCause());
         assertNotNull(content.getCause());
         assertNotNull(reader.getCause());
-        verify(logger, atLeastOnce()).warn(eq("Error Message :"), any(Object[].class));
+        verify(logger, atLeastOnce()).warn(eq("Error Message"), any(Object[].class));
     }
 
     @Test
@@ -318,7 +318,7 @@ class DefaultFileInspectorTest {
         assertNotNull(detection.getCause());
         assertNotNull(content.getCause());
         assertNotNull(reader.getCause());
-        verify(logger, atLeastOnce()).warn(eq("Error Message :"), any(Object[].class));
+        verify(logger, atLeastOnce()).warn(eq("Error Message"), any(Object[].class));
     }
 
     @Test
@@ -354,7 +354,7 @@ class DefaultFileInspectorTest {
         assertFault(sourceAndTarget, "Failed to translate content", IOOperation.TRANSLATE, IOStorageType.MEMORY);
         assertNotNull(targetOnly.getCause());
         assertNotNull(sourceAndTarget.getCause());
-        verify(logger, atLeastOnce()).warn(eq("Error Message :"), any(Object[].class));
+        verify(logger, atLeastOnce()).warn(eq("Error Message"), any(Object[].class));
     }
 
     private InputStream failingInputStream(IOException cause) {

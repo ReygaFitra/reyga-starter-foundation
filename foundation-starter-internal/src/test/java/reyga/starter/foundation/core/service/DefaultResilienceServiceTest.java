@@ -97,7 +97,7 @@ class DefaultResilienceServiceTest {
         assertEquals(0, suppliedCalls.get());
         assertEquals(1, fallbackCalls.get());
         verify(logger).warn(
-                org.mockito.ArgumentMatchers.eq("Request Not Permitted :"),
+                org.mockito.ArgumentMatchers.eq("Request Not Permitted"),
                 org.mockito.ArgumentMatchers.anyString()
         );
         verifyNoMoreInteractions(logger);
@@ -309,7 +309,7 @@ class DefaultResilienceServiceTest {
         assertEquals(0, processCalls.get());
         assertEquals(1, fallbackCalls.get());
         verify(logger).warn(
-                org.mockito.ArgumentMatchers.eq("Request Not Permitted :"),
+                org.mockito.ArgumentMatchers.eq("Request Not Permitted"),
                 org.mockito.ArgumentMatchers.anyString()
         );
         verifyNoMoreInteractions(logger);

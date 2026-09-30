@@ -421,7 +421,7 @@ class DefaultFileSanitizerTest {
         assertSame(xssCause, xss.getCause());
         assertFault(sql, "Failed to check SQL injection", IOOperation.CHECK_SQL, IOStorageType.MEMORY);
         assertSame(sqlCause, sql.getCause());
-        verify(logger, atLeastOnce()).warn(eq("Error Message : {}"), any(Object[].class));
+        verify(logger, atLeastOnce()).warn(eq("Error Message"), any(Object[].class));
     }
 
     @Test
@@ -444,7 +444,7 @@ class DefaultFileSanitizerTest {
         assertNotNull(sanitize.getCause());
         assertNotNull(xss.getCause());
         assertNotNull(sql.getCause());
-        verify(logger, atLeastOnce()).warn(eq("Error Message : {}"), any(Object[].class));
+        verify(logger, atLeastOnce()).warn(eq("Error Message"), any(Object[].class));
     }
 
     @Test
@@ -472,7 +472,7 @@ class DefaultFileSanitizerTest {
         assertNotNull(sanitize.getCause());
         assertNotNull(xss.getCause());
         assertNotNull(sql.getCause());
-        verify(logger, atLeastOnce()).warn(eq("Error Message : {}"), any(Object[].class));
+        verify(logger, atLeastOnce()).warn(eq("Error Message"), any(Object[].class));
     }
 
     private InputStream failingInputStream(IOException cause) {
