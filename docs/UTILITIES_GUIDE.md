@@ -1886,3 +1886,9 @@ Untuk unit test service, mock kontrak `ValidationUtility`, `ResilienceService`,
 `TransactionalExecutor`, atau `StarterHttpClient`. Untuk menguji anotasi DTO,
 gunakan Jakarta `Validator` atau `ValidationUtility` yang dibangun melalui
 `ValidationConfig`.
+
+## Subquery QueryBuilder
+
+QueryBuilder mendukung SELECT subquery pada predicate WHERE melalui conditionSubquery, exists, dan notExists, serta korelasi kolom melalui compareColumns. SQL dan binding disalin saat pemasangan. Lihat [pola dan batasan subquery](REPOSITORY_IMPLEMENTATION_GUIDE.md#subquery-pada-querybuilder).
+
+Alias QueryBuilder tersedia melalui .as(alias) setelah select/from dan pada JoinBuilder. Alias kolom memakai AS; alias tabel tanpa AS. Lihat [contoh alias](REPOSITORY_IMPLEMENTATION_GUIDE.md#alias-dengan-as).

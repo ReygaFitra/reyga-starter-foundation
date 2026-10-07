@@ -112,6 +112,20 @@ Implementation class menerima `QueryProcessor` melalui constructor injection. Bu
 kontrak nullable atau mandatory pada `JdbcResultSetMapper`. Mapper yang callback-nya
 stateless dapat digunakan ulang untuk menjaga mapping kolom tetap konsisten.
 
+SQL yang akan dibangun (nilai menggunakan placeholder JDBC):
+
+```sql
+INSERT INTO app_user (id, username, status, created_at) VALUES (?, ?, ?, ?);
+SELECT id, username, status, created_at FROM app_user ORDER BY created_at DESC;
+SELECT id, username, status, created_at FROM app_user WHERE id = ?;
+SELECT id, username, status, created_at FROM app_user ORDER BY id ASC LIMIT ? OFFSET ?;
+SELECT id, username, status, created_at FROM app_user WHERE UPPER(username) = ?;
+UPDATE app_user SET status = ? WHERE id = ?;
+DELETE FROM app_user WHERE id = ?;
+```
+
+Penggunaan QueryBuilder:
+
 ```java
 package com.example.user.repository.jdbc;
 
@@ -331,6 +345,14 @@ konversi kolom database tersebut ke `Boolean`:
 #### Integrasi dengan QueryProcessor
 
 Gunakan `mapper` dari contoh record di atas untuk query builder maupun raw SQL:
+
+SQL yang akan dibangun (nilai menggunakan placeholder JDBC):
+
+```sql
+SELECT user_id, login_count, verified FROM user_statistics WHERE user_id = ?
+```
+
+Penggunaan QueryBuilder:
 
 ```java
 QueryBuilder query = QueryBuilder.builder()
@@ -781,6 +803,77 @@ logging:
 
 ## F. QueryBuilder
 
+### Alias dengan as
+
+Alias bersifat **opsional**. Penambahan `.as(...)` tidak mengubah SQL atau urutan
+parameter dari builder existing yang tidak memanggilnya. `select`, `from`, JOIN,
+INSERT, UPDATE, DELETE, pagination, dan count query tetap dapat digunakan seperti
+sebelumnya. Alias inline seperti `.select("u.id AS user_id")`, `.from("app_user u")`,
+`.join("roles r")`, maupun `.join("roles", "r")` tetap didukung; tidak perlu migrasi.
+Pola lama dan `.as(...)` dapat digunakan pada query yang sama untuk expression
+berbeda. Jangan menambahkan `.as(...)` ke expression yang sudah memiliki alias.
+Validasi alias baru hanya berlaku ketika `.as(...)` dipanggil.
+
+Contoh tanpa alias, SQL yang akan dibangun:
+
+```sql
+SELECT id, username FROM app_user WHERE status = ?
+```
+
+Penggunaan QueryBuilder:
+
+```java
+QueryBuilder query = QueryBuilder.builder()
+        .select("id", "username")
+        .from("app_user")
+        .where().equals("status", "ACTIVE").done();
+```
+
+Contoh dengan alias inline existing, SQL yang akan dibangun:
+
+```sql
+SELECT u.id AS user_id FROM app_user u WHERE u.status = ?
+```
+
+Penggunaan QueryBuilder:
+
+```java
+QueryBuilder query = QueryBuilder.builder()
+        .select("u.id AS user_id")
+        .from("app_user u")
+        .where().equals("u.status", "ACTIVE").done();
+```
+
+Gunakan `.as("alias")` segera setelah `select(...)` atau `from(...)`, serta pada
+builder JOIN. Jika `select` menerima beberapa kolom, alias berlaku hanya pada
+kolom terakhir; panggil `select` lagi untuk projection berikutnya. Alias harus
+identifier sederhana tanpa spasi, qualification, atau quoting. Alias kosong,
+null, dan fragment SQL ditolak. Pemanggilan tanpa target atau berulang ditolak.
+Gunakan expression sumber tanpa alias sebelumnya; builder tidak mem-parsing SQL
+mentah. Alias kolom memakai `AS`; alias tabel memakai spasi tanpa `AS` untuk Oracle.
+Alias merupakan konstanta aplikasi, bukan input pengguna. Binding tetap sama.
+
+SQL yang akan dibangun:
+
+```sql
+SELECT u.id AS user_id, u.username AS login_name
+FROM app_user u
+LEFT JOIN user_role r ON u.id = r.user_id
+WHERE u.status = ?
+```
+
+Penggunaan QueryBuilder:
+
+```java
+QueryBuilder query = QueryBuilder.builder()
+        .select("u.id").as("user_id")
+        .select("u.username").as("login_name")
+        .from("app_user").as("u")
+        .join(QueryJoinType.LEFT, "user_role").as("r")
+            .on("u.id", QueryOperator.EQUALS, "r.user_id").done()
+        .where().equals("u.status", "ACTIVE").done();
+```
+
 ### Operator query bertipe aman
 
 Import `reyga.starter.foundation.common_database.enumeration.QueryOperator`. Enum ini
@@ -803,14 +896,22 @@ jenis JOIN, sedangkan `QueryOperator` menentukan predikatnya.
 
 Daftar ini mencakup seluruh operator predikat yang dimodelkan builder, bukan seluruh
 operator setiap dialect SQL. Operator aritmetika, JSON, regex, serta subquery
-`EXISTS`/`ANY`/`ALL` tidak dimodelkan. Kombinasi logika menggunakan `.and()`/`.or()`;
+`ANY`/`ALL` tidak dimodelkan. `EXISTS` tersedia melalui `WhereBuilder.exists`. Kombinasi logika menggunakan `.and()`/`.or()`;
 negasi menggunakan operator `NOT_*` yang sesuai. Dukungan predikat boolean dan
 DISTINCT bergantung pada database target.
+
+SQL yang akan dibangun (nilai menggunakan placeholder JDBC):
+
+```sql
+SELECT u.id, r.name FROM users u LEFT JOIN roles r ON u.role_id = r.id WHERE u.age >= ? AND u.status IN (?, ?) AND u.deleted_at IS NULL
+```
+
+Penggunaan QueryBuilder:
 
 ```java
 QueryBuilder query = QueryBuilder.builder()
         .select("u.id", "r.name")
-        .from("users u")
+        .from("users").as("u")
         .join(QueryJoinType.LEFT, "roles", "r")
             .on("u.role_id", QueryOperator.EQUALS, "r.id")
         .done()
@@ -842,11 +943,24 @@ gunakan `IS_NULL` untuk pengujian null, bukan `EQUALS`.
 
 ### SELECT dengan filter, join, grouping, dan ordering
 
+SQL yang akan dibangun (nilai menggunakan placeholder JDBC):
+
+```sql
+SELECT u.id, u.username, COUNT(r.id) AS role_count
+FROM app_user u
+INNER JOIN user_role r ON u.id = r.user_id
+WHERE u.status = ? AND u.username IS NOT NULL
+GROUP BY u.id, u.username
+ORDER BY u.username ASC
+```
+
+Penggunaan QueryBuilder:
+
 ```java
 QueryBuilder query = QueryBuilder.builder()
-        .select("u.id", "u.username", QueryFunction.count("r.id") + " AS role_count")
-        .from("app_user u")
-        .join("user_role r")
+        .select("u.id", "u.username", QueryFunction.count("r.id")).as("role_count")
+        .from("app_user").as("u")
+        .join("user_role").as("r")
             .on("u.id", QueryOperator.EQUALS, "r.user_id")
         .done()
         .where()
@@ -866,6 +980,14 @@ dipercaya.
 
 ### INSERT
 
+SQL yang akan dibangun (nilai menggunakan placeholder JDBC):
+
+```sql
+INSERT INTO app_user (id, username, status) VALUES (?, ?, ?)
+```
+
+Penggunaan QueryBuilder:
+
 ```java
 QueryBuilder query = QueryBuilder.builder()
         .insertInto("app_user", "id", "username", "status")
@@ -877,6 +999,14 @@ int affectedRows = queryProcessor.execute(query);
 Periksa `affectedRows` sesuai kebutuhan operasi, misalnya tepat satu baris untuk perubahan berdasarkan ID.
 
 ### UPDATE
+
+SQL yang akan dibangun (nilai menggunakan placeholder JDBC):
+
+```sql
+UPDATE app_user SET username = ?, status = ? WHERE id = ?
+```
+
+Penggunaan QueryBuilder:
 
 ```java
 QueryBuilder query = QueryBuilder.builder()
@@ -892,6 +1022,14 @@ int affectedRows = queryProcessor.execute(query);
 
 ### DELETE
 
+SQL yang akan dibangun (nilai menggunakan placeholder JDBC):
+
+```sql
+DELETE FROM app_user WHERE id = ?
+```
+
+Penggunaan QueryBuilder:
+
 ```java
 QueryBuilder query = QueryBuilder.builder()
         .deleteFrom("app_user")
@@ -905,6 +1043,27 @@ int affectedRows = queryProcessor.execute(query);
 ## G. Pagination dengan Pageable dan Page
 
 Spring Data `Pageable` menggunakan page number zero-based. Page pertama adalah `0`.
+
+Hasil `Page<User>` menyediakan konten halaman dan jumlah total baris. Untuk request
+paged, data dan total dihitung melalui query berikut:
+
+```sql
+SELECT id, username, status, created_at
+FROM app_user
+WHERE status = ?
+ORDER BY created_at DESC, id ASC
+LIMIT ? OFFSET ?
+```
+
+```sql
+SELECT COUNT(*) FROM (
+    SELECT id, username, status, created_at
+    FROM app_user
+    WHERE status = ?
+) query_count
+```
+
+Penggunaan QueryBuilder:
 
 ```java
 Pageable pageable = PageRequest.of(
@@ -926,25 +1085,6 @@ QueryBuilder query = QueryBuilder.builder()
 Page<User> page = queryProcessor.fetchPage(query, USER_ROW_MAPPER, pageable);
 ```
 
-Hasil `Page<User>` menyediakan konten halaman dan jumlah total baris. Untuk request
-paged, data dan total dihitung melalui query berikut:
-
-```sql
-SELECT id, username, status, created_at
-FROM app_user
-WHERE status = ?
-ORDER BY created_at DESC, id ASC
-LIMIT ? OFFSET ?
-```
-
-```sql
-SELECT COUNT(*) FROM (
-    SELECT id, username, status, created_at
-    FROM app_user
-    WHERE status = ?
-) query_count
-```
-
 Count query membungkus SELECT utama agar semantik `DISTINCT`, join, dan `GROUP BY` tetap terjaga.
 Parameter `LIMIT` dan `OFFSET` tidak ikut diteruskan ke count query.
 
@@ -961,6 +1101,14 @@ jika jumlah data terkendali.
 ### Pagination dengan nomor halaman
 
 Jika tidak memakai `Pageable`, gunakan nomor halaman yang dimulai dari 1:
+
+SQL yang akan dibangun (nilai menggunakan placeholder JDBC):
+
+```sql
+SELECT * FROM app_user LIMIT ? OFFSET ?
+```
+
+Penggunaan QueryBuilder:
 
 ```java
 QueryBuilder query = QueryBuilder.builder()
@@ -1077,6 +1225,16 @@ String databaseColumn = Optional.ofNullable(allowedSortColumns.get(requestedProp
 `QueryFunction` menghasilkan SQL expression dan dapat digunakan pada `select`, condition,
 grouping, atau ordering.
 
+SQL yang akan dibangun (nilai menggunakan placeholder JDBC):
+
+```sql
+SELECT id, UPPER(username) AS normalized_username, COALESCE(status, 'UNKNOWN') AS resolved_status, CURRENT_TIMESTAMP AS queried_at, TO_DATE('2026-01-01', 'YYYY-MM-DD') AS cutoff_date
+FROM app_user
+WHERE UPPER(username) = ?
+```
+
+Penggunaan QueryBuilder:
+
 ```java
 QueryBuilder query = QueryBuilder.builder()
         .select(
@@ -1119,6 +1277,16 @@ Berbeda dengan API lama `coalesce(column, defaultValue)` dan `toDate(value, form
 helper baru tidak mengubah Java value menjadi literal. Null Java ditolak dengan
 `NullPointerException`; argument kosong ditolak dengan `IllegalArgumentException`.
 Gunakan string `"NULL"` apabila memang membutuhkan SQL NULL.
+
+SQL yang akan dibangun (nilai menggunakan placeholder JDBC):
+
+```sql
+SELECT id, JSON_UNQUOTE(JSON_EXTRACT(payload, '$.profile.address.city')) AS city, DATE_FORMAT(created_at, '%Y-%m-%d') AS created_date
+FROM customer
+WHERE JSON_UNQUOTE(JSON_EXTRACT(payload, '$.profile.address.city')) = ?
+```
+
+Penggunaan QueryBuilder:
 
 ```java
 // MySQL: mengambil scalar dari nested JSON.
@@ -1233,6 +1401,14 @@ Detail SQLite: [fungsi tanggal](https://www.sqlite.org/lang_datefunc.html) dan
 
 Satu SQL dengan beberapa parameter group:
 
+SQL yang akan dibangun (nilai menggunakan placeholder JDBC):
+
+```sql
+UPDATE app_user SET status = ? WHERE id = ?
+```
+
+Penggunaan QueryBuilder:
+
 ```java
 QueryBuilder query = QueryBuilder.builder()
         .update("app_user")
@@ -1317,3 +1493,78 @@ class JdbcUserRepositoryTest {
 
 Untuk test SQL builder, validasi SQL final, urutan parameters, count parameters, serta negative case
 seperti page invalid dan sort expression yang tidak aman.
+
+## Subquery pada QueryBuilder
+
+`WhereBuilder.conditionSubquery(column, operator, subquery)` mendukung `IN`,
+`NOT_IN`, dan operator binary (termasuk perbandingan scalar). `exists(subquery)`
+dan `notExists(subquery)` menerima SELECT dengan projection bebas.
+
+SQL yang akan dibangun (nilai menggunakan placeholder JDBC):
+
+```sql
+SELECT u.id, u.name FROM users u WHERE u.active = ? AND u.id IN (SELECT o.user_id FROM orders o WHERE o.status = ?)
+```
+
+Penggunaan QueryBuilder:
+
+```java
+QueryBuilder paidOrders = QueryBuilder.builder()
+        .select("o.user_id")
+        .from("orders").as("o")
+        .where().equals("o.status", "PAID").done();
+
+QueryBuilder users = QueryBuilder.builder()
+        .select("u.id", "u.name")
+        .from("users").as("u")
+        .where().equals("u.active", true).and()
+        .conditionSubquery("u.id", QueryOperator.IN, paidOrders)
+        .done();
+// users.getParameters(): [true, "PAID"]
+```
+
+Untuk pemeriksaan keberadaan dengan korelasi:
+
+SQL yang akan dibangun (nilai menggunakan placeholder JDBC):
+
+```sql
+SELECT u.id FROM users u WHERE EXISTS (SELECT 1 FROM orders o WHERE o.user_id = u.id AND o.status = ?)
+```
+
+Penggunaan QueryBuilder:
+
+```java
+QueryBuilder paidOrderExists = QueryBuilder.builder()
+        .select("1")
+        .from("orders").as("o")
+        .where().compareColumns("o.user_id", QueryOperator.EQUALS, "u.id").and()
+        .equals("o.status", "PAID").done();
+
+QueryBuilder users = QueryBuilder.builder()
+        .select("u.id")
+        .from("users").as("u")
+        .where().exists(paidOrderExists).done();
+```
+
+Gunakan import `reyga.starter.foundation.common_database.util.QueryBuilder` dan
+`reyga.starter.foundation.common_database.enumeration.QueryOperator`.
+Buat builder baru per operasi pada repository; builder mutable tidak thread-safe.
+Gunakan parameter binding untuk input pengguna dan alias/kolom dari konstanta
+aplikasi. Jangan menyambung `subquery.build()` ke string SQL: parameter tidak
+akan ikut tersalin melalui API string.
+
+SQL dan parameter disalin ketika predicate dipasang; perubahan berikutnya pada
+builder anak tidak mengubah induk. Snapshot parameter bukan deep copy nilai.
+Subquery wajib SELECT dan bukan builder induk sendiri. Subquery bertingkat
+serta predicate pada UPDATE/DELETE didukung. Tambahkan assignment UPDATE sebelum
+WHERE seperti pada API lama. `IN`/`NOT IN` harus mengembalikan satu kolom;
+perbandingan scalar harus mengembalikan satu kolom dan paling banyak satu baris.
+Validasi bentuk hasil tersebut dilakukan database. Perhatikan semantik NULL
+pada `NOT IN`; gunakan correlated `NOT EXISTS` saat sesuai kebutuhan domain.
+
+`buildCount()` menghapus pagination induk tetapi tetap mempertahankan pagination
+dan binding subquery karena memengaruhi hasil filter. Sintaks pagination tetap
+`LIMIT/OFFSET` dan harus sesuai dialect database. Dukungan ini terbatas pada
+predicate WHERE; derived table pada FROM/JOIN dan projection subquery belum
+memiliki API binding khusus. Evaluasi execution plan dan index pada database
+consumer untuk query yang sering digunakan.

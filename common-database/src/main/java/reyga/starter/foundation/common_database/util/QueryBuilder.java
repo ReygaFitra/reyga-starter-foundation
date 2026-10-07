@@ -1,12 +1,18 @@
 package reyga.starter.foundation.common_database.util;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+
 import reyga.starter.foundation.common_database.enumeration.QueryJoinType;
 import reyga.starter.foundation.common_database.enumeration.QueryOperator;
 import reyga.starter.foundation.common_database.enumeration.QueryType;
-
-import java.util.*;
 
 /**
  * Mutable fluent builder for parameterized SELECT, INSERT, UPDATE, and DELETE statements.
@@ -31,6 +37,7 @@ import java.util.*;
 public class QueryBuilder {
     private QueryType type;
     private String table;
+    private String aliasTarget;
     private final List<String> columns = new ArrayList<>();
     private final List<String> joins = new ArrayList<>();
     private final List<String> groupBy = new ArrayList<>();
@@ -79,8 +86,10 @@ public class QueryBuilder {
      * @return this builder
      */
     public QueryBuilder select(String... cols) {
+        aliasTarget = null;
         this.type = QueryType.SELECT;
         columns.addAll(Arrays.asList(cols));
+        if (cols.length > 0) aliasTarget = "projection";
         return this;
     }
 
@@ -90,7 +99,9 @@ public class QueryBuilder {
      * @return this builder
      */
     public QueryBuilder from(String table) {
+        aliasTarget = null;
         this.table = table;
+        if (type == QueryType.SELECT && table != null && !table.isBlank()) aliasTarget = "source";
         return this;
     }
 
@@ -105,6 +116,7 @@ public class QueryBuilder {
      * @throws NullPointerException if operator is null
      */
     public QueryBuilder joinOn(String table, String leftColumn, QueryOperator op, String rightColumn) {
+        aliasTarget = null;
         return join(table).on(leftColumn, op, rightColumn).done();
     }
 
@@ -115,6 +127,7 @@ public class QueryBuilder {
      * @return the JOIN builder for fluent chaining
      */
     public JoinBuilder join(String table, String alias) {
+        aliasTarget = null;
         return new JoinBuilder(this, QueryJoinType.INNER, table, alias);
     }
 
@@ -124,6 +137,7 @@ public class QueryBuilder {
      * @return the JOIN builder for fluent chaining
      */
     public JoinBuilder join(String table) {
+        aliasTarget = null;
         return new JoinBuilder(this, QueryJoinType.INNER, table, null);
     }
 
@@ -134,6 +148,7 @@ public class QueryBuilder {
      * @return the JOIN builder for fluent chaining
      */
     public JoinBuilder join(QueryJoinType type, String table) {
+        aliasTarget = null;
         return new JoinBuilder(this, type, table, null);
     }
 
@@ -145,6 +160,7 @@ public class QueryBuilder {
      * @return the JOIN builder for fluent chaining
      */
     public JoinBuilder join(QueryJoinType type, String table, String alias) {
+        aliasTarget = null;
         return new JoinBuilder(this, type, table, alias);
     }
 
@@ -155,6 +171,7 @@ public class QueryBuilder {
      * @throws NullPointerException if the array is null
      */
     public QueryBuilder orderBy(String... cols) {
+        aliasTarget = null;
         orderBy.addAll(Arrays.asList(cols));
         return this;
     }
@@ -166,6 +183,7 @@ public class QueryBuilder {
      * @throws NullPointerException if the array is null
      */
     public QueryBuilder groupBy(String... cols) {
+        aliasTarget = null;
         groupBy.addAll(Arrays.asList(cols));
         return this;
     }
@@ -177,6 +195,7 @@ public class QueryBuilder {
      * @throws IllegalArgumentException if the value is negative
      */
     public QueryBuilder limit(int limit) {
+        aliasTarget = null;
         if (limit < 0) {
             throw new IllegalArgumentException("limit must not be negative");
         }
@@ -191,6 +210,7 @@ public class QueryBuilder {
      * @throws IllegalArgumentException if the value is negative
      */
     public QueryBuilder offset(int offset) {
+        aliasTarget = null;
         if (offset < 0) {
             throw new IllegalArgumentException("offset must not be negative");
         }
@@ -207,6 +227,7 @@ public class QueryBuilder {
      * @throws ArithmeticException if the computed offset overflows an int
      */
     public QueryBuilder paginate(int page, int pageSize) {
+        aliasTarget = null;
         if (page < 1) {
             throw new IllegalArgumentException("page must be greater than zero");
         }
@@ -230,6 +251,7 @@ public class QueryBuilder {
      * @throws NullPointerException if pageable is null
      */
     public QueryBuilder paginate(Pageable pageable) {
+        aliasTarget = null;
         Objects.requireNonNull(pageable, "pageable must not be null");
         pageableOrderBy.clear();
         appendPageableSort(pageable.getSort());
@@ -273,6 +295,7 @@ public class QueryBuilder {
      * @return this builder
      */
     public QueryBuilder insertInto(String table, String... cols) {
+        aliasTarget = null;
         this.type = QueryType.INSERT;
         this.table = table;
         if (cols != null && cols.length > 0) this.columns.addAll(Arrays.asList(cols));
@@ -285,6 +308,7 @@ public class QueryBuilder {
      * @return this builder
      */
     public QueryBuilder values(Object... vals) {
+        aliasTarget = null;
         if (vals != null) {
             for (Object v : vals) {
                 this.insertValues.add("?");
@@ -300,6 +324,7 @@ public class QueryBuilder {
      * @return this builder
      */
     public QueryBuilder update(String table) {
+        aliasTarget = null;
         this.type = QueryType.UPDATE;
         this.table = table;
         return this;
@@ -312,6 +337,7 @@ public class QueryBuilder {
      * @return this builder
      */
     public QueryBuilder set(String column, Object value) {
+        aliasTarget = null;
         this.setClauses.add(column + " = ?");
         this.parameters.add(value);
         return this;
@@ -323,6 +349,7 @@ public class QueryBuilder {
      * @return this builder
      */
     public QueryBuilder deleteFrom(String table) {
+        aliasTarget = null;
         this.type = QueryType.DELETE;
         this.table = table;
         return this;
@@ -333,7 +360,38 @@ public class QueryBuilder {
      * @return the WHERE builder for fluent chaining
      */
     public WhereBuilder where() {
+        aliasTarget = null;
         return new WhereBuilder(this);
+    }
+
+    /**
+     * Aliases the last projection immediately after select, or the source immediately
+     * after from. Projection aliases use AS; table aliases omit AS for Oracle compatibility.
+     * After select with multiple columns, only the final column receives the alias.
+     * Existing raw expressions are not parsed; supply expressions without an alias.
+     * @param alias trusted simple SQL identifier, without quoting or qualification
+     * @return this builder
+     * @throws IllegalArgumentException if alias is not a simple SQL identifier
+     * @throws IllegalStateException if no SELECT projection or source is awaiting an alias
+     */
+    public QueryBuilder as(String alias) {
+        validateAlias(alias);
+        if ("projection".equals(aliasTarget)) {
+            int index = columns.size() - 1;
+            columns.set(index, columns.get(index) + " AS " + alias);
+        } else if ("source".equals(aliasTarget)) {
+            table = table + " " + alias;
+        } else {
+            throw new IllegalStateException("as must follow select with a projection or SELECT from");
+        }
+        aliasTarget = null;
+        return this;
+    }
+
+    private static void validateAlias(String alias) {
+        if (alias == null || !alias.matches("[A-Za-z_][A-Za-z0-9_$]*")) {
+            throw new IllegalArgumentException("alias must be a simple SQL identifier");
+        }
     }
 
     private void addCondition(String condition) {
@@ -429,6 +487,86 @@ public class QueryBuilder {
          */
         public WhereBuilder equals(String column, Object value) {
             return condition(column, QueryOperator.EQUALS, value);
+        }
+
+        /**
+         * Adds a SELECT subquery predicate, snapshotting SQL and bindings at attachment.
+         * The database validates projection count and scalar result cardinality.
+         * @param column trusted non-blank left expression
+         * @param operator binary operator, IN, or NOT_IN
+         * @param subquery separate non-null SELECT builder
+         * @return this WHERE builder
+         * @throws NullPointerException if operator or subquery is null
+         * @throws IllegalArgumentException if column, operator, or subquery is invalid
+         */
+        public WhereBuilder conditionSubquery(String column, QueryOperator operator, QueryBuilder subquery) {
+            Objects.requireNonNull(operator, "operator must not be null");
+            if (column == null || column.isBlank()) {
+                throw new IllegalArgumentException("column must not be blank");
+            }
+            if (!operator.supportsColumnComparison() && operator != QueryOperator.IN
+                    && operator != QueryOperator.NOT_IN) {
+                throw new IllegalArgumentException("Operator " + operator.name() + " does not support a subquery");
+            }
+            return attachSubquery(column + " " + operator.getSql(), subquery);
+        }
+
+        /**
+         * Adds EXISTS using a snapshot of the subquery SQL and bindings.
+         * @param subquery separate non-null SELECT builder
+         * @return this WHERE builder
+         * @throws NullPointerException if subquery is null
+         * @throws IllegalArgumentException if subquery is not a separate SELECT builder
+         */
+        public WhereBuilder exists(QueryBuilder subquery) {
+            return attachSubquery("EXISTS", subquery);
+        }
+
+        /**
+         * Adds NOT EXISTS using a snapshot of the subquery SQL and bindings.
+         * @param subquery separate non-null SELECT builder
+         * @return this WHERE builder
+         * @throws NullPointerException if subquery is null
+         * @throws IllegalArgumentException if subquery is not a separate SELECT builder
+         */
+        public WhereBuilder notExists(QueryBuilder subquery) {
+            return attachSubquery("NOT EXISTS", subquery);
+        }
+
+        /**
+         * Compares trusted SQL expressions without binding, allowing correlated columns.
+         * Never use request input as either expression.
+         * @param left trusted non-blank left expression
+         * @param operator non-null binary operator
+         * @param right trusted non-blank right expression
+         * @return this WHERE builder
+         * @throws NullPointerException if operator is null
+         * @throws IllegalArgumentException if expressions are blank or operator is not binary
+         */
+        public WhereBuilder compareColumns(String left, QueryOperator operator, String right) {
+            Objects.requireNonNull(operator, "operator must not be null");
+            if (!operator.supportsColumnComparison()) {
+                throw new IllegalArgumentException("operator must support column comparison");
+            }
+            if (left == null || left.isBlank() || right == null || right.isBlank()) {
+                throw new IllegalArgumentException("column expressions must not be blank");
+            }
+            parent.addCondition(left + " " + operator.getSql() + " " + right);
+            lastConditionAdded = true;
+            return this;
+        }
+
+        private WhereBuilder attachSubquery(String prefix, QueryBuilder subquery) {
+            Objects.requireNonNull(subquery, "subquery must not be null");
+            if (subquery == parent || subquery.type != QueryType.SELECT) {
+                throw new IllegalArgumentException("subquery must be a separate SELECT builder");
+            }
+            String statement = subquery.build();
+            List<Object> bindings = subquery.getParameters();
+            parent.addCondition(prefix + " (" + statement + ")");
+            parent.parameters.addAll(bindings);
+            lastConditionAdded = true;
+            return this;
         }
 
         /**
@@ -616,7 +754,7 @@ public class QueryBuilder {
         private final QueryBuilder parent;
         private final QueryJoinType type;
         private final String table;
-        private final String alias;
+        private String alias;
         private final List<String> onConditions = new ArrayList<>();
         private boolean lastOnAdded = false;
 
@@ -625,6 +763,23 @@ public class QueryBuilder {
             this.type = type;
             this.table = table;
             this.alias = alias;
+        }
+
+        /**
+         * Assigns an alias to this JOIN source. Table aliases omit AS.
+         * Existing raw table expressions are not parsed; supply an unaliased source.
+         * @param alias trusted simple SQL identifier, without quoting or qualification
+         * @return this JOIN builder
+         * @throws IllegalArgumentException if alias is not a simple SQL identifier
+         * @throws IllegalStateException if this JOIN already has an alias
+         */
+        public JoinBuilder as(String alias) {
+            validateAlias(alias);
+            if (this.alias != null && !this.alias.isBlank()) {
+                throw new IllegalStateException("JOIN already has an alias");
+            }
+            this.alias = alias;
+            return this;
         }
 
         /**
@@ -727,6 +882,7 @@ public class QueryBuilder {
      * @return the JOIN builder for fluent chaining
      */
     public JoinBuilder joinBuilder(QueryJoinType type, String table, String alias) {
+        aliasTarget = null;
         return new JoinBuilder(this, type, table, alias);
     }
 
