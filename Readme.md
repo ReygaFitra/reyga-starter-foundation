@@ -166,8 +166,9 @@ Module kontrak untuk inspeksi, sanitasi, diagnostic I/O, dan report generation.
 
 ### `common-http`
 
-Module kontrak HTTP client berbasis OkHttp untuk call sinkron, asinkron, dan
-response caching.
+Module kontrak HTTP client berbasis OkHttp untuk call sinkron, asinkron, response
+caching, registrasi API YAML, dan builder request JSON/XML. Lihat
+[Panduan HTTP Client](docs/HTTP_CLIENT_GUIDE.md).
 
 - **HTTP client contract**
   - Menyediakan `StarterHttpClient` dengan tipe request, response, callback, dan
@@ -256,10 +257,11 @@ auto-configuration. Module ini dipublish dengan nama artifact publik
 `foundation-starter`.
 
 - **Auto-configuration**
-  - Menyediakan `FoundationDefaultAutoConfiguration`, `CoreConfig`,
-    `ValidationAutoConfiguration`, `CommonConfig`, `CommonDatabaseConfig`,
-    `CommonIOConfig`, `CommonHttpAutoConfiguration`, `LoggingConfig`, dan
-    `AsyncLoggingConfig`.
+  - Mengelompokkan konfigurasi per fitur melalui `FoundationDefaultAutoConfiguration`
+    dan metadata `META-INF/spring`; validasi dan HTTP client tetap memiliki
+    entry point independen. Konfigurasi lama tetap tersedia untuk compatibility.
+  - Pola registrasi dan aturan pengembangan dijelaskan pada
+    [panduan auto-configuration](docs/CONFIGURATION_GUIDE.md#s-pola-auto-configuration-untuk-pengembangan-starter).
 - **Default implementations**
   - Menyediakan `DefaultQueryProcessor`, `DefaultFileInspector`,
     `DefaultFileSanitizer`, `DefaultReportBuilder`, `DefaultValidationUtility`,
@@ -584,7 +586,7 @@ Dependency langsung yang tercantum pada POM setiap artifact adalah:
 | `common-http` | OkHttp JVM `5.5.0` | - |
 | `core` | `common`, Spring Boot Starter Validation `4.0.0`, Jakarta Validation API `3.1.1`, Resilience4j `2.3.0`, Spring Boot Starter Data JPA `4.0.0`, Spring Boot Starter AspectJ `4.0.0` | - |
 | `logging` | Spring Boot Starter Web `4.0.0`, Logback Classic `1.5.38` | `common` |
-| `foundation-starter` | Seluruh module publik foundation | Spring Boot Data JPA, Validation, AspectJ, Resilience4j, Tika, OWASP Sanitizer, serta JasperReports core dan exporter |
+| `foundation-starter` | Seluruh module publik foundation | Spring Boot Data JPA, Validation, AspectJ, Resilience4j, Tika, OWASP Sanitizer, Jackson XML, serta JasperReports core dan exporter |
 | `foundation-dependencies` | Seluruh dependency produksi pihak ketiga yang digunakan foundation | - |
 | `foundation-bom` | Constraint versi seluruh artifact foundation | - |
 

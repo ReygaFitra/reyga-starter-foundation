@@ -1,0 +1,29 @@
+reyga:
+  config:
+    http-client:
+      enabled: true
+      register-api:
+        - id: customer-id-only
+          base-url: https://example.test/v1
+          path: customers/{customerId}
+          path-variables:
+            customerId: CUS-01
+          method: GET
+          content-type: APPLICATION_JSON
+          accept: application_json
+          headers:
+            - name: X-Channel
+              value: web
+          query-parameters:
+            - name: include
+              value: address
+          response-type: reyga.starter.foundation.common_http.config.HttpRegistrationConfigurationTest$Customer
+          call-timeout: 2s
+        - id: create-id-only
+          base-url: https://example.test/v1
+          path: customers
+          method: POST
+          content-type: application/json
+          accept: APPLICATION_JSON
+          request-body-required: true
+          response-type: reyga.starter.foundation.common_http.config.HttpRegistrationConfigurationTest$Customer

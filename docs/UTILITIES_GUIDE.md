@@ -1772,6 +1772,24 @@ Ringkasan perilaku API:
 Ringkasan property dan troubleshooting tersedia pada
 [Panduan Konfigurasi](CONFIGURATION_GUIDE.md#default-http-client).
 
+### L.6. Registrasi API dan builder operasi
+
+`StarterHttpClient.operationBuilder()` memilih default YAML melalui `id` dan
+mendukung override URL, method, header, query, path variable, body JSON/XML,
+response type, serta call timeout per request. `execute(operation)` mengembalikan
+raw OkHttp `Response`; `executeAsync(operation, callback)` mengembalikan `Call`
+yang sudah di-enqueue. `HttpOperations.readResponse(response)` melakukan decoding
+opsional satu kali. Caller menutup response dan memeriksa status HTTP. Lihat
+[panduan HTTP client](HTTP_CLIENT_GUIDE.md) untuk contoh dan validasi lengkap.
+
+Jika semua default ada di YAML, request tanpa body cukup memilih `id`; request
+dengan body wajib mengisi `id` dan `requestBody(payload)`. Payload tidak disimpan
+di YAML atau dirujuk melalui bean. Method dan media
+setters juga menerima `HttpMethod`/`HttpContentType`; `header`/`addHeader` menerima
+`HttpHeader` untuk nama. Overload String tetap tersedia untuk nilai custom.
+Ketiga enum berada di `reyga.starter.foundation.common_http.enums`; lihat
+[referensi enum](HTTP_CLIENT_GUIDE.md#12-enum-dan-string-pada-builder-dan-yaml).
+
 ## M. Common Logger
 
 `CommonLogger` menyediakan format log foundation di atas SLF4J. Gunakan

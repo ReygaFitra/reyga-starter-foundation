@@ -1,7 +1,8 @@
 package reyga.starter.foundation.core.config;
 
 import org.aspectj.lang.JoinPoint;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,11 +28,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AspectAdviceConfigurationTest {
 
-    private final ApplicationContextRunner runner = new ApplicationContextRunner()
-            .withUserConfiguration(CoreConfig.class, AdviceBehaviorConfig.class);
-
-    @Test
-    void should_InvokeEachConfiguredBehavior_When_AnnotatedMethodsAreCalled() {
+    @ParameterizedTest
+    @ValueSource(classes = {CoreConfig.class, AspectAdviceAutoConfiguration.class})
+    void should_InvokeEachConfiguredBehavior_When_AnnotatedMethodsAreCalled(Class<?> configuration) {
+        ApplicationContextRunner runner = new ApplicationContextRunner()
+                .withUserConfiguration(configuration, AdviceBehaviorConfig.class);
         runner.withPropertyValues(
                         "reyga.config.aspect.before=true",
                         "reyga.config.aspect.before-behavior=beforeBehavior",
@@ -85,29 +86,30 @@ class AspectAdviceConfigurationTest {
                 });
     }
 
-    @Test
-    void should_FailStartup_When_EnabledAdviceHasNoBehavior() {
-        assertMissingBehavior(
+    @ParameterizedTest
+    @ValueSource(classes = {CoreConfig.class, AspectAdviceAutoConfiguration.class})
+    void should_FailStartup_When_EnabledAdviceHasNoBehavior(Class<?> configuration) {
+        assertMissingBehavior(configuration,
                 "reyga.config.aspect.before=true",
                 "reyga.config.aspect.before-behavior"
         );
-        assertMissingBehavior(
+        assertMissingBehavior(configuration,
                 "reyga.config.aspect.after=true",
                 "reyga.config.aspect.after-behavior"
         );
-        assertMissingBehavior(
+        assertMissingBehavior(configuration,
                 "reyga.config.aspect.after-returning=true",
                 "reyga.config.aspect.after-returning-behavior"
         );
-        assertMissingBehavior(
+        assertMissingBehavior(configuration,
                 "reyga.config.aspect.after-throwing=true",
                 "reyga.config.aspect.after-throwing-behavior"
         );
     }
 
-    private void assertMissingBehavior(String enabledProperty, String behaviorProperty) {
+    private void assertMissingBehavior(Class<?> configuration, String enabledProperty, String behaviorProperty) {
         new ApplicationContextRunner()
-                .withUserConfiguration(CoreConfig.class)
+                .withUserConfiguration(configuration)
                 .withPropertyValues(enabledProperty)
                 .run(context -> {
                     Throwable rootCause = context.getStartupFailure();

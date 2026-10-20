@@ -1,20 +1,19 @@
 package reyga.starter.foundation.defaults.config;
 
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.context.annotation.Import;
-import reyga.starter.foundation.common.config.CommonConfig;
-import reyga.starter.foundation.common_database.config.CommonDatabaseConfig;
-import reyga.starter.foundation.common_io.config.CommonIOConfig;
-import reyga.starter.foundation.core.config.CoreConfig;
-import reyga.starter.foundation.logging.config.AsyncLoggingConfig;
-import reyga.starter.foundation.logging.config.LoggingConfig;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 
+/**
+ * Compatibility entry point for the default foundation feature configurations.
+ * The associated imports resource lists feature auto-configurations. Excluding this
+ * entry point continues to disable the same group; HTTP and validation utilities
+ * remain independently registered in the top-level AutoConfiguration.imports file.
+ */
 @AutoConfiguration
-@Import(
-        {
-                LoggingConfig.class, AsyncLoggingConfig.class, CoreConfig.class,
-                CommonIOConfig.class, CommonConfig.class, CommonDatabaseConfig.class
-        })
+@ImportAutoConfiguration
 public class FoundationDefaultAutoConfiguration {
 
+    /** Creates the default feature group. */
+    public FoundationDefaultAutoConfiguration() {
+    }
 }

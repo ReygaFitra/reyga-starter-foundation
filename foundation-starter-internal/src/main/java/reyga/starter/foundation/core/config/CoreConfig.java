@@ -1,234 +1,222 @@
 package reyga.starter.foundation.core.config;
 
-import java.time.Duration;
-
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.ratelimiter.RateLimiterConfig;
 import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
-import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
 import io.github.resilience4j.retry.RetryRegistry;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.aop.support.AopUtils;
+
 import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.util.StringUtils;
+
 import reyga.starter.foundation.core.aspect.AspectAfter;
 import reyga.starter.foundation.core.aspect.AspectAfterReturning;
 import reyga.starter.foundation.core.aspect.AspectAfterThrowing;
 import reyga.starter.foundation.core.aspect.AspectAround;
 import reyga.starter.foundation.core.aspect.AspectBefore;
-import reyga.starter.foundation.core.aspect.BaseAspectAfter;
-import reyga.starter.foundation.core.aspect.BaseAspectAfterReturning;
-import reyga.starter.foundation.core.aspect.BaseAspectAfterThrowing;
-import reyga.starter.foundation.core.aspect.BaseAspectAround;
-import reyga.starter.foundation.core.aspect.BaseAspectBefore;
-import reyga.starter.foundation.core.aspect.AspectProcessor;
-import reyga.starter.foundation.core.component.DefaultTransactionalExecutor;
 import reyga.starter.foundation.core.component.TransactionalExecutor;
 import reyga.starter.foundation.core.config.properties.ConfigProperties;
 import reyga.starter.foundation.core.exception.handler.DefaultAppValidationExceptionHandler;
 import reyga.starter.foundation.core.exception.handler.DefaultExceptionHandler;
 import reyga.starter.foundation.core.exception.handler.DefaultValidationExceptionHandler;
-import reyga.starter.foundation.core.service.DefaultResilienceService;
 import reyga.starter.foundation.core.service.foundation.ResilienceService;
 
+/**
+ * Compatibility configuration retaining the original bean methods and property conditions.
+ * New starter registration uses the feature auto-configurations; explicit imports remain supported.
+ */
 @Configuration
 @EnableConfigurationProperties(ConfigProperties.class)
 public class CoreConfig {
 
-    private static final Logger log = LoggerFactory.getLogger(CoreConfig.class);
+    /** Creates the compatibility configuration. */
+    public CoreConfig() {
+    }
 
+    /**
+     * Creates the existing defaultExceptionHandler bean with unchanged activation and defaults.
+     * @return the configured bean using the legacy factory behavior
+     */
     @Bean
     @ConditionalOnProperty(name = "reyga.config.default-bean.exception-handler", havingValue = "true")
     public DefaultExceptionHandler defaultExceptionHandler() {
-        return new DefaultExceptionHandler();
+        return new ExceptionHandlingAutoConfiguration().defaultExceptionHandler();
     }
 
+    /**
+     * Creates the existing defaultAppValidationExceptionHandler bean with unchanged activation and defaults.
+     * @return the configured bean using the legacy factory behavior
+     */
     @Bean
     public DefaultAppValidationExceptionHandler defaultAppValidationExceptionHandler() {
-        return new DefaultAppValidationExceptionHandler();
+        return new ExceptionHandlingAutoConfiguration().defaultAppValidationExceptionHandler();
     }
 
+    /**
+     * Creates the existing defaultValidationExceptionHandler bean with unchanged activation and defaults.
+     * @return the configured bean using the legacy factory behavior
+     */
     @Bean
     @ConditionalOnProperty(name = "reyga.config.default-bean.validation-handler", havingValue = "true")
     public DefaultValidationExceptionHandler defaultValidationExceptionHandler() {
-        return new DefaultValidationExceptionHandler();
+        return new ExceptionHandlingAutoConfiguration().defaultValidationExceptionHandler();
     }
 
+    /**
+     * Creates the existing resilienceService bean with unchanged activation and defaults.
+     * @return the configured bean using the legacy factory behavior
+     */
     @Bean
     @ConditionalOnProperty(name = "reyga.config.default-bean.utilities", havingValue = "true")
     public ResilienceService resilienceService() {
-        return new DefaultResilienceService();
+        return new UtilitiesAutoConfiguration().resilienceService();
     }
 
+    /**
+     * Creates the existing transactionalExecutor bean with unchanged activation and defaults.
+     * @param transactionManager required transaction manager used by the executor
+     * @return the configured bean using the legacy factory behavior
+     */
     @Bean
     @ConditionalOnProperty(name = "reyga.config.default-bean.utilities", havingValue = "true")
     public TransactionalExecutor transactionalExecutor(PlatformTransactionManager transactionManager) {
-        return new DefaultTransactionalExecutor(transactionManager);
+        return new UtilitiesAutoConfiguration().transactionalExecutor(transactionManager);
     }
 
+    /**
+     * Creates the existing aspectAround bean with unchanged activation and defaults.
+     * @param configProperties bound properties supplying the configured behavior bean name
+     * @param beanFactory application bean factory used to resolve and validate the behavior
+     * @return the configured bean using the legacy factory behavior
+     * @throws IllegalStateException if the behavior name is blank, missing, or has the wrong type
+     */
     @Bean
     @ConditionalOnProperty(name = "reyga.config.aspect.around", havingValue = "true")
     public AspectAround aspectAround(ConfigProperties configProperties, ListableBeanFactory beanFactory) {
-        Object behavior = resolveAspectBehavior(
-                beanFactory, configProperties.aspect().behavior(),
-                "reyga.config.aspect.behavior", "reyga.config.aspect.around",
-                BaseAspectAround.class
-        );
-        return new AspectAround((AspectProcessor) behavior);
+        return new AspectAdviceAutoConfiguration().aspectAround(configProperties, beanFactory);
     }
 
+    /**
+     * Creates the existing aspectBefore bean with unchanged activation and defaults.
+     * @param configProperties bound properties supplying the configured behavior bean name
+     * @param beanFactory application bean factory used to resolve and validate the behavior
+     * @return the configured bean using the legacy factory behavior
+     * @throws IllegalStateException if the behavior name is blank, missing, or has the wrong type
+     */
     @Bean
     @ConditionalOnProperty(name = "reyga.config.aspect.before", havingValue = "true")
     public AspectBefore aspectBefore(ConfigProperties configProperties, ListableBeanFactory beanFactory) {
-        Object behavior = resolveAspectBehavior(
-                beanFactory, configProperties.aspect().beforeBehavior(),
-                "reyga.config.aspect.before-behavior", "reyga.config.aspect.before",
-                BaseAspectBefore.class
-        );
-        return new AspectBefore((BaseAspectBefore) behavior);
+        return new AspectAdviceAutoConfiguration().aspectBefore(configProperties, beanFactory);
     }
 
+    /**
+     * Creates the existing aspectAfter bean with unchanged activation and defaults.
+     * @param configProperties bound properties supplying the configured behavior bean name
+     * @param beanFactory application bean factory used to resolve and validate the behavior
+     * @return the configured bean using the legacy factory behavior
+     * @throws IllegalStateException if the behavior name is blank, missing, or has the wrong type
+     */
     @Bean
     @ConditionalOnProperty(name = "reyga.config.aspect.after", havingValue = "true")
     public AspectAfter aspectAfter(ConfigProperties configProperties, ListableBeanFactory beanFactory) {
-        Object behavior = resolveAspectBehavior(
-                beanFactory, configProperties.aspect().afterBehavior(),
-                "reyga.config.aspect.after-behavior", "reyga.config.aspect.after",
-                BaseAspectAfter.class
-        );
-        return new AspectAfter((BaseAspectAfter) behavior);
+        return new AspectAdviceAutoConfiguration().aspectAfter(configProperties, beanFactory);
     }
 
+    /**
+     * Creates the existing aspectAfterReturning bean with unchanged activation and defaults.
+     * @param configProperties bound properties supplying the configured behavior bean name
+     * @param beanFactory application bean factory used to resolve and validate the behavior
+     * @return the configured bean using the legacy factory behavior
+     * @throws IllegalStateException if the behavior name is blank, missing, or has the wrong type
+     */
     @Bean
     @ConditionalOnProperty(name = "reyga.config.aspect.after-returning", havingValue = "true")
     public AspectAfterReturning aspectAfterReturning(ConfigProperties configProperties, ListableBeanFactory beanFactory) {
-        Object behavior = resolveAspectBehavior(
-                beanFactory, configProperties.aspect().afterReturningBehavior(),
-                "reyga.config.aspect.after-returning-behavior", "reyga.config.aspect.after-returning",
-                BaseAspectAfterReturning.class
-        );
-        return new AspectAfterReturning((BaseAspectAfterReturning) behavior);
+        return new AspectAdviceAutoConfiguration().aspectAfterReturning(configProperties, beanFactory);
     }
 
+    /**
+     * Creates the existing aspectAfterThrowing bean with unchanged activation and defaults.
+     * @param configProperties bound properties supplying the configured behavior bean name
+     * @param beanFactory application bean factory used to resolve and validate the behavior
+     * @return the configured bean using the legacy factory behavior
+     * @throws IllegalStateException if the behavior name is blank, missing, or has the wrong type
+     */
     @Bean
     @ConditionalOnProperty(name = "reyga.config.aspect.after-throwing", havingValue = "true")
     public AspectAfterThrowing aspectAfterThrowing(ConfigProperties configProperties, ListableBeanFactory beanFactory) {
-        Object behavior = resolveAspectBehavior(
-                beanFactory, configProperties.aspect().afterThrowingBehavior(),
-                "reyga.config.aspect.after-throwing-behavior", "reyga.config.aspect.after-throwing",
-                BaseAspectAfterThrowing.class
-        );
-        return new AspectAfterThrowing((BaseAspectAfterThrowing) behavior);
+        return new AspectAdviceAutoConfiguration().aspectAfterThrowing(configProperties, beanFactory);
     }
 
+    /**
+     * Creates the existing defaultRateLimiterConfig bean with unchanged activation and defaults.
+     * @param properties bound foundation properties supplying the resilience settings
+     * @return the configured bean using the legacy factory behavior
+     */
     @Bean
     @ConditionalOnProperty(name = "reyga.config.rate-limiter.required", havingValue = "true")
     public RateLimiterConfig defaultRateLimiterConfig(ConfigProperties properties) {
-        ConfigProperties.RateLimiter rateLimiterProperty = properties.rateLimiter();
-        return RateLimiterConfig.custom()
-                .limitRefreshPeriod(Duration.ofSeconds(rateLimiterProperty.refreshPeriodSeconds()))
-                .limitForPeriod(rateLimiterProperty.maxRequest())
-                .timeoutDuration(Duration.ofMillis(rateLimiterProperty.timeoutMilis()))
-                .build();
+        return new ResilienceAutoConfiguration().defaultRateLimiterConfig(properties);
     }
 
+    /**
+     * Creates the existing rateLimiterRegistry bean with unchanged activation and defaults.
+     * @param defaultConfig configuration used for new instances in the registry
+     * @return the configured bean using the legacy factory behavior
+     */
     @Bean
     @ConditionalOnProperty(name = "reyga.config.rate-limiter.required", havingValue = "true")
     public RateLimiterRegistry rateLimiterRegistry(RateLimiterConfig defaultConfig) {
-        return RateLimiterRegistry.of(defaultConfig);
+        return new ResilienceAutoConfiguration().rateLimiterRegistry(defaultConfig);
     }
 
+    /**
+     * Creates the existing defaultCircuitBreakerConfig bean with unchanged activation and defaults.
+     * @param properties bound foundation properties supplying the resilience settings
+     * @return the configured bean using the legacy factory behavior
+     */
     @Bean
     @ConditionalOnProperty(name = "reyga.config.circuit-breaker.required", havingValue = "true")
     public CircuitBreakerConfig defaultCircuitBreakerConfig(ConfigProperties properties) {
-        ConfigProperties.CircuitBreaker circuitBreakerProperty = properties.circuitBreaker();
-        return CircuitBreakerConfig.custom()
-                .failureRateThreshold(circuitBreakerProperty.failureRateThreshold())
-                .slowCallRateThreshold(circuitBreakerProperty.slowCallRateThreshold())
-                .slowCallDurationThreshold(Duration.ofSeconds(circuitBreakerProperty.slowCallDurationThresholdSeconds()))
-                .minimumNumberOfCalls(circuitBreakerProperty.minimumNumberOfCalls())
-                .slidingWindowSize(circuitBreakerProperty.slidingWindowSize())
-                .permittedNumberOfCallsInHalfOpenState(circuitBreakerProperty.permittedNumberOfCallsInHalfOpenState())
-                .waitDurationInOpenState(Duration.ofSeconds(circuitBreakerProperty.slowCallDurationThresholdSeconds()))
-                .automaticTransitionFromOpenToHalfOpenEnabled(circuitBreakerProperty.automaticTransitionFromOpenToHalfOpenEnabled())
-                .build();
+        return new ResilienceAutoConfiguration().defaultCircuitBreakerConfig(properties);
     }
 
+    /**
+     * Creates the existing circuitBreakerRegistry bean with unchanged activation and defaults.
+     * @param defaultConfig configuration used for new instances in the registry
+     * @return the configured bean using the legacy factory behavior
+     */
     @Bean
     @ConditionalOnProperty(name = "reyga.config.circuit-breaker.required", havingValue = "true")
     public CircuitBreakerRegistry circuitBreakerRegistry(CircuitBreakerConfig defaultConfig) {
-        return CircuitBreakerRegistry.of(defaultConfig);
+        return new ResilienceAutoConfiguration().circuitBreakerRegistry(defaultConfig);
     }
 
+    /**
+     * Creates the existing defaultRetryConfig bean with unchanged activation and defaults.
+     * @param properties bound foundation properties supplying the resilience settings
+     * @return the configured bean using the legacy factory behavior
+     */
     @Bean
     @ConditionalOnProperty(name = "reyga.config.retry.required", havingValue = "true")
     public RetryConfig defaultRetryConfig(ConfigProperties properties) {
-        return RetryConfig.custom()
-                .maxAttempts(properties.retry().maxAttempts())
-                .waitDuration(Duration.ofMillis(properties.retry().waitDurationMillis()))
-                .failAfterMaxAttempts(properties.retry().failAfterMaxAttempts())
-                .build();
+        return new ResilienceAutoConfiguration().defaultRetryConfig(properties);
     }
 
+    /**
+     * Creates the existing retryRegistry bean with unchanged activation and defaults.
+     * @param retryConfig configuration used for new retry instances in the registry
+     * @return the configured bean using the legacy factory behavior
+     */
     @Bean
     @ConditionalOnProperty(name = "reyga.config.retry.required", havingValue = "true")
     public RetryRegistry retryRegistry(RetryConfig retryConfig) {
-        RetryRegistry registry = RetryRegistry.of(retryConfig);
-        registry.getEventPublisher()
-                .onEntryAdded(event -> {
-                    Retry addedRetry = event.getAddedEntry();
-                    addedRetry.getEventPublisher().onRetry(retryEvent ->
-                            log.warn(
-                                    "-> Retry triggered [{}] attempt#{} because: {}",
-                                    retryEvent.getName(),
-                                    retryEvent.getNumberOfRetryAttempts(),
-                                    retryEvent.getLastThrowable() != null
-                                            ? retryEvent.getLastThrowable().getMessage()
-                                            : "unknown error"
-                            )
-                    );
-                });
-        return registry;
-    }
-
-    private Object resolveAspectBehavior(ListableBeanFactory beanFactory, String configuredBehaviorName,
-                                         String behaviorProperty, String enabledProperty, Class<?> requiredType)
-    {
-        if (!StringUtils.hasText(configuredBehaviorName)) {
-            throw new IllegalStateException(
-                    behaviorProperty + " must contain the bean name of a "
-                            + requiredType.getSimpleName() + " implementation when "
-                            + enabledProperty + "=true"
-            );
-        }
-        String behaviorName = configuredBehaviorName.trim();
-
-        if (!beanFactory.containsBean(behaviorName)) {
-            throw new IllegalStateException(
-                    "No bean named '" + behaviorName + "' was found for " + behaviorProperty + ". "
-                            + "Register a @Component that extends " + requiredType.getSimpleName()
-            );
-        }
-
-        Object behavior = beanFactory.getBean(behaviorName);
-        Class<?> behaviorType = AopUtils.getTargetClass(behavior);
-        if (!requiredType.isAssignableFrom(behaviorType)) {
-            throw new IllegalStateException(
-                    "Bean named '" + behaviorName + "' configured by " + behaviorProperty
-                            + " must extend " + requiredType.getSimpleName()
-                            + " but was " + behaviorType.getName()
-            );
-        }
-
-        return behavior;
+        return new ResilienceAutoConfiguration().retryRegistry(retryConfig);
     }
 
 }

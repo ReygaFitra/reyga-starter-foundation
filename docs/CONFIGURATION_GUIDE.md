@@ -496,6 +496,28 @@ asinkron juga bertanggung jawab menutup response yang diterimanya. Method cachin
 tetap mengikuti header dan aturan cache HTTP, serta tidak mengambil alih lifecycle
 `Cache` yang diberikan consumer.
 
+### Registrasi API HTTP
+
+Gunakan `reyga.config.http-client.enabled=true` untuk registrasi YAML dan builder
+request. Flag `reyga.config.default-bean.http-client` juga tetap mengaktifkan
+konfigurasi ini. Default timeout connect/read/write `10s`, call timeout `0ms`,
+redirect dan recovery koneksi `true`, serta list `register-api` kosong.
+Setiap registrasi wajib mempunyai `id` unik dan `base-url` HTTP(S) absolut.
+Header dan query berupa list record name/value; payload selalu diberikan per
+request melalui builder, sedangkan `response-type` menunjuk class model response.
+Registrasi invalid menggagalkan startup ketika fitur HTTP aktif. Bean transport
+dan codec consumer mengambil prioritas. Lihat
+[panduan HTTP client](HTTP_CLIENT_GUIDE.md) untuk schema lengkap dan override.
+
+Jika endpoint tanpa body dan semua default placeholder tersedia, kode cukup
+`httpClient.operationBuilder().id("api-id").build()`. Untuk request dengan body,
+gunakan `id("api-id").requestBody(payload).build()`. `request-body-required`
+mengatur kewajiban payload: default true untuk POST/PUT/PATCH/PROPPATCH/REPORT,
+false untuk method lain; GET/HEAD selalu melarang body. `content-type`/`accept`
+menerima MIME literal atau nama enum media
+seperti `APPLICATION_JSON`; header YAML tetap memakai nama wire. Lihat
+[contoh id atau id+body](HTTP_CLIENT_GUIDE.md#11-pemakaian-paling-sederhana-metadata-dari-yaml-payload-per-request).
+
 ## J. Rate Limiter
 
 ```yaml
@@ -722,3 +744,76 @@ REYGA_CONFIG_LOGGING_FILE_ASYNC_LOGS_MAX_POOL_SIZE=20
 | Summary file kosong | Aktifkan `logging-handler`; summary hanya menerima event dengan marker MDC summary. |
 | File log tidak dibuat | Periksa `rolling.enable`/`summary.enable`, resolved `file-path`, permission, serta cari `application.log` atau `monitoring/summary.log`; file `.gz` baru dibuat ketika rollover. |
 | Bean duplicate/ambigu | Hindari nama bean yang sama dan jangan aktifkan handler library bersamaan dengan handler aplikasi untuk exception yang sama. |
+
+## S. Pola Auto-Configuration untuk Pengembangan Starter
+
+Class Java konfigurasi tetap berada di package fitur dalam
+`foundation-starter-internal/src/main/java`. Direktori
+`src/main/resources/META-INF/spring` hanya menyimpan metadata daftar nama class;
+class Java tidak dipindahkan ke direktori resource.
+
+### Entry point dan pembagian fitur
+
+`org.springframework.boot.autoconfigure.AutoConfiguration.imports` tetap
+mendaftarkan tiga entry point berikut:
+
+- `FoundationDefaultAutoConfiguration`: grup default common, database, I/O,
+  logging, exception handler, resilience, utilities, dan Aspect Advice.
+- `ValidationAutoConfiguration`: utility validasi yang aktif melalui flag lama.
+- `CommonHttpAutoConfiguration`: HTTP client yang aktif melalui flag lama.
+
+`FoundationDefaultAutoConfiguration` menggunakan `@ImportAutoConfiguration`.
+Daftar fitur grup default disimpan pada file pendamping
+`META-INF/spring/reyga.starter.foundation.defaults.config.FoundationDefaultAutoConfiguration.imports`:
+
+| Auto-configuration | Tanggung jawab |
+|---|---|
+| `CommonAutoConfiguration` | Mengimpor factory logger dan logger injector yang sudah ada |
+| `CommonDatabaseAutoConfiguration` | Mengimpor factory query processor yang sudah ada |
+| `CommonIOAutoConfiguration` | Mengimpor factory file inspector dan sanitizer yang sudah ada |
+| `LoggingAutoConfiguration` | Mengimpor factory logging service dan konfigurasi MVC yang sudah ada |
+| `AsyncLoggingAutoConfiguration` | Mengimpor factory executor asynchronous dengan propagasi MDC yang sudah ada |
+| `ExceptionHandlingAutoConfiguration` | Application fault, validation fault, dan generic exception handler |
+| `ResilienceAutoConfiguration` | Factory konfigurasi dan registry rate limiter, circuit breaker, dan retry |
+| `UtilitiesAutoConfiguration` | Resilience service dan transactional executor |
+| `AspectAdviceAutoConfiguration` | Lima dispatcher Aspect Advice dan validasi behavior bean |
+
+Pemisahan ini mempertahankan arti exclusion lama: mengecualikan
+`FoundationDefaultAutoConfiguration` melalui `spring.autoconfigure.exclude`
+menonaktifkan seluruh grup default. Utility validasi dan HTTP client tetap
+mengikuti entry point serta flag masing-masing.
+
+`CoreConfig` tetap tersedia sebagai compatibility configuration untuk import
+eksplisit dan pemanggilan method factory lama. Method tersebut mendelegasikan
+pembuatan bean ke konfigurasi fitur. Empat auto-configuration hasil pemisahan
+core menggunakan `@ConditionalOnMissingBean(CoreConfig.class)` agar import
+eksplisit konfigurasi lama tidak menghasilkan bean ganda. Guard ini bukan
+kebijakan baru untuk mengganti default bean melalui bean consumer.
+
+### Aturan ketika menambahkan fitur
+
+1. Buat satu `*AutoConfiguration` per tanggung jawab dengan `@AutoConfiguration`;
+   jangan melakukan component scan seluruh package starter.
+2. Gunakan `@EnableConfigurationProperties` untuk property fitur dan pertahankan
+   aktivasi runtime yang eksplisit melalui `reyga.config.*`.
+3. Untuk fitur yang termasuk grup default, daftarkan nama lengkap class pada file
+   pendamping `FoundationDefaultAutoConfiguration.imports`. Gunakan daftar
+   top-level hanya untuk entry point independen; periksa dampak terhadap
+   exclusion sebelum mengubah keanggotaan grup.
+4. Helper konfigurasi tetap menggunakan `@Configuration` dan diimpor oleh
+   auto-configuration fitur. Jika ordering dibutuhkan, nyatakan melalui
+   `@AutoConfiguration(before = ..., after = ...)`, jangan mengandalkan urutan
+   baris metadata.
+5. Gunakan `@ConditionalOnMissingBean` untuk default baru yang memang mendukung
+   override consumer. Jangan menambahkan conditional ke factory lama sebagai
+   bagian dari refactor karena hal tersebut dapat mengubah perilaku aplikasi.
+6. Uji dengan `ApplicationContextRunner`: discovery metadata, default dan flag
+   nonaktif, aktivasi fitur, kegagalan requirement, serta compatibility import
+   dan exclusion.
+
+Refactor ini mempertahankan nama bean, property, nilai default, implementasi,
+logging, dan validasi startup. `JdbcTemplate` tetap wajib untuk query processor;
+`PlatformTransactionManager` tetap wajib ketika utilities aktif. Konfigurasi
+logging, async, common, database, dan I/O lama tetap menggunakan factory serta
+proxy configuration yang sama. Dependency consumer dan mekanisme
+`ServiceLoader` tidak berubah.

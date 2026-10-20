@@ -1,0 +1,9 @@
+reyga.starter.foundation.common.config.CommonAutoConfiguration
+reyga.starter.foundation.common_database.config.CommonDatabaseAutoConfiguration
+reyga.starter.foundation.common_io.config.CommonIOAutoConfiguration
+reyga.starter.foundation.logging.config.LoggingAutoConfiguration
+reyga.starter.foundation.logging.config.AsyncLoggingAutoConfiguration
+reyga.starter.foundation.core.config.AspectAdviceAutoConfiguration
+reyga.starter.foundation.core.config.ExceptionHandlingAutoConfiguration
+reyga.starter.foundation.core.config.ResilienceAutoConfiguration
+reyga.starter.foundation.core.config.UtilitiesAutoConfiguration

@@ -1645,6 +1645,24 @@ API behavior summary:
 Properties and troubleshooting are in the
 [Configuration Guide](CONFIGURATION_GUIDE_EN.md#default-http-client).
 
+### L.6. Registered APIs and operation builders
+
+`StarterHttpClient.operationBuilder()` selects YAML defaults by `id` and supports
+per-request URL, method, headers, query, path variables, JSON/XML payload, response
+type, and call timeout overrides. `execute(operation)` returns raw OkHttp
+`Response`; `executeAsync(operation, callback)` returns an enqueued `Call`.
+`HttpOperations.readResponse(response)` optionally decodes the body once.
+The caller owns response closure and HTTP status handling. See the
+[HTTP client guide](HTTP_CLIENT_GUIDE_EN.md) for examples and validation rules.
+
+With complete YAML defaults, bodyless builders only need id; body requests require
+id and requestBody(payload). Payload sources are not stored in YAML or resolved
+from beans. Method/media setters also
+accept HttpMethod/HttpContentType; header/addHeader accept HttpHeader names. String
+overloads remain available. All enums belong to
+`reyga.starter.foundation.common_http.enums`; see the
+[enum reference](HTTP_CLIENT_GUIDE.md#12-enum-dan-string-pada-builder-dan-yaml).
+
 ## M. Common Logger
 
 `CommonLogger` supplies foundation formatting over SLF4J. Use `@InjectLogger`

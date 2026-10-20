@@ -18,6 +18,37 @@ import okhttp3.Response;
 public interface StarterHttpClient {
 
     /**
+     * Creates a builder with this client's registered defaults.
+     * @param <T> request payload type
+     * @param <R> response payload type
+     * @return new builder
+     * @throws UnsupportedOperationException if a custom implementation does not support registration
+     */
+    default <T, R> HttpOperations.Builder<T, R> operationBuilder() {
+        throw new UnsupportedOperationException("This StarterHttpClient does not support operation builders");
+    }
+
+    /**
+     * Executes a prepared operation; caller closes the response.
+     * @param operation non-null prepared operation
+     * @return raw OkHttp response
+     * @throws IOException on transport failure
+     */
+    default Response execute(HttpOperations<?, ?> operation) throws IOException {
+        return call(java.util.Objects.requireNonNull(operation, "operation must not be null").request());
+    }
+
+    /**
+     * Enqueues a prepared operation; callback closes the response.
+     * @param operation non-null prepared operation
+     * @param callback completion callback
+     * @return enqueued cancellable call
+     */
+    default Call executeAsync(HttpOperations<?, ?> operation, Callback callback) {
+        return asynchronousCall(java.util.Objects.requireNonNull(operation, "operation must not be null").request(), callback);
+    }
+
+    /**
      * Executes a request synchronously.
      *
      * @param request request to execute; must not be {@code null}

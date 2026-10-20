@@ -486,6 +486,27 @@ callbacks are also responsible for closing their responses. Caching methods
 follow HTTP cache headers and rules and do not own the lifecycle of a
 consumer-supplied `Cache`.
 
+### Registered HTTP APIs
+
+Use `reyga.config.http-client.enabled=true` for YAML registrations and request
+builders. The existing `reyga.config.default-bean.http-client` flag also enables
+this configuration. Defaults: connect/read/write timeout `10s`, call timeout
+`0ms`, redirects and connection recovery `true`, and an empty `register-api` list.
+Each registration requires a unique `id` and an absolute HTTP(S) `base-url`.
+Headers and query parameters are repeated name/value records; request payloads
+are always supplied per request through the builder, while `response-type` names a response class.
+Invalid registrations fail startup only while the HTTP feature is enabled.
+Consumer transport and codec beans take precedence. See the
+[HTTP client guide](HTTP_CLIENT_GUIDE_EN.md) for the full schema and overrides.
+
+With complete endpoint/placeholder defaults, bodyless code only needs
+`httpClient.operationBuilder().id("api-id").build()`. Body requests require
+`id("api-id").requestBody(payload).build()`. request-body-required defaults to
+true for POST/PUT/PATCH/PROPPATCH/REPORT and false otherwise; GET/HEAD prohibit
+bodies. content-type/accept accept literal MIME types or symbolic media
+enum names such as APPLICATION_JSON; YAML headers retain wire names. See the
+[id/body example](HTTP_CLIENT_GUIDE.md#11-pemakaian-paling-sederhana-metadata-dari-yaml-payload-per-request).
+
 ## J. Rate Limiter
 
 ```yaml
@@ -712,3 +733,76 @@ REYGA_CONFIG_LOGGING_FILE_ASYNC_LOGS_MAX_POOL_SIZE=20
 | Empty summary file | Enable `logging-handler`; summaries accept only events with the summary MDC marker. |
 | Log files not created | Check `rolling.enable`/`summary.enable`, resolved `file-path`, and permissions; look for `application.log` or `monitoring/summary.log`. `.gz` files are created only on rollover. |
 | Duplicate/ambiguous beans | Avoid duplicate bean names and do not enable library and application handlers for the same exception simultaneously. |
+
+## S. Auto-Configuration Pattern for Starter Development
+
+Java configuration classes stay in their feature packages under
+`foundation-starter-internal/src/main/java`.
+`src/main/resources/META-INF/spring` contains metadata listing fully qualified
+class names; Java classes do not belong in the resource directory.
+
+### Entry points and feature groups
+
+`org.springframework.boot.autoconfigure.AutoConfiguration.imports` continues
+to register these three entry points:
+
+- `FoundationDefaultAutoConfiguration`: the default group for common, database,
+  I/O, logging, exception handling, resilience, utilities, and Aspect Advice.
+- `ValidationAutoConfiguration`: the validation utility with its existing flag.
+- `CommonHttpAutoConfiguration`: the HTTP client with its existing flag.
+
+`FoundationDefaultAutoConfiguration` uses `@ImportAutoConfiguration`.
+Its default features are listed in the companion resource
+`META-INF/spring/reyga.starter.foundation.defaults.config.FoundationDefaultAutoConfiguration.imports`:
+
+| Auto-configuration | Responsibility |
+|---|---|
+| `CommonAutoConfiguration` | Imports the existing logger and logger injector factories |
+| `CommonDatabaseAutoConfiguration` | Imports the existing query processor factory |
+| `CommonIOAutoConfiguration` | Imports the existing file inspector and sanitizer factories |
+| `LoggingAutoConfiguration` | Imports the existing logging service and MVC configuration factories |
+| `AsyncLoggingAutoConfiguration` | Imports the existing asynchronous executor factory with MDC propagation |
+| `ExceptionHandlingAutoConfiguration` | Application fault, validation fault, and generic exception handlers |
+| `ResilienceAutoConfiguration` | Configuration and registry factories for rate limiting, circuit breaking, and retry |
+| `UtilitiesAutoConfiguration` | Resilience service and transactional executor |
+| `AspectAdviceAutoConfiguration` | Five Aspect Advice dispatchers and behavior bean validation |
+
+This grouping preserves the existing exclusion behavior: excluding
+`FoundationDefaultAutoConfiguration` through `spring.autoconfigure.exclude`
+disables the entire default group. The validation utility and HTTP client retain
+their independent entry points and flags.
+
+`CoreConfig` remains available as a compatibility configuration for explicit
+imports and existing factory method calls. Its methods delegate bean creation
+to the feature configurations. The four extracted core auto-configurations use
+`@ConditionalOnMissingBean(CoreConfig.class)` to prevent duplicate beans when
+the legacy configuration is imported explicitly. This guard does not introduce
+a new policy for consumer overrides of default beans.
+
+### Rules for adding features
+
+1. Create one `*AutoConfiguration` per responsibility with `@AutoConfiguration`;
+   avoid scanning the entire starter package.
+2. Use `@EnableConfigurationProperties` for feature properties and retain
+   explicit runtime activation through `reyga.config.*`.
+3. Register features belonging to the default group in the companion
+   `FoundationDefaultAutoConfiguration.imports` resource. Reserve the top-level
+   list for independent entry points; assess exclusion behavior before changing
+   group membership.
+4. Keep helper configurations annotated with `@Configuration` and import them
+   from the feature auto-configuration. When ordering matters, declare it with
+   `@AutoConfiguration(before = ..., after = ...)` rather than relying on
+   metadata line order.
+5. Use `@ConditionalOnMissingBean` for new defaults that support consumer
+   overrides. Do not add conditions to existing factories during a refactor,
+   since that can change application behavior.
+6. Verify metadata discovery, defaults and disabled flags, feature activation,
+   missing requirements, and compatibility imports and exclusions with
+   `ApplicationContextRunner`.
+
+This refactor preserves bean names, properties, default values, implementations,
+logging, and startup validation. A `JdbcTemplate` remains required for the query
+processor; a `PlatformTransactionManager` remains required when utilities are
+enabled. Existing logging, async, common, database, and I/O configurations retain
+their original factories and configuration proxies. Consumer dependencies and
+`ServiceLoader` registration remain unchanged.

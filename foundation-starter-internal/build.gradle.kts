@@ -29,8 +29,10 @@ val resilience4jVersion: String by project
 val apacheTikaVersion: String by project
 val owaspSanitizerVersion: String by project
 val jasperReportsVersion: String by project
+val jacksonDatabindVersion: String by project
 
 dependencies {
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:$jacksonDatabindVersion")
     testImplementation("org.springframework.boot:spring-boot-starter-test:$springBootVersion")
     api(project(":common"))
     api(project(":common-database"))

@@ -12,6 +12,7 @@ val jasperReportsVersion: String by project
 val logbackClassicVersion: String by project
 val ojdbcVersion: String by project
 val okHttpVersion: String by project
+val jacksonDatabindVersion: String by project
 
 plugins {
     `java-library`
@@ -19,6 +20,7 @@ plugins {
 }
 
 dependencies {
+    api("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:$jacksonDatabindVersion")
     api("org.springframework.boot:spring-boot-starter-web:$springBootVersion")
     api("org.springframework.boot:spring-boot-starter-validation:$springBootVersion")
     api("org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion")

@@ -1,0 +1,26 @@
+reyga:
+  config:
+    http-client:
+      enabled: true
+      connect-timeout: 1500ms
+      read-timeout: 2s
+      write-timeout: 2s
+      call-timeout: 3s
+      follow-redirects: false
+      retry-on-connection-failure: false
+      register-api:
+        - id: customer
+          base-url: https://example.test/v1
+          path: customers
+          method: GET
+          headers:
+            - name: X-Tag
+              value: one
+            - name: X-Tag
+              value: two
+          query-parameters:
+            - name: page
+              value: "1"
+            - name: page
+              value: "2"
+          response-type: java.util.Map
